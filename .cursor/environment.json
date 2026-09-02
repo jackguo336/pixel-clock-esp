@@ -1,0 +1,4 @@
+{
+  "name": "Pixel Clock ESP (ESP-IDF v6.0.2)",
+  "install": "bash ./.cursor/install.sh"
+}
