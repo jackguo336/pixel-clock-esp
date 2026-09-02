@@ -24,7 +24,7 @@ jobs:
           target: esp32c6
           command: idf.py build
 
-      # QEMU does not support ESP32-C6; tests use ESP32-C3 (see test/pytest_unit_tests.py).
+      # QEMU does not support ESP32-C6; tests use ESP32-C3 into build_esp32c3_qemu.
       - name: Run unit tests
         uses: espressif/esp-idf-ci-action@v1
         with:
@@ -32,5 +32,8 @@ jobs:
           target: esp32c3
           path: test
           command: >
-            python -m pip install 'pytest-embedded-idf[qemu]~=2.9'
+            python -m pip install 'pytest-embedded-qemu[idf]~=2.9'
+            && idf.py -B build_esp32c3_qemu
+            -D SDKCONFIG=build_esp32c3_qemu/sdkconfig
+            -D IDF_TARGET=esp32c3 build
             && pytest pytest_unit_tests.py
