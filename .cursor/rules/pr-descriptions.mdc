@@ -1,0 +1,47 @@
+---
+description: Write pull request descriptions with context, rationale, and diagrams for multi-component changes
+alwaysApply: false
+---
+
+# Pull request descriptions
+
+Write for a reviewer who does not already know this area. Lead with **why**, not a file list.
+
+## Include
+
+1. **Context** — what was true before, and what broke or was incomplete.
+2. **Reason** — why this change, in this shape. Name constraints that are not obvious (chip support, package extras, build dirs).
+3. **Diagram** — for anything that spans more than one component, job, service, or process. A short mermaid flowchart or relationship graph is enough. Skip the diagram for a single-file or single-function change.
+
+Keep it concise. Prefer a few short paragraphs over bullets of implementation detail. Do not recap the diff.
+
+## Omit unless asked
+
+- Test plans, checklists, and “how I verified”
+- Line-by-line or file-by-line change lists
+- Commit-message restatements of *what* landed
+
+## Diagram
+
+Use mermaid. Label real names (job, package, directory, component). Show the path the change sits on, not a generic architecture poster.
+
+```mermaid
+flowchart LR
+  ci["CI test job"] --> pip["pytest-embedded-qemu"]
+  ci --> build["idf.py build esp32c3"]
+  build --> dir["build_esp32c3_qemu"]
+  pip --> pytest["pytest"]
+  dir --> pytest
+```
+
+## Example
+
+❌ BAD — what changed, no why:
+
+> Update `ci.yml` to install a different pip extra, build the test app, and type the fixture as `Dut`.
+
+✅ GOOD — context and reason:
+
+> CI’s unit-test job failed during pytest collection: `pytest_embedded_idf.dut` always imports `pytest_embedded_serial`, which is not part of a QEMU-only install. QEMU does not emulate ESP32-C6, so Unity tests already run on ESP32-C3 in QEMU; that DUT is `QemuDut`, not `IdfDut`.
+>
+> The workflow also never built the app pytest looks for. `pytest-embedded-idf[qemu]` is not a real extra; QEMU support is `pytest-embedded-qemu[idf]`. Pytest then expects a prebuilt image in `build_esp32c3_qemu` (gitignored) and does not compile firmware itself.
