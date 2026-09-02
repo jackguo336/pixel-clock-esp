@@ -1,0 +1,253 @@
+---
+description: Write ESP-IDF Unity unit tests in C++ (component test/ dirs, TEST_CASE, CMake, mocks)
+globs: "**/test/**"
+alwaysApply: false
+---
+
+# ESP-IDF C++ unit tests
+
+Two ways to test:
+
+1. **Target-based (default).** A central Unity test app runs on the chip. Put tests in each component’s `test/` subdirectory. This is the path to use unless the user asked for Linux-host tests.
+2. **Linux-host with mocks.** Hardware is replaced by CMock. Only some IDF components support this; mocking on-device is not generally available.
+
+Write tests in C++ (`.cpp`). Unity’s C API is included from `unity.h`; `TEST_CASE` is C++-safe. Do not wrap cases in `extern "C"`. Do not throw; IDF often builds without exceptions. Prefer RAII for setup/teardown.
+
+## Normal test cases
+
+Location: `components/<name>/test/`. Filenames must start with `test`. One file may contain many cases. Include `unity.h` and the header under test.
+
+```
+components/<name>/
+  include/ ...
+  src/ ...
+  CMakeLists.txt          # production component; does not compile test/
+  test/
+    CMakeLists.txt        # test component
+    test_<module>.cpp
+```
+
+```cpp
+#include "unity.h"
+#include "platform/mailbox.hpp"
+
+TEST_CASE("empty mailbox has size zero", "[mailbox]")
+{
+    platform::Mailbox mailbox;
+    TEST_ASSERT_EQUAL(0, mailbox.size());
+}
+```
+
+- First argument: descriptive name (shown in the serial menu).
+- Second argument: tags in square brackets. Used to group related cases or mark properties (`[mailbox]`, `[ignore]`, `[fails]`, `[test_env=...]`). Combine tags: `"[spi][ignore]"`.
+- Do **not** add `app_main`, `UNITY_BEGIN()`, `UNITY_END()`, or `RUN_TEST` in component test files. `unity_platform.c` begins/ends Unity and runs registered cases. `TEST_CASE` registers itself with a constructor.
+
+### Assertions (Unity)
+
+`TEST_ASSERT(expr)` / `TEST_ASSERT_TRUE` / `TEST_ASSERT_FALSE` / `TEST_ASSERT_NULL` / `TEST_ASSERT_NOT_NULL`. Equality is **expected, actual**: `TEST_ASSERT_EQUAL(expected, actual)`, plus `TEST_ASSERT_EQUAL_INT`, `_UINT`, `_HEX`, `_STRING`, `_MEMORY(exp, act, len)`, `_INT8/16/32`, `_UINT8/16/32`. Comparisons: `TEST_ASSERT_GREATER_THAN`, `_LESS_THAN`, `_FLOAT_WITHIN(delta, expected, actual)`. Abort the case: `TEST_FAIL()` / `TEST_FAIL_MESSAGE("...")`. Skip: `TEST_IGNORE()` / `TEST_IGNORE_MESSAGE("...")`.
+
+### Test-component CMakeLists.txt
+
+`test/` is itself a component. Production components list `SRCS` explicitly; test components should use `SRC_DIRS` so every `test_*.cpp` is picked up. Require `unity`. Also `PRIV_REQUIRES` the parent component so its headers and library are available.
+
+```cmake
+idf_component_register(SRC_DIRS "."
+                       INCLUDE_DIRS "."
+                       REQUIRES unity
+                       PRIV_REQUIRES <name>)
+```
+
+The firmware app does **not** compile `test/`. A sibling test app includes it via `TEST_COMPONENTS` (see Building).
+
+## Multi-device test cases
+
+Normal cases run on one DUT. GPIO/SPI-style tests that need a peer use several functions, each the entry point on a different DUT (max 5).
+
+```cpp
+void gpio_master_test()
+{
+    gpio_config_t slave_config = {
+        .pin_bit_mask = 1 << MASTER_GPIO_PIN,
+        .mode = GPIO_MODE_INPUT,
+    };
+    gpio_config(&slave_config);
+    unity_wait_for_signal("output high level");
+    TEST_ASSERT(gpio_get_level(MASTER_GPIO_PIN) == 1);
+}
+
+void gpio_slave_test()
+{
+    gpio_config_t master_config = {
+        .pin_bit_mask = 1 << SLAVE_GPIO_PIN,
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    gpio_config(&master_config);
+    gpio_set_level(SLAVE_GPIO_PIN, 1);
+    unity_send_signal("output high level");
+}
+
+TEST_CASE_MULTIPLE_DEVICES("gpio multiple devices test example", "[driver]",
+                           gpio_master_test, gpio_slave_test);
+```
+
+- Arg 1: name. Arg 2: description/tags. Remaining args: per-DUT functions.
+- The macro appends `[multi_device]` for the runner.
+- Sync over UART with `unity_wait_for_signal("name")` and `unity_send_signal("name")`. The waiting DUT prints `Waiting for signal: [name]!` and `Please press "Enter" key to once any board send this signal.` The sending DUT prints `Send signal: [name]!`. After the signal is sent, press Enter on the waiter so it unblocks.
+
+## Multi-stage test cases
+
+Normal cases must finish without reset (or only check that a reset happened). For “reset, then assert” (e.g. deep-sleep reset reason), group functions as stages. The runner needs interaction: pick the case, then pick the stage.
+
+```cpp
+static void trigger_deepsleep(void)
+{
+    esp_sleep_enable_timer_wakeup(2000);
+    esp_deep_sleep_start();
+}
+
+void check_deepsleep_reset_reason()
+{
+    soc_reset_reason_t reason = esp_rom_get_reset_reason(0);
+    TEST_ASSERT(reason == RESET_REASON_CORE_DEEP_SLEEP);
+}
+
+TEST_CASE_MULTIPLE_STAGES("reset reason check for deepsleep", "[esp32]",
+                          trigger_deepsleep, check_deepsleep_reset_reason);
+```
+
+The macro appends `[multi_stage]`. First run: select stage 1 (triggers reset). After reboot, select the same case and stage 2. The case **passes only if the last stage passes and every previous stage triggered a reset**.
+
+## Tests for different targets
+
+Hardware tests often cannot run on every chip. Wrap cases with `DISABLED_FOR_TARGETS` / `TEMPORARY_DISABLED_FOR_TARGETS`, either in the original file or in extra files that are **still compiled**. Prefer `soc_caps.h` over chip names. If a cap allows the test but a chip is not ready, nest both and drop the temporary disable later.
+
+```cpp
+#if !TEMPORARY_DISABLED_FOR_TARGETS(ESP32, ESP8266)
+TEST_CASE("a test that is not ready for esp32 and esp8266 yet", "[]")
+{
+}
+#endif
+
+#if SOC_SDIO_SLAVE_SUPPORTED
+#if !TEMPORARY_DISABLED_FOR_TARGETS(ESP64)
+TEST_CASE("a sdio slave tests that is not ready for esp64 yet", "[sdio_slave]")
+{
+    // available for esp32 now; will be available for esp64 later
+}
+#endif
+#endif
+```
+
+- `DISABLED_FOR_TARGETS(...)` — impossible on those chips (no peripheral).
+- `TEMPORARY_DISABLED_FOR_TARGETS(...)` — not ready yet, missing runners, etc.
+
+**Deprecated (do not):**
+
+- Do not put tests under `test/<target>/` and pick a folder in CMake. Tests are reused more often than implementations; `test/esp32` to skip esp32s2 makes re-enabling on esp32s3 messy.
+- Do not skip **test items** with `#if CONFIG_IDF_TARGET_xxx`. That hides cases on new chips. Prefer blacklist `#if !DISABLED_FOR_TARGETS(...)`.
+
+**Test item vs implementation:**
+
+- *Item*: a case that runs on some chips and is skipped on others (ESP32-S2 has no SD host → skip SD 1-bit/4-bit, keep SDSPI).
+- *Implementation*: the case always runs, but the body differs (e.g. no `PKT_LEN` register → read length another way). `#if CONFIG_IDF_TARGET_xxx` is allowed **inside** an implementation. Do **not** use `#else`: a new target must fail the build until an implementation is chosen explicitly.
+
+## Building unit test apps
+
+`IDF_PATH` must point at the ESP-IDF tree. Component `test/` dirs are not part of the firmware `project()`. Provide a **test app** (this repo: a `test/` project next to `main/`, same pattern as IDF `examples/system/unit_test`):
+
+```cmake
+cmake_minimum_required(VERSION 3.22)
+set(EXTRA_COMPONENT_DIRS "../components")
+set(TEST_COMPONENTS "platform" CACHE STRING "List of components to test")
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+idf_build_set_property(MINIMAL_BUILD ON)
+project(pixel_clock_esp_test)
+```
+
+`TEST_COMPONENTS` can be overridden: `idf.py -T platform build` or `cmake -D TEST_COMPONENTS="platform mailbox"`. From the test-app directory:
+
+1. `idf.py menuconfig` — Unity options under Component Config if needed.
+2. `idf.py build`
+3. `idf.py flash` (build prints flash instructions)
+
+For CI or many cases in a row, pytest-embedded can drive the DUT. Larger trees often split into several test-apps (one per component); **IDF Build Apps** finds and builds them. Pin the test-app task to a core if you use the cache-compensated timer (below).
+
+## Running unit tests
+
+Flash, reset, wait until idle, press Enter. The menu lists every registered case:
+
+```
+Here's the test menu, pick your combo:
+(1)     "empty mailbox has size zero" [mailbox]
+(13)    "gpio master/slave test example" [ignore][misc][test_env=UT_T2_1][multi_device]
+        (1)     "gpio_master_test"
+        (2)     "gpio_slave_test"
+(20)    "reset reason check for deepsleep" [esp32][test_env=UT_T2_1][multi_stage]
+        (1)     "trigger_deepsleep"
+        (2)     "check_deepsleep_reset_reason"
+```
+
+Normal cases print name + tags. Multi-device/stage cases also print a sub-menu of function names. `[multi_device]` and `[multi_stage]` are added by those macros.
+
+Select by:
+
+| Input | Effect |
+| --- | --- |
+| `"quoted test name"` | one case |
+| index (`1`) | one case |
+| `[tag]` | all cases with that tag |
+| `*` | all cases |
+
+After picking a multi-device case, enter the number of the function this DUT should run. After picking a multi-stage case, enter the stage number (1 after flash; 2 after the reset from stage 1).
+
+## Timing / microbenchmarks
+
+Code/data in SPI flash or PSRAM go through the cache. Hits are fast; misses stall the CPU. Placement changes between builds, so wall-clock microbenchmarks jitter. Putting the hot path in IRAM/DRAM avoids the cache but those memories are small.
+
+**Cache-compensated timer:** uses per-core event counters to subtract cache-miss stall time from wall time.
+
+```cpp
+ccomp_timer_start();
+func_code_to_time();
+int64_t t = ccomp_timer_stop();  // microseconds since start
+```
+
+The timed task **must be pinned to one core**. Each core has its own counters. If `ccomp_timer_start` runs on core 0 and `ccomp_timer_stop` on core 1 (sleep + reschedule), the result is invalid.
+
+## Mocks (Linux host / CMock)
+
+On-device tests pull in real lower layers and hardware, which hurts reliability, edge-case coverage, and root-cause isolation. CMock replaces those dependencies in software. **Today this works only on the Linux target, and only for selected IDF components.** Prefer mocking every dependency of the component under test. If that is too heavy: include more real IDF code (failures then mix production vs test), or split the design to shrink the dependency surface.
+
+**Host requirements:** Ruby; full ESP-IDF; `libbsd` / `libbsd-dev`; recent Linux or macOS + GCC. Every component the app uses must be Linux-capable or mocked. Linux apps must not auto-pull every IDF component:
+
+```cmake
+set(COMPONENTS main)
+```
+
+**Use an existing mock** from IDF `tools/mocks` if it covers what you need. **Create a mock** by overriding the component (same name, discovered later than the original). Specify headers to mock, their include paths, and mock dependencies. `COMPONENT_OVERRIDEN_DIR` is the original component path:
+
+```cmake
+idf_component_get_property(original_component_dir <original-component-name> COMPONENT_OVERRIDEN_DIR)
+idf_component_mock(INCLUDE_DIRS "${original_component_dir}/include"
+    REQUIRES freertos
+    MOCK_HEADER_FILES ${original_component_dir}/include/header_containing_functions_to_mock.h)
+```
+
+Add a `mock/` directory with `mock_config.yaml` (CMock plugins). Minimal:
+
+```yaml
+:cmock:
+  :plugins:
+    - expect
+    - expect_any_args
+```
+
+Partial mocks are enough if they satisfy the test app and remaining real code. IDF’s `tools/mocks` entries are mostly partial.
+
+**Wire the mock into the test app** so it overrides the real component: put the mock under the test project’s `components/`, or:
+
+```cmake
+list(APPEND EXTRA_COMPONENT_DIRS "<mock_component_dir>")
+```
+
+The second form is convenient for IDF-supplied mocks. Pattern reference in IDF: `esp_event/host_test/esp_event_unit_test/` and NVS Page C++ unit tests.

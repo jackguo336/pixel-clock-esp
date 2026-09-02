@@ -1,0 +1,46 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "ESP32-C6 Debug",
+            "type": "gdb",
+            "request": "attach",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/pixel_clock_esp.elf",
+            "target": ":3333",
+            "remote": true,
+            "gdbpath": "${env:HOME}/.espressif/tools/riscv32-esp-elf-gdb/17.1_20260402/riscv32-esp-elf-gdb/bin/riscv32-esp-elf-gdb",
+            "preLaunchTask": "OpenOCD",
+            "stopAtConnect": false,
+            "stopAtEntry": "app_main",
+            "autorun": [
+                "source ${workspaceFolder}/build/gdbinit/symbols",
+                "source ${workspaceFolder}/build/gdbinit/prefix_map",
+                "set remotetimeout 10",
+                "set remote hardware-watchpoint-limit 2",
+                "monitor reset halt",
+                "maintenance flush register-cache"
+            ]
+        },
+        {
+            "name": "ESP32-C6 Debug (OpenOCD already running)",
+            "type": "gdb",
+            "request": "attach",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/pixel_clock_esp.elf",
+            "target": ":3333",
+            "remote": true,
+            "gdbpath": "${env:HOME}/.espressif/tools/riscv32-esp-elf-gdb/17.1_20260402/riscv32-esp-elf-gdb/bin/riscv32-esp-elf-gdb",
+            "stopAtConnect": false,
+            "stopAtEntry": "app_main",
+            "autorun": [
+                "source ${workspaceFolder}/build/gdbinit/symbols",
+                "source ${workspaceFolder}/build/gdbinit/prefix_map",
+                "set remotetimeout 10",
+                "set remote hardware-watchpoint-limit 2",
+                "monitor reset halt",
+                "maintenance flush register-cache"
+            ]
+        }
+    ]
+}

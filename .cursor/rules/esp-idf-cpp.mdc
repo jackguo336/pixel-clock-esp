@@ -1,0 +1,184 @@
+---
+description: ESP-IDF C++ firmware practices (components, C linkage, no exceptions/RTTI, RAII, FreeRTOS, ISRs)
+globs: "**/{*.cpp,*.hpp,*.h,CMakeLists.txt,idf_component.yml}"
+alwaysApply: false
+---
+
+# ESP-IDF C++ development
+
+ESP-IDF is a C SDK with a C++ toolchain (default `-std=gnu++26` on chip). Write application code in C++. Keep `main/` thin: `extern "C" app_main` plus wiring. Put reusable logic in `components/<name>/`. Do not enable exceptions or RTTI unless the user explicitly asks. This tree currently has both off.
+
+Unit tests: follow `esp-idf-cpp-unit-tests` instead of this file.
+
+## Components and CMake
+
+```
+components/<name>/
+  include/<name>/   # public headers only
+  src/              # .cpp and private headers
+  CMakeLists.txt
+```
+
+List `SRCS` explicitly (no `GLOB` / `SRC_DIRS` in production). Public headers go in `INCLUDE_DIRS`; private ones stay next to sources (`PRIV_INCLUDE_DIRS` if needed).
+
+- `REQUIRES`: headers included from **public** headers, plus anything dependents must link.
+- `PRIV_REQUIRES`: headers included only from `.cpp` / private headers (`freertos`, `esp_timer`, drivers).
+- Do not put FreeRTOS or driver types in public headers if a `void*` / opaque handle will do (keeps headers mockable and C++-only consumers simpler).
+- Managed deps: `idf.py add-dependency` → `idf_component.yml`. `espressif/esp-idf-cxx` is RAII wrappers for GPIO/I2C/SPI/timer/events; it expects exceptions. Do not add it while exceptions stay disabled.
+
+Override the language standard only per-component, after `idf_component_register`:
+
+```cmake
+target_compile_options(${COMPONENT_LIB} PRIVATE -std=gnu++26)
+```
+
+Use `PUBLIC` only if public headers need that standard.
+
+## C / C++ boundary
+
+`app_main` must have C linkage. Same for any symbol called from C.
+
+```cpp
+extern "C" void app_main(void)
+{
+    static app::Thing thing;
+    thing.start();
+}
+```
+
+Headers used from both languages:
+
+```cpp
+#ifdef __cplusplus
+extern "C" {
+#endif
+void my_c_api(void);
+#ifdef __cplusplus
+}
+#endif
+```
+
+Define the C++ side as `extern "C" void my_c_api(void) { ... }`.
+
+## Language subset (this project)
+
+- **No exceptions.** Do not `throw`, `try`/`catch`, or throw from constructors. Return `bool` / `esp_err_t`. Log failures with `ESP_LOGx` and `esp_err_to_name(err)`.
+- **No RTTI.** Do not use `dynamic_cast` or `typeid`. Prefer static dispatch, templates, or a known closed set of types. Virtuals at a component boundary (like `platform::Component`) are fine; vtables live in flash.
+- **No `iostream`.** Including `<iostream>` / `<sstream>` adds ~200 kB. Use `ESP_LOG`, `snprintf`, or `esp_log`.
+- **No `setjmp`/`longjmp`.** They skip destructors.
+- Do not enable `CONFIG_COMPILER_CXX_EXCEPTIONS` or `CONFIG_COMPILER_CXX_RTTI` in `sdkconfig` / `sdkconfig.defaults` to “make STL happier.” They grow flash (RTTI: tens of kB) and exception unwind is not real-time safe.
+
+## Naming
+
+Use descriptive names for classes, methods, and variables. A reader should know the role without comments or the surrounding function. Prefer a longer clear name over a short vague one (`drop_count_`, `post_event_from_isr`, `Mailbox` — not `dc`, `pefi`, `MB`).
+
+- **Classes / enums / structs:** PascalCase nouns (`Mailbox`, `MessageType`). Name what the type *is*, not a generic `Manager` / `Helper` / `Data`.
+- **Methods:** snake_case verbs that say what happens and from where (`receive`, `post_from_isr`, `uses_reserved_slots`). Pair task-vs-ISR APIs with an explicit `_from_isr` suffix. Booleans read as predicates (`started_`, `has_message`).
+- **Variables / members:** snake_case; members end with `_` (`items_available_`, `control_task_`). Name the meaning, not the type (`timeout_ms` not `t` or `uint32_val`). Loop indices `i`/`n` are fine in a few lines; anything that lives longer is not.
+- **Constants:** `k` prefix + PascalCase (`kCapacity`, `kControlStackBytes`, `kTag`).
+- **Namespaces:** match the component (`platform`, `demo`).
+- Abbreviations only when they are IDF or domain standard (`isr`, `gpio`, `nvs`, `wdt`). Do not invent `cfg`, `ptr`, `tmp`, `obj`, `buf` unless the buffer’s contents are obvious in the next line.
+
+```cpp
+// ❌ BAD
+void p(Msg& m, uint32_t t);
+class MB { int dc; void* q; };
+
+// ✅ GOOD
+bool post(const Message& message, uint32_t timeout_ms);
+class Mailbox {
+    uint32_t drop_count_{0};
+    void* items_available_{nullptr};
+};
+```
+
+## Types, headers, RAII
+
+Namespaces match the component (`platform`, `demo`). `#pragma once`. Include public headers as `"platform/mailbox.hpp"`.
+
+- Rule of Five: if you define a destructor (e.g. delete a semaphore), `= delete` copy. Add move only if ownership transfer is real.
+- Constructors must not fail by throwing. Failed RTOS object creation: log, leave handles null, make later calls safe no-ops, or abort on unrecoverable boot failures.
+- Prefer bounded storage (`std::array`, member buffers, `static constexpr` capacities) over `std::vector` / `new[]` on hot paths. Heap fragmentation is a firmware bug.
+- STL that is fine: `std::array`, `std::span` (if available), `std::optional` for values, scoped enums, `constexpr`, `nullptr`. Avoid `std::function` in ISRs (heap + type erasure). Avoid `<filesystem>` unless a VFS is actually in use (many operations unimplemented: links, `space`, `resize_file`, `current_path` is always `/`).
+
+```cpp
+// ❌ BAD: exception + iostream + heap on the control path
+void start() {
+    std::cout << "hi\n";
+    auto* q = new std::vector<int>();
+    throw std::runtime_error("fail");
+}
+
+// ✅ GOOD: C API, bounded state, explicit error
+esp_err_t start() {
+    if (handle_ == nullptr) {
+        ESP_LOGE(kTag, "init failed");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
+```
+
+## Designated initializers
+
+C++26 (IDF default) is stricter than C. When filling IDF config structs:
+
+- Members in **declaration order**.
+- No nested designated init, no mixing designated + positional, no designated array init.
+
+```cpp
+gpio_config_t io = {
+    .pin_bit_mask = 1ULL << pin,
+    .mode = GPIO_MODE_OUTPUT,
+    .pull_up_en = GPIO_PULLUP_DISABLE,
+    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    .intr_type = GPIO_INTR_DISABLE,
+};
+```
+
+Zero the rest first if you only set a few fields: `gpio_config_t io{}; io.mode = GPIO_MODE_OUTPUT;`.
+
+## Tasks and threading
+
+Prefer the FreeRTOS C API (this repo’s pattern): `xTaskCreate`, static **thunk** + instance method, explicit stack size and priority.
+
+```cpp
+static void control_task_thunk(void* arg)
+{
+    static_cast<Runtime*>(arg)->control_loop();
+}
+```
+
+`std::thread` / `std::mutex` / `std::condition_variable` sit on pthreads → FreeRTOS. Default pthread stacks are often too small. If you use them, set `esp_pthread_cfg_t` (`esp_pthread_set_cfg`) for stack, name, priority, core. Destroy `std::jthread` only from a pthread/C++-thread task, not from a raw `xTaskCreate` task.
+
+Do not block the scheduler or hold a lock across long work. Feed the task WDT in long loops (`esp_task_wdt_reset`). Prefer static or ctor-created RTOS objects over create/delete in a hot loop.
+
+## ISRs and IRAM
+
+Keep ISRs short: clear the source, `FromISR` give/queue, set `*yielded` / `portYIELD_FROM_ISR`. No logs, no locks that block, no heap, no virtual calls.
+
+Vtables and most code live in flash. With cache disabled (flash write/erase), virtual dispatch in an `ESP_INTR_FLAG_IRAM` handler crashes. `IRAM_ATTR` on a lambda is not reliable (GCC ignores section attributes on lambdas; callees may still be in flash).
+
+```cpp
+static void IRAM_ATTR interrupt_handler_static(void* arg)
+{
+    static_cast<Driver*>(arg)->interrupt_handler();
+}
+
+void IRAM_ATTR Driver::interrupt_handler()
+{
+    bool yielded = false;
+    runtime.post_event_from_isr(event, &yielded);
+    if (yielded) {
+        portYIELD_FROM_ISR();
+    }
+}
+```
+
+Define IRAM handlers in a `.cpp`, not inline in the class body. The linker script generator cannot place **C++-linkage** functions at function granularity; `IRAM_ATTR` / `extern "C"` wrappers are the supported placement method.
+
+## Logging and size
+
+- Tag: `constexpr char kTag[] = "mailbox";` in an anonymous namespace in the `.cpp`.
+- `ESP_LOGI` / `W` / `E`; format with `PRIu32` etc. from `<inttypes.h>`.
+- Do not pull unused IDF components. Measure with `idf.py size` / `size-components` / `size-files` before “optimizing.”

@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "OpenOCD",
+            "type": "shell",
+            "command": "source \"$HOME/.espressif/tools/activate_idf_v6.0.2.sh\" && openocd -f board/esp32c6-builtin.cfg",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "openocd",
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".",
+                    "endsPattern": "Listening on port [0-9]+ for gdb connections"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "showReuseMessage": false
+            }
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "source \"$HOME/.espressif/tools/activate_idf_v6.0.2.sh\" && idf.py build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Flash",
+            "type": "shell",
+            "command": "source \"$HOME/.espressif/tools/activate_idf_v6.0.2.sh\" && idf.py -p /dev/cu.usbmodem1101 flash",
+            "group": "build",
+            "problemMatcher": "$gcc"
+        }
+    ]
+}

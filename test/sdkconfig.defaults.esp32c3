@@ -1,0 +1,2 @@
+# UART console so QEMU can drive Unity. Do not enable USB-Serial/JTAG here.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y

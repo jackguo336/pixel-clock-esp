@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build firmware
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v6.0.2
+          target: esp32c6
+          command: idf.py build
+
+      # QEMU does not support ESP32-C6; tests use ESP32-C3 (see test/pytest_unit_tests.py).
+      - name: Run unit tests
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v6.0.2
+          target: esp32c3
+          path: test
+          command: >
+            python -m pip install 'pytest-embedded-idf[qemu]~=2.9'
+            && pytest pytest_unit_tests.py
