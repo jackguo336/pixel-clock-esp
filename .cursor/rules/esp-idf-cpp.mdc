@@ -63,7 +63,7 @@ Define the C++ side as `extern "C" void my_c_api(void) { ... }`.
 ## Language subset (this project)
 
 - **No exceptions.** Do not `throw`, `try`/`catch`, or throw from constructors. Return `bool` / `esp_err_t`. Log failures with `ESP_LOGx` and `esp_err_to_name(err)`.
-- **No RTTI.** Do not use `dynamic_cast` or `typeid`. Prefer static dispatch, templates, or a known closed set of types. Virtuals at a component boundary (like `platform::Component`) are fine; vtables live in flash.
+- **No RTTI.** Do not use `dynamic_cast` or `typeid`. Prefer static dispatch, templates, or a known closed set of types. Virtuals at a component boundary (like `platform::RuntimeComponent`) are fine; vtables live in flash.
 - **No `iostream`.** Including `<iostream>` / `<sstream>` adds ~200 kB. Use `ESP_LOG`, `snprintf`, or `esp_log`.
 - **No `setjmp`/`longjmp`.** They skip destructors.
 - Do not enable `CONFIG_COMPILER_CXX_EXCEPTIONS` or `CONFIG_COMPILER_CXX_RTTI` in `sdkconfig` / `sdkconfig.defaults` to “make STL happier.” They grow flash (RTTI: tens of kB) and exception unwind is not real-time safe.

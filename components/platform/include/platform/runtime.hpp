@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "platform/component.hpp"
 #include "platform/mailbox.hpp"
+#include "platform/runtime_component.hpp"
 #include "platform/scheduler.hpp"
 
 namespace platform {
@@ -15,7 +15,7 @@ public:
 
     static Runtime& instance();
 
-    void add(Component& component);
+    void add(RuntimeComponent& component);
     void start();
     void stop();
 
@@ -37,10 +37,10 @@ private:
     static void control_task_thunk(void* arg);
     void control_loop();
     void dispatch(const Message& message);
-    Component* find_component(Component* component) const;
+    RuntimeComponent* find_component(RuntimeComponent* component) const;
     void log_mailbox_stats();
 
-    Component* components_[kMaxComponents]{};
+    RuntimeComponent* components_[kMaxComponents]{};
     std::size_t component_count_{0};
     Mailbox mailbox_{};
     Scheduler scheduler_{};

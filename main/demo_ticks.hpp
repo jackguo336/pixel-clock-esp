@@ -1,11 +1,11 @@
 #pragma once
 
-#include "platform/component.hpp"
+#include "platform/runtime_component.hpp"
 #include "platform/scheduler.hpp"
 
 namespace demo {
 
-class TickSource : public platform::Component {
+class TickSource : public platform::RuntimeComponent {
 public:
     const char* name() const override;
     void start() override;
@@ -16,7 +16,7 @@ private:
     platform::Scheduler::Handle timer_{};
 };
 
-class TickSink : public platform::Component {
+class TickSink : public platform::RuntimeComponent {
 public:
     explicit TickSink(TickSource& tick_source);
 

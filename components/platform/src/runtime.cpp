@@ -29,7 +29,7 @@ Runtime& Runtime::instance()
     return runtime;
 }
 
-void Runtime::add(Component& component)
+void Runtime::add(RuntimeComponent& component)
 {
     if (started_) {
         ESP_LOGE(kTag, "cannot add component after start");
@@ -137,7 +137,7 @@ void Runtime::dispatch(const Message& message)
         return;
     }
 
-    Component* target = find_component(message.command.target);
+    RuntimeComponent* target = find_component(message.command.target);
     if (target == nullptr) {
         ESP_LOGW(kTag, "command type=%u dropped; unknown target=%p",
                  static_cast<unsigned>(message.command.type),
@@ -147,7 +147,7 @@ void Runtime::dispatch(const Message& message)
     target->on_command(message.command);
 }
 
-Component* Runtime::find_component(Component* component) const
+RuntimeComponent* Runtime::find_component(RuntimeComponent* component) const
 {
     if (component == nullptr) {
         return nullptr;

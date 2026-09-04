@@ -4,9 +4,9 @@
 
 namespace platform {
 
-class Component {
+class RuntimeComponent {
 public:
-    virtual ~Component() = default;
+    virtual ~RuntimeComponent() = default;
 
     virtual const char* name() const = 0;
     virtual void start() {}
