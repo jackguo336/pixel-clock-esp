@@ -8,13 +8,13 @@
 
 namespace platform {
 
-class Component;
+class RuntimeComponent;
 
 inline constexpr std::size_t kPayloadCapacity = 32;
 
 struct Event {
     EventType type{EventType::None};
-    Component* source{nullptr};
+    RuntimeComponent* source{nullptr};
     // Caller-owned correlation id. Copy from a command onto its reply so the
     // originator can match them. The platform does not set or read this.
     uint32_t generation{0};
@@ -29,8 +29,8 @@ struct Event {
 
 struct Command {
     CommandType type{CommandType::None};
-    Component* target{nullptr};
-    Component* source{nullptr};
+    RuntimeComponent* target{nullptr};
+    RuntimeComponent* source{nullptr};
     // See Event::generation.
     uint32_t generation{0};
     uint8_t payload_size{0};
