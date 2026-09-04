@@ -62,7 +62,15 @@ struct BitmapElement {
     BitmapId bitmap_id{};
 };
 
+enum class LayoutDirection : uint8_t {
+    TopToBottom = 0,
+    LeftToRight = 1,
+    RightToLeft = 2,
+    BottomToTop = 3,
+};
+
 struct ContainerElement {
+    LayoutDirection layout_direction{};
     // Child IDs in a future scene's static storage. The container's position is
     // the origin of that local coordinate space; children are not owned here.
     std::span<const ElementId> child_ids{};
