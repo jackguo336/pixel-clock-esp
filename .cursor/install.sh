@@ -13,7 +13,7 @@ sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
   git wget flex bison gperf ca-certificates \
   python3 python3-pip python3-venv \
-  cmake ninja-build ccache \
+  g++ cmake ninja-build ccache \
   libffi-dev libssl-dev dfu-util \
   libusb-1.0-0 libbsd-dev \
   libslirp0 libpixman-1-0 libgcrypt20

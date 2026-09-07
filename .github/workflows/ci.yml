@@ -17,6 +17,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install host toolchain
+        run: sudo apt-get update && sudo apt-get install -y cmake g++
+
       - name: Configure, build, and run native-host tests
         run: |
           cmake -S test/native_host -B test/native_host/build
