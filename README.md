@@ -11,7 +11,9 @@ Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
 - `main/` — composition root (`app_main`) and temporary TickSource/TickSink demo
 - `components/platform/` — component interface, mailbox, runtime, scheduler, logging
-- `test/` — Unity test app (not compiled into firmware); cases live in `components/platform/test/`
+- `test/native_host/` — GoogleTest suite compiled for macOS/Linux; no ESP-IDF
+- `test/embedded/` — Unity test app (cross-compiled for ESP32; not part of firmware)
+- `components/platform/test/` — Unity cases consumed by the embedded test app
 
 ## Build
 
@@ -33,32 +35,51 @@ each tick and, after a few counts, unicasts `PauseTicks`. `TickSource` cancels
 the timer and posts `TicksPaused`. Everything runs on the control task; the
 stubs will be removed when real services land.
 
-## Unit tests
+## Tests
 
-The firmware `project()` does not compile `components/*/test/`. A sibling app
-under `test/` pulls those in via `TEST_COMPONENTS` and runs Unity.
+Prefer native-host GoogleTest for code that does not depend on ESP-IDF,
+FreeRTOS, peripherals, or a specific chip. Use the embedded Unity app for
+behavior that needs the ESP environment, QEMU, or hardware. The firmware
+`project()` does not compile `components/*/test/`; the sibling app under
+`test/embedded/` pulls those Unity cases in via `TEST_COMPONENTS`.
 
-### Local (QEMU)
+### Native host (GoogleTest)
 
-QEMU does not emulate ESP32-C6, so the host suite builds for ESP32-C3 (closest
-RISC-V target) into `test/build_esp32c3_qemu/`. That does not replace the C6
-on-device build under `test/build/`. Install the QEMU RISC-V binary once, then
-from `test/`:
+From the repository root (no ESP-IDF required):
+
+```bash
+cmake -S test/native_host -B test/native_host/build
+cmake --build test/native_host/build
+ctest --test-dir test/native_host/build --output-on-failure
+```
+
+In VS Code, run the **Test (native host)** task.
+
+### Embedded (QEMU)
+
+QEMU does not emulate ESP32-C6, so the embedded suite builds for ESP32-C3
+(closest RISC-V target) into `test/embedded/build_esp32c3_qemu/`. That does
+not replace the C6 on-device build under `test/embedded/build/`. Install the
+QEMU RISC-V binary once, then from `test/embedded/`:
 
 ```bash
 eim run 'python $IDF_PATH/tools/idf_tools.py install qemu-riscv32'
 eim run "idf.py -B build_esp32c3_qemu -D SDKCONFIG=build_esp32c3_qemu/sdkconfig -D IDF_TARGET=esp32c3 build"
-eim run "pytest pytest_unit_tests.py"
+eim run "pytest pytest_embedded_tests.py"
 ```
 
-### On device (ESP32-C6)
+In VS Code, run the **Test (embedded QEMU)** task.
 
-From `test/`:
+### Embedded (on device, ESP32-C6)
+
+From `test/embedded/`:
 
 ```bash
 eim run "idf.py set-target esp32c6"
 eim run "idf.py -p /dev/cu.usbmodem1101 flash monitor"
 ```
+
+In VS Code, run the **Test (embedded on device)** task.
 
 `set-target` is only needed on a fresh tree (or after a QEMU/C3 configure in the
 default build dir). After boot, press Enter for the Unity menu. `*` runs every

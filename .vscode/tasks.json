@@ -39,6 +39,39 @@
             "command": "source \"$HOME/.espressif/tools/activate_idf_v6.0.2.sh\" && idf.py -p /dev/cu.usbmodem1101 flash",
             "group": "build",
             "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Test (native host)",
+            "type": "shell",
+            "command": "cmake -S . -B build && cmake --build build && ctest --test-dir build --output-on-failure",
+            "options": {
+                "cwd": "${workspaceFolder}/test/native_host"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Test (embedded QEMU)",
+            "type": "shell",
+            "command": "source \"$HOME/.espressif/tools/activate_idf_v6.0.2.sh\" && idf.py -B build_esp32c3_qemu -D SDKCONFIG=build_esp32c3_qemu/sdkconfig -D IDF_TARGET=esp32c3 build && pytest pytest_embedded_tests.py",
+            "options": {
+                "cwd": "${workspaceFolder}/test/embedded"
+            },
+            "group": "test",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Test (embedded on device)",
+            "type": "shell",
+            "command": "source \"$HOME/.espressif/tools/activate_idf_v6.0.2.sh\" && idf.py set-target esp32c6 && idf.py -p /dev/cu.usbmodem1101 flash monitor",
+            "options": {
+                "cwd": "${workspaceFolder}/test/embedded"
+            },
+            "group": "test",
+            "problemMatcher": "$gcc"
         }
     ]
 }

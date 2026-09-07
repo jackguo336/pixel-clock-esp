@@ -32,8 +32,8 @@ echo "==> Installing ESP-IDF toolchains for esp32c6 and esp32c3"
 # shellcheck disable=SC1091
 . "$IDF_DIR/export.sh"
 
-echo "==> Installing QEMU (RISC-V) for host unit tests"
-# QEMU cannot emulate esp32c6, so the test suite runs on esp32c3 instead.
+echo "==> Installing QEMU (RISC-V) for embedded unit tests"
+# QEMU cannot emulate esp32c6, so the embedded suite runs on esp32c3 instead.
 python "$IDF_PATH/tools/idf_tools.py" install qemu-riscv32
 # Re-source so the freshly installed QEMU binary is on PATH.
 # shellcheck disable=SC1091

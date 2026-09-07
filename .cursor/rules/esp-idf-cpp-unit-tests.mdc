@@ -1,21 +1,78 @@
 ---
-description: Write ESP-IDF Unity unit tests in C++ (component test/ dirs, TEST_CASE, CMake, mocks)
+description: Native-host GoogleTest by default; ESP-IDF Unity for device, QEMU, and hardware-dependent code
 globs: "**/test/**"
 alwaysApply: false
 ---
 
-# ESP-IDF C++ unit tests
+# C++ unit tests
 
-Two ways to test:
+Two compilation targets, two runners:
 
-1. **Target-based (default).** A central Unity test app runs on the chip. Put tests in each component’s `test/` subdirectory. This is the path to use unless the user asked for Linux-host tests.
-2. **Linux-host with mocks.** Hardware is replaced by CMock. Only some IDF components support this; mocking on-device is not generally available.
+1. **Native-host GoogleTest (default).** Code compiled for macOS/Linux and run with CTest. Use this whenever the unit under test has no ESP-IDF, FreeRTOS, peripheral, or target-specific dependency. These tests are the fast path for local iteration and CI.
+2. **Embedded Unity.** A central Unity test app is cross-compiled for ESP32 and run in QEMU or on hardware. Use this only for behavior that genuinely needs the ESP environment (FreeRTOS, `esp_timer`, drivers, ISR paths, chip-specific consoles, QEMU, or a physical board).
 
-Write tests in C++ (`.cpp`). Unity’s C API is included from `unity.h`; `TEST_CASE` is C++-safe. Do not wrap cases in `extern "C"`. Do not throw; IDF often builds without exceptions. Prefer RAII for setup/teardown.
+Do not put a GoogleTest case in the Unity tree, and do not add a Unity case for a helper that already runs on the host. Write tests in C++ (`.cpp`). Production firmware still builds without exceptions or RTTI; native-host tests may use GoogleTest’s usual assertions.
 
-## Normal test cases
+## Where tests live
 
-Location: `components/<name>/test/`. Filenames must start with `test`. One file may contain many cases. Include `unity.h` and the header under test.
+```
+test/native_host/                 # host CMake project (GoogleTest + CTest)
+  CMakeLists.txt
+  test_<module>.cpp
+test/embedded/                    # ESP-IDF Unity test *app* (not firmware)
+  CMakeLists.txt
+  main/
+  pytest_embedded_tests.py
+components/<name>/test/           # Unity cases for that component
+  CMakeLists.txt
+  test_<module>.cpp
+```
+
+- Device-independent helpers (header-only types, payload packing, pure functions): `test/native_host/test_*.cpp`.
+- Mailbox, runtime, scheduler, timers, tasks, ISR posting, target console: `components/<name>/test/` driven by `test/embedded/`.
+- The firmware `project()` does not compile `components/*/test/` or anything under `test/`.
+
+## Native-host GoogleTest
+
+Location: `test/native_host/`. Filenames start with `test`. One file may contain many `TEST` cases. Include `gtest/gtest.h` and the public header under test. Do **not** `include($ENV{IDF_PATH}/...)` or call `idf_component_register`.
+
+The native-host CMake project fetches a pinned GoogleTest release, exposes component **public** include dirs, and registers tests with `gtest_discover_tests` for CTest. It does not load ESP-IDF. Only compile sources that are already host-safe (typically headers under `components/<name>/include/`). Do not add `.cpp` files that include FreeRTOS, `esp_timer`, or other IDF headers unless those dependencies are stubbed in the native project.
+
+```cpp
+#include "gtest/gtest.h"
+#include "platform/message.hpp"
+
+TEST(Message, MakeEventMessageCopiesEventFields)
+{
+    platform::Event event{};
+    event.type = platform::EventType::Tick;
+    event.generation = 42;
+
+    const platform::Message message = platform::make_event_message(event);
+
+    EXPECT_EQ(message.kind, platform::MessageType::Event);
+    EXPECT_EQ(message.event.type, platform::EventType::Tick);
+    EXPECT_EQ(message.event.generation, 42u);
+}
+```
+
+Add a new `test_*.cpp` to `test/native_host/CMakeLists.txt` `add_executable` sources. Include further component public dirs with `target_include_directories` the same way `platform/include` is wired. Prefer `EXPECT_*` when later assertions still matter; use `ASSERT_*` only when continuing the case would be meaningless.
+
+Build and run from the repository root (no ESP-IDF, no QEMU):
+
+```bash
+cmake -S test/native_host -B test/native_host/build
+cmake --build test/native_host/build
+ctest --test-dir test/native_host/build --output-on-failure
+```
+
+In VS Code, run the **Test (native host)** task. CI job: `native-host-tests`.
+
+**Linux-host with IDF CMock** (optional, rare here): IDF can replace some components with CMock on the Linux target. That still requires ESP-IDF, Ruby, and `libbsd`. Prefer the GoogleTest project above for code that does not need IDF at all. See Mocks below if a component cannot be exercised without an IDF header.
+
+## Embedded Unity: normal test cases
+
+Location: `components/<name>/test/`. Filenames must start with `test`. One file may contain many cases. Include `unity.h` and the header under test. Unity’s C API is included from `unity.h`; `TEST_CASE` is C++-safe. Do not wrap cases in `extern "C"`. Do not throw; IDF often builds without exceptions. Prefer RAII for setup/teardown.
 
 ```
 components/<name>/
@@ -48,7 +105,7 @@ TEST_CASE("empty mailbox has size zero", "[mailbox]")
 
 ### Test-component CMakeLists.txt
 
-`test/` is itself a component. Production components list `SRCS` explicitly; test components should use `SRC_DIRS` so every `test_*.cpp` is picked up. Require `unity`. Also `PRIV_REQUIRES` the parent component so its headers and library are available.
+`components/<name>/test/` is itself a component. Production components list `SRCS` explicitly; test components should use `SRC_DIRS` so every `test_*.cpp` is picked up. Require `unity`. Also `PRIV_REQUIRES` the parent component so its headers and library are available.
 
 ```cmake
 idf_component_register(SRC_DIRS "."
@@ -57,7 +114,7 @@ idf_component_register(SRC_DIRS "."
                        PRIV_REQUIRES <name>)
 ```
 
-The firmware app does **not** compile `test/`. A sibling test app includes it via `TEST_COMPONENTS` (see Building).
+The firmware app does **not** compile `components/*/test/`. The sibling embedded test app includes it via `TEST_COMPONENTS` (see Building).
 
 ## Multi-device test cases
 
@@ -151,28 +208,30 @@ TEST_CASE("a sdio slave tests that is not ready for esp64 yet", "[sdio_slave]")
 - *Item*: a case that runs on some chips and is skipped on others (ESP32-S2 has no SD host → skip SD 1-bit/4-bit, keep SDSPI).
 - *Implementation*: the case always runs, but the body differs (e.g. no `PKT_LEN` register → read length another way). `#if CONFIG_IDF_TARGET_xxx` is allowed **inside** an implementation. Do **not** use `#else`: a new target must fail the build until an implementation is chosen explicitly.
 
-## Building unit test apps
+## Building the embedded Unity test app
 
-`IDF_PATH` must point at the ESP-IDF tree. Component `test/` dirs are not part of the firmware `project()`. Provide a **test app** (this repo: a `test/` project next to `main/`, same pattern as IDF `examples/system/unit_test`):
+`IDF_PATH` must point at the ESP-IDF tree. Component `test/` dirs are not part of the firmware `project()`. The Unity runner lives under `test/embedded/` (same pattern as IDF `examples/system/unit_test`):
 
 ```cmake
 cmake_minimum_required(VERSION 3.22)
-set(EXTRA_COMPONENT_DIRS "../components")
+set(EXTRA_COMPONENT_DIRS "../../components")
 set(TEST_COMPONENTS "platform" CACHE STRING "List of components to test")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 idf_build_set_property(MINIMAL_BUILD ON)
 project(pixel_clock_esp_test)
 ```
 
-`TEST_COMPONENTS` can be overridden: `idf.py -T platform build` or `cmake -D TEST_COMPONENTS="platform mailbox"`. From the test-app directory:
+`TEST_COMPONENTS` can be overridden: `idf.py -T platform build` or `cmake -D TEST_COMPONENTS="platform mailbox"`. From `test/embedded/`:
 
 1. `idf.py menuconfig` — Unity options under Component Config if needed.
 2. `idf.py build`
 3. `idf.py flash` (build prints flash instructions)
 
-For CI or many cases in a row, pytest-embedded can drive the DUT. Larger trees often split into several test-apps (one per component); **IDF Build Apps** finds and builds them. Pin the test-app task to a core if you use the cache-compensated timer (below).
+For CI or many cases in a row, pytest-embedded can drive the DUT (`pytest pytest_embedded_tests.py` after a QEMU build). Larger trees often split into several test-apps (one per component); **IDF Build Apps** finds and builds them. Pin the test-app task to a core if you use the cache-compensated timer (below).
 
-## Running unit tests
+QEMU does not emulate ESP32-C6. The host-driven embedded suite builds for ESP32-C3 into `test/embedded/build_esp32c3_qemu/`. That does not replace an on-device ESP32-C6 build under `test/embedded/build/`. In VS Code: **Test (embedded QEMU)** or **Test (embedded on device)**.
+
+## Running embedded Unity tests
 
 Flash, reset, wait until idle, press Enter. The menu lists every registered case:
 
@@ -217,6 +276,8 @@ The timed task **must be pinned to one core**. Each core has its own counters. I
 ## Mocks (Linux host / CMock)
 
 On-device tests pull in real lower layers and hardware, which hurts reliability, edge-case coverage, and root-cause isolation. CMock replaces those dependencies in software. **Today this works only on the Linux target, and only for selected IDF components.** Prefer mocking every dependency of the component under test. If that is too heavy: include more real IDF code (failures then mix production vs test), or split the design to shrink the dependency surface.
+
+This IDF CMock path is **not** a substitute for `test/native_host/`. Use CMock when the code under test still needs IDF headers or generated mocks. Use native-host GoogleTest when the code is already device-independent.
 
 **Host requirements:** Ruby; full ESP-IDF; `libbsd` / `libbsd-dev`; recent Linux or macOS + GCC. Every component the app uses must be Linux-capable or mocked. Linux apps must not auto-pull every IDF component:
 
