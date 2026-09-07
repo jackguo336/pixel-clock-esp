@@ -1,8 +1,8 @@
-# Test project: builds component tests under components/*/test/.
-# The firmware app in the parent directory does not compile those tests.
+# Embedded Unity test project: builds component tests under components/*/test/.
+# The firmware app in the repository root does not compile those tests.
 cmake_minimum_required(VERSION 3.22)
 
-set(EXTRA_COMPONENT_DIRS "../components")
+set(EXTRA_COMPONENT_DIRS "../../components")
 set(TEST_COMPONENTS "platform" CACHE STRING "List of components to test")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
