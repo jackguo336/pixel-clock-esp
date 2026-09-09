@@ -11,9 +11,10 @@ Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
 - `main/` — composition root (`app_main`) and temporary TickSource/TickSink demo
 - `components/platform/` — component interface, mailbox, runtime, scheduler, logging
-- `test/native_host/` — GoogleTest suite compiled for macOS/Linux; no ESP-IDF
-- `test/embedded/` — Unity test app (cross-compiled for ESP32; not part of firmware)
-- `components/platform/test/` — Unity cases consumed by the embedded test app
+- `components/<name>/test/native_host/` — GoogleTest cases owned by that component
+- `components/<name>/test/embedded/` — Unity cases and mocks owned by that component
+- `test/native_host/` — shared GoogleTest/CTest runner (no ESP-IDF; no `test_*.cpp`)
+- `test/embedded/` — shared Unity runner app (cross-compiled for ESP32; not firmware)
 
 ## Build
 
@@ -39,9 +40,11 @@ stubs will be removed when real services land.
 
 Prefer native-host GoogleTest for code that does not depend on ESP-IDF,
 FreeRTOS, peripherals, or a specific chip. Use the embedded Unity app for
-behavior that needs the ESP environment, QEMU, or hardware. The firmware
-`project()` does not compile `components/*/test/`; the sibling app under
-`test/embedded/` pulls those Unity cases in via `TEST_COMPONENTS`.
+behavior that needs the ESP environment, QEMU, or hardware. Cases live next
+to the component (`components/<name>/test/native_host/` or `.../embedded/`);
+`test/native_host/` and `test/embedded/` are shared runners only. The
+firmware `project()` does not compile `components/*/test/`; the Unity runner
+pulls those cases in via `TEST_COMPONENTS`.
 
 ### Native host (GoogleTest)
 

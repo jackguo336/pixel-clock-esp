@@ -1,5 +1,6 @@
-# Native-host GoogleTest project. Compiles for macOS/Linux and does not load
-# ESP-IDF. Add only device-independent sources and public component headers.
+# Shared native-host GoogleTest/CTest runner. Fetches GoogleTest, then adds
+# each participating component's native-host CMake project. Does not load
+# ESP-IDF. Component suites live under components/<name>/test/native_host/.
 cmake_minimum_required(VERSION 3.22)
 
 project(pixel_clock_esp_native_host_tests LANGUAGES CXX)
@@ -27,29 +28,15 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-set(NATIVE_HOST_PLATFORM_INCLUDE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../components/platform/include")
-
-add_executable(native_host_tests
-    test_message.cpp
+# Components that own a native-host suite. Each must provide
+# components/<name>/test/native_host/CMakeLists.txt.
+set(NATIVE_HOST_TEST_COMPONENTS
+    platform
 )
 
-target_include_directories(native_host_tests
-    PRIVATE
-        "${NATIVE_HOST_PLATFORM_INCLUDE}"
-)
-
-target_compile_options(native_host_tests
-    PRIVATE
-        -Wall
-        -Wextra
-        -Wpedantic
-)
-
-target_link_libraries(native_host_tests
-    PRIVATE
-        GTest::gtest_main
-)
-
-include(GoogleTest)
-gtest_discover_tests(native_host_tests)
+foreach(component IN LISTS NATIVE_HOST_TEST_COMPONENTS)
+    add_subdirectory(
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../components/${component}/test/native_host"
+        "${CMAKE_CURRENT_BINARY_DIR}/${component}"
+    )
+endforeach()

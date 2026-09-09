@@ -1,5 +1,6 @@
-# Embedded Unity test project: builds component tests under components/*/test/.
-# The firmware app in the repository root does not compile those tests.
+# Shared Unity runner. Builds component-owned cases under
+# components/*/test/embedded/ via TEST_COMPONENTS. The firmware app in the
+# repository root does not compile those tests.
 cmake_minimum_required(VERSION 3.22)
 
 set(EXTRA_COMPONENT_DIRS "../../components")
