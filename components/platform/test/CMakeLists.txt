@@ -1,5 +1,8 @@
-idf_component_register(SRC_DIRS "."
-                       INCLUDE_DIRS "."
+# ESP-IDF test-component adapter. IDF discovers this file at
+# components/<name>/test/CMakeLists.txt. Unity cases and local mocks live
+# under embedded/; native-host GoogleTest sources are not compiled here.
+idf_component_register(SRC_DIRS "embedded"
+                       INCLUDE_DIRS "embedded"
                        REQUIRES unity
                        PRIV_REQUIRES platform freertos esp_timer)
 

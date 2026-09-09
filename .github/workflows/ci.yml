@@ -17,6 +17,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install host toolchain
+        run: sudo apt-get update && sudo apt-get install -y cmake g++
+
+      - name: Run native-host tests
+        run: |
+          cmake -S test/native_host -B test/native_host/build
+          cmake --build test/native_host/build
+          ctest --test-dir test/native_host/build --output-on-failure
+
       - name: Build firmware
         uses: espressif/esp-idf-ci-action@v1
         with:
@@ -25,15 +34,15 @@ jobs:
           command: idf.py build
 
       # QEMU does not support ESP32-C6; tests use ESP32-C3 into build_esp32c3_qemu.
-      - name: Run unit tests
+      - name: Run embedded unit tests
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: v6.0.2
           target: esp32c3
-          path: test
+          path: test/embedded
           command: >
             python -m pip install 'pytest-embedded-qemu[idf]~=2.9'
             && idf.py -B build_esp32c3_qemu
             -D SDKCONFIG=build_esp32c3_qemu/sdkconfig
             -D IDF_TARGET=esp32c3 build
-            && pytest pytest_unit_tests.py
+            && pytest pytest_embedded_tests.py
