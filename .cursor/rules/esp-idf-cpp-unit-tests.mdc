@@ -70,7 +70,7 @@ cmake --build test/native_host/build
 ctest --test-dir test/native_host/build --output-on-failure
 ```
 
-In VS Code, run the **Test (native host)** task. CI job: `native-host-tests`.
+In VS Code, run the **Test (native host)** task. CI runs these in the `build-and-test` job before firmware and QEMU.
 
 **Linux-host with IDF CMock** (optional, rare here): IDF can replace some components with CMock on the Linux target. That still requires ESP-IDF, Ruby, and `libbsd`. Prefer the GoogleTest project above for code that does not need IDF at all. See Mocks below if a component cannot be exercised without an IDF header.
 
