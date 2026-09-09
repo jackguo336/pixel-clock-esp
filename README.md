@@ -46,6 +46,18 @@ to the component (`components/<name>/test/native_host/` or `.../embedded/`);
 firmware `project()` does not compile `components/*/test/`; the Unity runner
 pulls those cases in via `TEST_COMPONENTS`.
 
+### All tests
+
+After installing the QEMU RISC-V binary (see below), run both the native-host
+and embedded QEMU suites from the repository root:
+
+```bash
+./test/run_all.sh
+```
+
+The script uses the active ESP-IDF environment, or runs the embedded suite
+through EIM when ESP-IDF is not already active.
+
 ### Native host (GoogleTest)
 
 From the repository root (no ESP-IDF required):
