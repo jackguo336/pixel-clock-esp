@@ -41,6 +41,16 @@
             "problemMatcher": "$gcc"
         },
         {
+            "label": "Test (native host and embedded QEMU)",
+            "type": "shell",
+            "command": "./test/run_all.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
             "label": "Test (native host)",
             "type": "shell",
             "command": "cmake -S . -B build && cmake --build build && ctest --test-dir build --output-on-failure",

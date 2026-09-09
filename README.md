@@ -38,13 +38,14 @@ stubs will be removed when real services land.
 
 ## Tests
 
-Prefer native-host GoogleTest for code that does not depend on ESP-IDF,
-FreeRTOS, peripherals, or a specific chip. Use the embedded Unity app for
-behavior that needs the ESP environment, QEMU, or hardware. Cases live next
-to the component (`components/<name>/test/native_host/` or `.../embedded/`);
-`test/native_host/` and `test/embedded/` are shared runners only. The
-firmware `project()` does not compile `components/*/test/`; the Unity runner
-pulls those cases in via `TEST_COMPONENTS`.
+Tests are split into native-host and embedded suites. Use native-host GoogleTest
+for code that does not depend on ESP-IDF, FreeRTOS, peripherals, or a specific
+chip. Use the embedded Unity app for behavior that needs the ESP environment,
+QEMU, or hardware. Cases live next to the component
+(`components/<name>/test/native_host/` or `.../embedded/`); `test/native_host/`
+and `test/embedded/` are shared runners only. The firmware `project()` does not
+compile `components/*/test/`; the Unity runner pulls those cases in via
+`TEST_COMPONENTS`.
 
 ### All tests
 
