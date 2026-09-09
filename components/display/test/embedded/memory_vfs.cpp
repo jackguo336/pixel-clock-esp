@@ -22,6 +22,15 @@ esp_err_t MemoryVfs::register_fs()
         .fcntl_p = nullptr,
         .ioctl_p = nullptr,
         .fsync_p = nullptr,
+#ifdef CONFIG_VFS_SUPPORT_DIR
+        .dir = nullptr,
+#endif
+#ifdef CONFIG_VFS_SUPPORT_TERMIOS
+        .termios = nullptr,
+#endif
+#if CONFIG_VFS_SUPPORT_SELECT
+        .select = nullptr,
+#endif
     };
 
     static_cast<void>(esp_vfs_unregister_fs(kPrefix));
