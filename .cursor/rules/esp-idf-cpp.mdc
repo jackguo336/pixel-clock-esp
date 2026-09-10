@@ -75,7 +75,7 @@ Use descriptive names for classes, methods, and variables. A reader should know 
 - **Classes / enums / structs:** PascalCase nouns (`Mailbox`, `MessageType`). Name what the type *is*, not a generic `Manager` / `Helper` / `Data`.
 - **Methods:** snake_case verbs that say what happens and from where (`receive`, `post_from_isr`, `uses_reserved_slots`). Pair task-vs-ISR APIs with an explicit `_from_isr` suffix. Booleans read as predicates (`started_`, `has_message`).
 - **Variables / members:** snake_case; members end with `_` (`items_available_`, `control_task_`). Name the meaning, not the type (`timeout_ms` not `t` or `uint32_val`). Loop indices `i`/`n` are fine in a few lines; anything that lives longer is not.
-- **Constants:** `k` prefix + PascalCase (`kCapacity`, `kControlStackBytes`, `kTag`).
+- **Constants:** `k` prefix + PascalCase (`kCapacity`, `kControlStackBytes`, `kTag`). Name non-obvious numeric literals (see Magic numbers).
 - **Namespaces:** match the component (`platform`, `demo`).
 - Abbreviations only when they are IDF or domain standard (`isr`, `gpio`, `nvs`, `wdt`). Do not invent `cfg`, `ptr`, `tmp`, `obj`, `buf` unless the buffer’s contents are obvious in the next line.
 
@@ -90,6 +90,24 @@ class Mailbox {
     uint32_t drop_count_{0};
     void* items_available_{nullptr};
 };
+```
+
+## Magic numbers
+
+A literal is a magic number when the reader cannot easily infer **why** that value was chosen. Assign those numbers to a descriptive name: a `constexpr` with the `k` prefix if the value is reused or domain-specific, otherwise a local `const`.
+
+Leave obvious literals inline: `0` / `1` / `-1` for empty, first, or invalid; `sizeof`; already-named sizes used as loop bounds; and conversions the surrounding names already explain (`bit_count / 8` into `bytes_per_pixel`).
+
+```cpp
+// ❌ BAD: 10 and 32 do not explain themselves
+const uint32_t pixel_offset = read_uint32_little_endian(file_header + 10);
+uint8_t discard[32];
+
+// ✅ GOOD
+constexpr uint32_t kFileHeaderPixelOffsetField = 10;
+constexpr std::size_t kSkipChunkBytes = 32;
+const uint32_t pixel_offset = read_uint32_little_endian(file_header + kFileHeaderPixelOffsetField);
+uint8_t discard[kSkipChunkBytes];
 ```
 
 ## Types, headers, RAII
