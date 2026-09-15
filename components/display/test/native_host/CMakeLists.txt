@@ -9,6 +9,7 @@ add_executable(display
     test_bitmap_file_loader.cpp
     test_bitmap_rasterizer.cpp
     test_managed_file_descriptor.cpp
+    test_widgets.cpp
     "${DISPLAY_ROOT}/src/bitmap.cpp"
     "${DISPLAY_ROOT}/src/logical_framebuffer.cpp"
     "${DISPLAY_ROOT}/src/bitmap_file_loader.cpp"

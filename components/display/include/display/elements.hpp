@@ -11,6 +11,10 @@ struct ElementId {
     uint16_t value{0};
 };
 
+struct WidgetId {
+    uint16_t value{0};
+};
+
 struct FontId {
     uint16_t value{0};
 };
@@ -69,11 +73,13 @@ enum class LayoutDirection : uint8_t {
     BottomToTop = 3,
 };
 
+using ContainerChild = std::variant<ElementId, WidgetId>;
+
 struct ContainerElement {
     LayoutDirection layout_direction{};
     // Child IDs in a future scene's static storage. The container's position is
     // the origin of that local coordinate space; children are not owned here.
-    std::span<const ElementId> child_ids{};
+    std::span<const ContainerChild> children{};
 };
 
 // Closed set of element payloads. Inspect with std::get_if (no RTTI, no throw).
