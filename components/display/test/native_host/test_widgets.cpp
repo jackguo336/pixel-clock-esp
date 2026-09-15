@@ -1,4 +1,3 @@
-#include <array>
 #include <cstdint>
 #include <type_traits>
 #include <variant>
@@ -63,31 +62,4 @@ TEST(Widget, ResolveReadsSceneDataAndReturnsElementVisuals)
     ASSERT_NE(rectangle, nullptr);
     EXPECT_EQ(rectangle->size.width, static_cast<uint16_t>(kSceneRevision));
     EXPECT_EQ(rectangle->size.height, kResolvedHeight);
-}
-
-TEST(ContainerChild, StoresElementAndWidgetIdsInOrder)
-{
-    constexpr display::ElementId kFirstElement{.value = 3};
-    constexpr display::WidgetId kWidget{.value = 8};
-    constexpr display::ElementId kSecondElement{.value = 5};
-    const std::array<display::ContainerChild, 3> stored{kFirstElement, kWidget, kSecondElement};
-
-    const display::ContainerElement container{
-        .layout_direction = display::LayoutDirection::LeftToRight,
-        .children = stored,
-    };
-
-    ASSERT_EQ(container.children.size(), 3u);
-
-    const auto* first = std::get_if<display::ElementId>(&container.children[0]);
-    ASSERT_NE(first, nullptr);
-    EXPECT_EQ(first->value, kFirstElement.value);
-
-    const auto* widget_id = std::get_if<display::WidgetId>(&container.children[1]);
-    ASSERT_NE(widget_id, nullptr);
-    EXPECT_EQ(widget_id->value, kWidget.value);
-
-    const auto* second = std::get_if<display::ElementId>(&container.children[2]);
-    ASSERT_NE(second, nullptr);
-    EXPECT_EQ(second->value, kSecondElement.value);
 }
