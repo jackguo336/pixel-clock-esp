@@ -5,6 +5,7 @@
 #include <string_view>
 #include <variant>
 
+#include "display/animations.hpp"
 #include "display/common.hpp"
 
 namespace display {
@@ -65,6 +66,8 @@ struct Element {
     Position position{};
     Paint paint{};
     ElementPayload payload{};
+    // Immutable animations stored elsewhere (typically a static scene definition).
+    std::span<const Animation> animations{};
 };
 
 }  // namespace display
