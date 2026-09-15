@@ -2,7 +2,7 @@
 
 #include <span>
 
-#include "display/elements.hpp"
+#include "display/common.hpp"
 
 namespace display {
 
