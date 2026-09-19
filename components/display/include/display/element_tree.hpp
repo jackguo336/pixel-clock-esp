@@ -10,11 +10,8 @@
 #include <variant>
 
 #include "display/elements.hpp"
-#include "display/view_data.hpp"
 
 namespace display {
-
-class View;
 
 using ElementNodeIndex = uint16_t;
 
@@ -36,10 +33,8 @@ struct ElementTree {
 // order through indices, so growing the tree cannot invalidate node pointers.
 //
 // The top-level builder accepts exactly one root. Failures (a second root, a
-// non-container passed to `add_container`, exhausted node storage, or
-// `add_view` receiving a false result / zero / multiple direct subtrees) are
-// sticky: later `add` / `add_container` / `add_view` calls return false
-// without appending.
+// non-container passed to `add_container`, or exhausted node storage) are
+// sticky: later `add` / `add_container` calls return false without appending.
 class ElementTreeBuilder {
 public:
     explicit ElementTreeBuilder(std::span<ElementTreeNode> storage);
@@ -51,11 +46,6 @@ public:
 
     template <typename AddChildren>
     [[nodiscard]] bool add_container(Element container, AddChildren&& add_children);
-
-    // Nested-view composition: synchronously builds `view` into this scope.
-    // The view must contribute exactly one direct subtree. Generated elements
-    // are stored; the View object is not.
-    [[nodiscard]] bool add_view(const View& view, const ViewData& view_data);
 
     // Precondition: the build produced exactly one root and did not fail.
     [[nodiscard]] ElementTree get_tree() const;
@@ -69,10 +59,6 @@ private:
     };
 
     explicit ElementTreeBuilder(SharedBuildState* state, ElementNodeIndex parent);
-
-    [[nodiscard]] std::size_t count_direct_subtrees_added_since(
-        std::optional<ElementNodeIndex> last_sibling_before,
-        bool had_root_before) const;
 
     SharedBuildState owned_state_{};
     SharedBuildState* state_{nullptr};
@@ -148,32 +134,6 @@ bool ElementTreeBuilder::add_container(Element container, AddChildren&& add_chil
     ElementTreeBuilder child_scope{state_, parent_index};
     std::forward<AddChildren>(add_children)(child_scope);
     return !state_->failed;
-}
-
-inline std::size_t ElementTreeBuilder::count_direct_subtrees_added_since(
-    std::optional<ElementNodeIndex> last_sibling_before,
-    bool had_root_before) const
-{
-    if (!parent_.has_value()) {
-        if (!state_->root.has_value() || had_root_before) {
-            return 0;
-        }
-        return 1;
-    }
-
-    std::optional<ElementNodeIndex> current{};
-    if (last_sibling_before.has_value()) {
-        current = state_->storage[*last_sibling_before].next_sibling;
-    } else {
-        current = state_->storage[*parent_].first_child;
-    }
-
-    std::size_t count = 0;
-    while (current.has_value()) {
-        ++count;
-        current = state_->storage[*current].next_sibling;
-    }
-    return count;
 }
 
 inline ElementTree ElementTreeBuilder::get_tree() const
