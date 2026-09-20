@@ -9,7 +9,6 @@
 
 #include "bitmap_file_loader.hpp"
 #include "display/bitmap.hpp"
-#include "display/elements.hpp"
 #include "gtest/gtest.h"
 
 namespace {

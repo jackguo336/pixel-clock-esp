@@ -4,61 +4,27 @@
 #include <string_view>
 #include <variant>
 
+#include "display/bitmap.hpp"
+#include "display/color.hpp"
+#include "display/geometry.hpp"
+
 namespace display {
 
 struct ElementId {
     uint16_t value{0};
 };
 
-struct FontId {
-    uint16_t value{0};
-};
-
-struct BitmapId {
-    uint16_t value{0};
-};
-
-struct Position {
-    int16_t x{0};
-    int16_t y{0};
-};
-
-struct Size {
-    uint16_t width{0};
-    uint16_t height{0};
-};
-
-struct RgbColor {
-    uint8_t red{0};
-    uint8_t green{0};
-    uint8_t blue{0};
-};
-
-struct SolidPaint {
-    RgbColor color{};
-};
-
-struct LinearGradientPaint {
-    Position start{};
-    Position end{};
-    RgbColor start_color{};
-    RgbColor end_color{};
-};
-
-using Paint = std::variant<SolidPaint, LinearGradientPaint>;
-
-struct TextElement {
-    FontId font_id{};
-    // Immutable text stored elsewhere (typically a static scene definition).
+struct TextElementPayload {
     std::string_view text{};
 };
 
-struct FilledRectangleElement {
+struct FilledRectangleElementPayload {
     Size size{};
 };
 
-struct BitmapElement {
-    BitmapId bitmap_id{};
+struct BitmapElementPayload {
+    // Reference to a static bitmap file in memory.
+    const BitmapFile* bitmap{};
 };
 
 enum class LayoutDirection : uint8_t {
@@ -68,15 +34,14 @@ enum class LayoutDirection : uint8_t {
     BottomToTop = 3,
 };
 
-struct ContainerElement {
+struct ContainerElementPayload {
     LayoutDirection layout_direction{};
-    // The container's position is the origin of that local coordinate space.
-    // Child relationships live in the built ElementTree, not on this payload.
+    // Container children are defined in the ElementTree.
 };
 
-// Closed set of element payloads. Inspect with std::get_if (no RTTI, no throw).
 using ElementPayload =
-    std::variant<TextElement, FilledRectangleElement, BitmapElement, ContainerElement>;
+    std::variant<TextElementPayload, FilledRectangleElementPayload, BitmapElementPayload,
+                 ContainerElementPayload>;
 
 struct Element {
     ElementId id{};

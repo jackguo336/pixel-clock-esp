@@ -110,9 +110,9 @@ inline void ElementTreeBuilder::link_node_to_tree(ElementNodeIndex index)
 
 inline bool ElementTreeBuilder::is_terminal_element(const Element& element)
 {
-    return std::get_if<TextElement>(&element.payload) != nullptr
-        || std::get_if<FilledRectangleElement>(&element.payload) != nullptr
-        || std::get_if<BitmapElement>(&element.payload) != nullptr;
+    return std::get_if<TextElementPayload>(&element.payload) != nullptr
+        || std::get_if<FilledRectangleElementPayload>(&element.payload) != nullptr
+        || std::get_if<BitmapElementPayload>(&element.payload) != nullptr;
 }
 
 inline bool ElementTreeBuilder::add(Element element)
@@ -151,7 +151,7 @@ bool ElementTreeBuilder::add_container(Element container, AddChildren&& add_chil
     if (failed_to_add_element_) {
         return false;
     }
-    if (std::get_if<ContainerElement>(&container.payload) == nullptr) {
+    if (std::get_if<ContainerElementPayload>(&container.payload) == nullptr) {
         failed_to_add_element_ = true;
         return false;
     }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "display/bitmap.hpp"
-#include "display/elements.hpp"
+#include "display/geometry.hpp"
 #include "logical_framebuffer.hpp"
 
 namespace display {

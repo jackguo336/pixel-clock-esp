@@ -34,7 +34,7 @@ display::Element make_outer_container()
         .id = kOuterId,
         .position = kOuterPosition,
         .paint = kOuterPaint,
-        .payload = display::ContainerElement{.layout_direction = display::LayoutDirection::LeftToRight},
+        .payload = display::ContainerElementPayload{.layout_direction = display::LayoutDirection::LeftToRight},
     };
 }
 
@@ -44,7 +44,7 @@ display::Element make_root_container()
         .id = kRootId,
         .position = kRootPosition,
         .paint = kRootPaint,
-        .payload = display::ContainerElement{.layout_direction = display::LayoutDirection::TopToBottom},
+        .payload = display::ContainerElementPayload{.layout_direction = display::LayoutDirection::TopToBottom},
     };
 }
 
@@ -54,7 +54,7 @@ display::Element make_revision_box(uint32_t revision)
         .id = kBoxId,
         .position = kBoxPosition,
         .paint = kBoxPaint,
-        .payload = display::FilledRectangleElement{
+        .payload = display::FilledRectangleElementPayload{
             .size =
                 {
                     .width = static_cast<uint16_t>(revision),
@@ -70,7 +70,7 @@ display::Element make_label()
         .id = kLabelId,
         .position = kLabelPosition,
         .paint = kLabelPaint,
-        .payload = display::TextElement{.text = kLabelText},
+        .payload = display::TextElementPayload{.text = kLabelText},
     };
 }
 
@@ -176,12 +176,12 @@ TEST(View, BuildReadsViewDataAndAddsScopedElements)
     ASSERT_TRUE(tree.nodes[1].next_sibling.has_value());
     EXPECT_EQ(*tree.nodes[1].next_sibling, 2);
 
-    const auto* box = std::get_if<display::FilledRectangleElement>(&tree.nodes[1].element.payload);
+    const auto* box = std::get_if<display::FilledRectangleElementPayload>(&tree.nodes[1].element.payload);
     ASSERT_NE(box, nullptr);
     EXPECT_EQ(box->size.width, static_cast<uint16_t>(kViewRevision));
     EXPECT_EQ(box->size.height, kBoxHeight);
 
-    const auto* label = std::get_if<display::TextElement>(&tree.nodes[2].element.payload);
+    const auto* label = std::get_if<display::TextElementPayload>(&tree.nodes[2].element.payload);
     ASSERT_NE(label, nullptr);
     EXPECT_EQ(label->text, kLabelText);
 }
@@ -207,12 +207,12 @@ TEST(View, BuildCanBeCalledInsideContainer)
     ASSERT_TRUE(tree.nodes[2].next_sibling.has_value());
     EXPECT_EQ(*tree.nodes[2].next_sibling, 3);
 
-    const auto* box = std::get_if<display::FilledRectangleElement>(&tree.nodes[2].element.payload);
+    const auto* box = std::get_if<display::FilledRectangleElementPayload>(&tree.nodes[2].element.payload);
     ASSERT_NE(box, nullptr);
     EXPECT_EQ(box->size.width, static_cast<uint16_t>(kViewRevision));
     EXPECT_EQ(box->size.height, kBoxHeight);
 
-    const auto* label = std::get_if<display::TextElement>(&tree.nodes[3].element.payload);
+    const auto* label = std::get_if<display::TextElementPayload>(&tree.nodes[3].element.payload);
     ASSERT_NE(label, nullptr);
     EXPECT_EQ(label->text, kLabelText);
 }

@@ -3,6 +3,7 @@
 #include <string_view>
 #include <variant>
 
+#include "display/bitmap.hpp"
 #include "display/element_tree.hpp"
 #include "display/elements.hpp"
 #include "gtest/gtest.h"
@@ -25,7 +26,7 @@ constexpr display::SolidPaint kNestedContainerPaint{.color = {.red = 7, .green =
 constexpr display::SolidPaint kNestedLeafPaint{.color = {.red = 10, .green = 11, .blue = 12}};
 constexpr display::SolidPaint kBitmapLeafPaint{.color = {.red = 13, .green = 14, .blue = 15}};
 constexpr display::Size kLeafSize{.width = 11, .height = 13};
-constexpr display::BitmapId kBitmapId{.value = 9};
+constexpr display::BitmapFile kBitmap{};
 constexpr std::string_view kNestedLeafText = "nested";
 
 display::Element make_container(
@@ -38,7 +39,7 @@ display::Element make_container(
         .id = id,
         .position = position,
         .paint = paint,
-        .payload = display::ContainerElement{.layout_direction = layout_direction},
+        .payload = display::ContainerElementPayload{.layout_direction = layout_direction},
     };
 }
 
@@ -52,7 +53,7 @@ display::Element make_rectangle(
         .id = id,
         .position = position,
         .paint = paint,
-        .payload = display::FilledRectangleElement{.size = size},
+        .payload = display::FilledRectangleElementPayload{.size = size},
     };
 }
 
@@ -66,7 +67,7 @@ display::Element make_text(
         .id = id,
         .position = position,
         .paint = paint,
-        .payload = display::TextElement{.text = text},
+        .payload = display::TextElementPayload{.text = text},
     };
 }
 
@@ -74,13 +75,13 @@ display::Element make_bitmap(
     display::ElementId id,
     display::Position position,
     display::SolidPaint paint,
-    display::BitmapId bitmap_id)
+    const display::BitmapFile* bitmap)
 {
     return display::Element{
         .id = id,
         .position = position,
         .paint = paint,
-        .payload = display::BitmapElement{.bitmap_id = bitmap_id},
+        .payload = display::BitmapElementPayload{.bitmap = bitmap},
     };
 }
 
@@ -134,7 +135,7 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
                         make_text(kNestedLeafId, kNestedLeafPosition, kNestedLeafPaint, kNestedLeafText)));
                 }));
             EXPECT_TRUE(children.add_terminal(
-                make_bitmap(kBitmapLeafId, kBitmapLeafPosition, kBitmapLeafPaint, kBitmapId)));
+                make_bitmap(kBitmapLeafId, kBitmapLeafPosition, kBitmapLeafPaint, &kBitmap)));
         });
     ASSERT_TRUE(built);
 
@@ -145,14 +146,14 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
     EXPECT_EQ(tree.nodes.data(), storage.data());
 
     expect_element(tree.nodes[0].element, kRootId, kRootPosition, kRootPaint);
-    const auto* root_container = std::get_if<display::ContainerElement>(&tree.nodes[0].element.payload);
+    const auto* root_container = std::get_if<display::ContainerElementPayload>(&tree.nodes[0].element.payload);
     ASSERT_NE(root_container, nullptr);
     EXPECT_EQ(root_container->layout_direction, display::LayoutDirection::TopToBottom);
     expect_optional_index(tree.nodes[0].first_child, 1);
     EXPECT_FALSE(tree.nodes[0].next_sibling.has_value());
 
     expect_element(tree.nodes[1].element, kLeafId, kLeafPosition, kLeafPaint);
-    const auto* leaf = std::get_if<display::FilledRectangleElement>(&tree.nodes[1].element.payload);
+    const auto* leaf = std::get_if<display::FilledRectangleElementPayload>(&tree.nodes[1].element.payload);
     ASSERT_NE(leaf, nullptr);
     EXPECT_EQ(leaf->size.width, kLeafSize.width);
     EXPECT_EQ(leaf->size.height, kLeafSize.height);
@@ -160,23 +161,23 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
     expect_optional_index(tree.nodes[1].next_sibling, 2);
 
     expect_element(tree.nodes[2].element, kNestedContainerId, kNestedContainerPosition, kNestedContainerPaint);
-    const auto* nested_container = std::get_if<display::ContainerElement>(&tree.nodes[2].element.payload);
+    const auto* nested_container = std::get_if<display::ContainerElementPayload>(&tree.nodes[2].element.payload);
     ASSERT_NE(nested_container, nullptr);
     EXPECT_EQ(nested_container->layout_direction, display::LayoutDirection::LeftToRight);
     expect_optional_index(tree.nodes[2].first_child, display::ElementNodeIndex{3});
     expect_optional_index(tree.nodes[2].next_sibling, display::ElementNodeIndex{4});
 
     expect_element(tree.nodes[3].element, kNestedLeafId, kNestedLeafPosition, kNestedLeafPaint);
-    const auto* nested_leaf = std::get_if<display::TextElement>(&tree.nodes[3].element.payload);
+    const auto* nested_leaf = std::get_if<display::TextElementPayload>(&tree.nodes[3].element.payload);
     ASSERT_NE(nested_leaf, nullptr);
     EXPECT_EQ(nested_leaf->text, kNestedLeafText);
     EXPECT_FALSE(tree.nodes[3].first_child.has_value());
     EXPECT_FALSE(tree.nodes[3].next_sibling.has_value());
 
     expect_element(tree.nodes[4].element, kBitmapLeafId, kBitmapLeafPosition, kBitmapLeafPaint);
-    const auto* bitmap_leaf = std::get_if<display::BitmapElement>(&tree.nodes[4].element.payload);
+    const auto* bitmap_leaf = std::get_if<display::BitmapElementPayload>(&tree.nodes[4].element.payload);
     ASSERT_NE(bitmap_leaf, nullptr);
-    EXPECT_EQ(bitmap_leaf->bitmap_id.value, kBitmapId.value);
+    EXPECT_EQ(bitmap_leaf->bitmap, &kBitmap);
     EXPECT_FALSE(tree.nodes[4].first_child.has_value());
     EXPECT_FALSE(tree.nodes[4].next_sibling.has_value());
 }
