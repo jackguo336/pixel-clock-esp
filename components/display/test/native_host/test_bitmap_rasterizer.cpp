@@ -4,7 +4,6 @@
 
 #include "bitmap_rasterizer.hpp"
 #include "display/bitmap.hpp"
-#include "display/elements.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
 

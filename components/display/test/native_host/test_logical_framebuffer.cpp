@@ -1,7 +1,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "display/elements.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
 

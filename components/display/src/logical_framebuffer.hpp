@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <span>
 
-#include "display/elements.hpp"
+#include "display/color.hpp"
 
 namespace display {
 
