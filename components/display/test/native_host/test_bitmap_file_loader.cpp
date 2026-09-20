@@ -203,7 +203,7 @@ TEST_F(BitmapFileLoaderTest, DecodesUncompressed24BitBottomUpBmpWithRowPadding)
         display::RgbColor{.red = 1, .green = 2, .blue = 3},
         display::RgbColor{.red = 4, .green = 5, .blue = 6},
     };
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 2},
         .pixels = destination,
     };
@@ -228,7 +228,7 @@ TEST_F(BitmapFileLoaderTest, DecodesUncompressed32BitTopDownBmpAndIgnoresAlpha)
         .pixels = {expected[0], expected[1], expected[2], expected[3]},
     });
     std::array<display::RgbColor, 4> destination{};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = destination,
     };
@@ -254,7 +254,7 @@ TEST_F(BitmapFileLoaderTest, ConvertsBgrChannelsAndPreservesRowOrientation)
         },
     });
     std::array<display::RgbColor, 4> destination{};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = destination,
     };
@@ -269,11 +269,11 @@ TEST_F(BitmapFileLoaderTest, ConvertsBgrChannelsAndPreservesRowOrientation)
 TEST_F(BitmapFileLoaderTest, RejectsNullEmptyPathsAndInvalidDestinationViews)
 {
     std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapView valid{
+    const display::MutableBitmapFile valid{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
-    const display::MutableBitmapView zero_width{
+    const display::MutableBitmapFile zero_width{
         .size = {.width = 0, .height = 1},
         .pixels = destination,
     };
@@ -290,7 +290,7 @@ TEST_F(BitmapFileLoaderTest, RejectsNullEmptyPathsAndInvalidDestinationViews)
 TEST_F(BitmapFileLoaderTest, RejectsMissingFiles)
 {
     std::array<display::RgbColor, 1> destination{};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
@@ -302,7 +302,7 @@ TEST_F(BitmapFileLoaderTest, RejectsMissingFiles)
 TEST_F(BitmapFileLoaderTest, RejectsBadSignaturesUnsupportedHeadersPlanesDepthsAndCompression)
 {
     std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 1, .green = 2, .blue = 3}};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
@@ -345,7 +345,7 @@ TEST_F(BitmapFileLoaderTest, RejectsBadSignaturesUnsupportedHeadersPlanesDepthsA
 TEST_F(BitmapFileLoaderTest, RejectsSourceDimensionsThatDifferFromDestination)
 {
     std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 4, .green = 5, .blue = 6}};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
@@ -368,7 +368,7 @@ TEST_F(BitmapFileLoaderTest, DistinguishesTruncatedHeadersAndPixelData)
         display::RgbColor{.red = 1, .green = 1, .blue = 1},
         display::RgbColor{.red = 2, .green = 2, .blue = 2},
     };
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 2},
         .pixels = destination,
     };
@@ -401,7 +401,7 @@ TEST_F(BitmapFileLoaderTest, DistinguishesTruncatedHeadersAndPixelData)
 TEST_F(BitmapFileLoaderTest, PreservesDestinationWhenValidationFailsBeforePixelDecoding)
 {
     std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 11, .green = 22, .blue = 33}};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };

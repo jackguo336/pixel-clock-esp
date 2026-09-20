@@ -4,7 +4,7 @@
 set(DISPLAY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 add_executable(display
-    test_bitmap_views.cpp
+    test_bitmap_file.cpp
     test_logical_framebuffer.cpp
     test_bitmap_file_loader.cpp
     test_bitmap_rasterizer.cpp

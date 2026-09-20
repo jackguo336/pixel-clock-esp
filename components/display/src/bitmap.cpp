@@ -18,19 +18,19 @@ namespace {
 
 }  // namespace
 
-bool BitmapView::is_valid() const
+bool BitmapFile::is_valid() const
 {
     return has_matching_pixel_count(size, pixels.size());
 }
 
-bool MutableBitmapView::is_valid() const
+bool MutableBitmapFile::is_valid() const
 {
     return has_matching_pixel_count(size, pixels.size());
 }
 
-BitmapView MutableBitmapView::as_read_only() const
+BitmapFile MutableBitmapFile::as_read_only() const
 {
-    return BitmapView{
+    return BitmapFile{
         .size = size,
         .pixels = pixels,
     };

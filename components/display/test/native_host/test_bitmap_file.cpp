@@ -11,10 +11,10 @@ constexpr display::RgbColor kGreen{0, 255, 0};
 
 }  // namespace
 
-TEST(BitmapView, AcceptsNonZeroDimensionsWithExactPixelCount)
+TEST(BitmapFile, AcceptsNonZeroDimensionsWithExactPixelCount)
 {
     const std::array<display::RgbColor, 6> pixels{kRed, kGreen, kRed, kGreen, kRed, kGreen};
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 3, .height = 2},
         .pixels = pixels,
     };
@@ -22,10 +22,10 @@ TEST(BitmapView, AcceptsNonZeroDimensionsWithExactPixelCount)
     EXPECT_TRUE(view.is_valid());
 }
 
-TEST(BitmapView, RejectsZeroWidth)
+TEST(BitmapFile, RejectsZeroWidth)
 {
     const std::array<display::RgbColor, 2> pixels{kRed, kGreen};
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 0, .height = 2},
         .pixels = pixels,
     };
@@ -33,10 +33,10 @@ TEST(BitmapView, RejectsZeroWidth)
     EXPECT_FALSE(view.is_valid());
 }
 
-TEST(BitmapView, RejectsZeroHeight)
+TEST(BitmapFile, RejectsZeroHeight)
 {
     const std::array<display::RgbColor, 2> pixels{kRed, kGreen};
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 2, .height = 0},
         .pixels = pixels,
     };
@@ -44,10 +44,10 @@ TEST(BitmapView, RejectsZeroHeight)
     EXPECT_FALSE(view.is_valid());
 }
 
-TEST(BitmapView, RejectsUndersizedSpan)
+TEST(BitmapFile, RejectsUndersizedSpan)
 {
     const std::array<display::RgbColor, 3> pixels{kRed, kGreen, kRed};
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = pixels,
     };
@@ -55,10 +55,10 @@ TEST(BitmapView, RejectsUndersizedSpan)
     EXPECT_FALSE(view.is_valid());
 }
 
-TEST(BitmapView, RejectsOversizedSpan)
+TEST(BitmapFile, RejectsOversizedSpan)
 {
     const std::array<display::RgbColor, 5> pixels{kRed, kGreen, kRed, kGreen, kRed};
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = pixels,
     };
@@ -66,15 +66,15 @@ TEST(BitmapView, RejectsOversizedSpan)
     EXPECT_FALSE(view.is_valid());
 }
 
-TEST(MutableBitmapView, ConvertsToReadOnlyWithoutChangingStorage)
+TEST(MutableBitmapFile, ConvertsToReadOnlyWithoutChangingStorage)
 {
     std::array<display::RgbColor, 4> pixels{kRed, kGreen, kRed, kGreen};
-    const display::MutableBitmapView mutable_view{
+    const display::MutableBitmapFile mutable_view{
         .size = {.width = 2, .height = 2},
         .pixels = pixels,
     };
 
-    const display::BitmapView view = mutable_view.as_read_only();
+    const display::BitmapFile view = mutable_view.as_read_only();
 
     EXPECT_TRUE(mutable_view.is_valid());
     EXPECT_TRUE(view.is_valid());
