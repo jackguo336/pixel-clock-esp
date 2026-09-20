@@ -47,7 +47,7 @@ TEST(BitmapRasterizer, RendersMultiColorBitmapAtRequestedOrigin)
         display::RgbColor{.red = 0, .green = 0, .blue = 255},
         display::RgbColor{.red = 255, .green = 255, .blue = 0},
     };
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = pixels,
     };
@@ -72,7 +72,7 @@ TEST(BitmapRasterizer, WritesBlackSourcePixels)
         display::RgbColor{.red = 0, .green = 0, .blue = 0},
         display::RgbColor{.red = 255, .green = 255, .blue = 255},
     };
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 2, .height = 1},
         .pixels = pixels,
     };
@@ -93,7 +93,7 @@ TEST(BitmapRasterizer, ClipsLeftEdgeIndependently)
         display::RgbColor{.red = 1, .green = 0, .blue = 0},
         display::RgbColor{.red = 0, .green = 1, .blue = 0},
     };
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 2, .height = 1},
         .pixels = pixels,
     };
@@ -112,7 +112,7 @@ TEST(BitmapRasterizer, ClipsTopEdgeIndependently)
         display::RgbColor{.red = 1, .green = 0, .blue = 0},
         display::RgbColor{.red = 0, .green = 1, .blue = 0},
     };
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 1, .height = 2},
         .pixels = pixels,
     };
@@ -131,7 +131,7 @@ TEST(BitmapRasterizer, ClipsRightEdgeIndependently)
         display::RgbColor{.red = 1, .green = 0, .blue = 0},
         display::RgbColor{.red = 0, .green = 1, .blue = 0},
     };
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 2, .height = 1},
         .pixels = pixels,
     };
@@ -150,7 +150,7 @@ TEST(BitmapRasterizer, ClipsBottomEdgeIndependently)
         display::RgbColor{.red = 1, .green = 0, .blue = 0},
         display::RgbColor{.red = 0, .green = 1, .blue = 0},
     };
-    const display::BitmapView view{
+    const display::BitmapFile view{
         .size = {.width = 1, .height = 2},
         .pixels = pixels,
     };
@@ -166,15 +166,15 @@ TEST(BitmapRasterizer, ClipsBottomEdgeIndependently)
 TEST(BitmapRasterizer, LeavesFramebufferUnchangedWhenFullyOffCanvasOrInvalid)
 {
     const std::array<display::RgbColor, 1> pixel{display::RgbColor{.red = 255, .green = 0, .blue = 0}};
-    const display::BitmapView onscreen{
+    const display::BitmapFile onscreen{
         .size = {.width = 1, .height = 1},
         .pixels = pixel,
     };
-    const display::BitmapView invalid{
+    const display::BitmapFile invalid{
         .size = {.width = 0, .height = 1},
         .pixels = pixel,
     };
-    const display::BitmapView undersized{
+    const display::BitmapFile undersized{
         .size = {.width = 2, .height = 1},
         .pixels = pixel,
     };
@@ -198,11 +198,11 @@ TEST(BitmapRasterizer, RendersDifferentViewsThroughTheSameInstance)
 {
     const std::array<display::RgbColor, 1> first_pixels{display::RgbColor{.red = 9, .green = 0, .blue = 0}};
     const std::array<display::RgbColor, 1> second_pixels{display::RgbColor{.red = 0, .green = 9, .blue = 0}};
-    const display::BitmapView first_view{
+    const display::BitmapFile first_view{
         .size = {.width = 1, .height = 1},
         .pixels = first_pixels,
     };
-    const display::BitmapView second_view{
+    const display::BitmapFile second_view{
         .size = {.width = 1, .height = 1},
         .pixels = second_pixels,
     };

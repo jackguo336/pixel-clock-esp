@@ -92,7 +92,7 @@ TEST_CASE("loads a valid BMP through the /bitmap-test VFS prefix", "[display][vf
     const RegisteredMemoryVfs registered(vfs);
 
     std::array<display::RgbColor, 1> destination{};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
@@ -115,7 +115,7 @@ TEST_CASE("maps a missing VFS path to OpenFailed", "[display][vfs]")
     const RegisteredMemoryVfs registered(vfs);
 
     std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
@@ -138,7 +138,7 @@ TEST_CASE("maps a driver read failure to ReadFailed and closes the descriptor", 
     const RegisteredMemoryVfs registered(vfs);
 
     std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
@@ -160,7 +160,7 @@ TEST_CASE("closes the VFS descriptor after truncated input", "[display][vfs]")
     const RegisteredMemoryVfs registered(vfs);
 
     std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapView view{
+    const display::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };

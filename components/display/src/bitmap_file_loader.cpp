@@ -172,7 +172,7 @@ struct BitmapHeader {
 }
 
 [[nodiscard]] BitmapLoadStatus check_header_configuration_supported(BitmapHeader& header,
-                                                                     MutableBitmapView destination)
+                                                                     MutableBitmapFile destination)
 {
     if (header.planes != kRequiredPlanes) {
         return BitmapLoadStatus::UnsupportedFormat;
@@ -219,7 +219,7 @@ struct BitmapHeader {
     return skip_exactly(fd, skip_bytes, status);
 }
 
-[[nodiscard]] bool decode_pixels(int fd, const BitmapHeader& header, MutableBitmapView destination,
+[[nodiscard]] bool decode_pixels(int fd, const BitmapHeader& header, MutableBitmapFile destination,
                                  BitmapLoadStatus& status)
 {
     // Pixel data (uncompressed RGB):
@@ -260,7 +260,7 @@ struct BitmapHeader {
 
 }  // namespace
 
-BitmapLoadStatus BitmapFileLoader::load(const char* path, MutableBitmapView destination) const
+BitmapLoadStatus BitmapFileLoader::load(const char* path, MutableBitmapFile destination) const
 {
     if (path == nullptr || path[0] == '\0' || !destination.is_valid()) {
         return BitmapLoadStatus::InvalidArgument;

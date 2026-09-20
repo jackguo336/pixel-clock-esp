@@ -5,7 +5,7 @@
 
 namespace display {
 
-void BitmapRasterizer::rasterize(BitmapView bitmap, Position canvas_origin,
+void BitmapRasterizer::rasterize(BitmapFile bitmap, Position canvas_origin,
                                  LogicalFramebuffer& framebuffer) const
 {
     if (!bitmap.is_valid()) {
