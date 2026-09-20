@@ -145,8 +145,9 @@ TEST(ElementTreeRenderer, OverwritesEarlierBitmapsInDeclarationOrder)
         display::RgbColor{.red = 255, .green = 0, .blue = 0},
         display::RgbColor{.red = 0, .green = 255, .blue = 0},
     };
-    const std::array<display::RgbColor, 1> nested_pixels{
+    const std::array<display::RgbColor, 2> nested_pixels{
         display::RgbColor{.red = 0, .green = 0, .blue = 255},
+        display::RgbColor{.red = 0, .green = 255, .blue = 255},
     };
     const std::array<display::RgbColor, 1> later_pixels{
         display::RgbColor{.red = 255, .green = 255, .blue = 255},
@@ -156,7 +157,7 @@ TEST(ElementTreeRenderer, OverwritesEarlierBitmapsInDeclarationOrder)
         .pixels = earlier_pixels,
     };
     const display::BitmapFile nested_bitmap{
-        .size = {.width = 1, .height = 1},
+        .size = {.width = 2, .height = 1},
         .pixels = nested_pixels,
     };
     const display::BitmapFile later_bitmap{
@@ -184,7 +185,7 @@ TEST(ElementTreeRenderer, OverwritesEarlierBitmapsInDeclarationOrder)
     renderer.render(builder.get_tree(), framebuffer);
 
     expect_rgb_at(framebuffer, 4, 3, 255, 255, 255);
-    expect_rgb_at(framebuffer, 5, 3, 0, 255, 0);
+    expect_rgb_at(framebuffer, 5, 3, 0, 255, 255);
 }
 
 TEST(ElementTreeRenderer, LeavesFramebufferUnchangedForEmptyContainer)
