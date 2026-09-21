@@ -1,4 +1,4 @@
-#include "bitmap_file_loader.hpp"
+#include "display/bitmap_file_loader.hpp"
 #include "managed_file_descriptor.hpp"
 
 #include <fcntl.h>

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <vector>
 
-#include "bitmap_file_loader.hpp"
+#include "display/bitmap_file_loader.hpp"
 #include "display/bitmap.hpp"
 #include "memory_vfs.hpp"
 
