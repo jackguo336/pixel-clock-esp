@@ -4,7 +4,7 @@
 #include <string_view>
 #include <variant>
 
-#include "display/bitmap.hpp"
+#include "display/bitmap_file.hpp"
 #include "display/color.hpp"
 #include "display/geometry.hpp"
 

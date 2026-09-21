@@ -1,4 +1,4 @@
-idf_component_register(SRCS "src/bitmap.cpp"
+idf_component_register(SRCS "src/bitmap_file.cpp"
                             "src/logical_framebuffer.cpp"
                             "src/bitmap_file_loader.cpp"
                             "src/bitmap_rasterizer.cpp"

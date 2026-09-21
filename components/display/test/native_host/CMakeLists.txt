@@ -11,7 +11,7 @@ add_executable(display
     test_managed_file_descriptor.cpp
     test_element_tree.cpp
     test_views.cpp
-    "${DISPLAY_ROOT}/src/bitmap.cpp"
+    "${DISPLAY_ROOT}/src/bitmap_file.cpp"
     "${DISPLAY_ROOT}/src/logical_framebuffer.cpp"
     "${DISPLAY_ROOT}/src/bitmap_file_loader.cpp"
     "${DISPLAY_ROOT}/src/bitmap_rasterizer.cpp"

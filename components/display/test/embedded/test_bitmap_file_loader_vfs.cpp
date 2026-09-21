@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "display/bitmap_file_loader.hpp"
-#include "display/bitmap.hpp"
+#include "display/bitmap_file.hpp"
 #include "memory_vfs.hpp"
 
 namespace {

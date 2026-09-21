@@ -1,6 +1,6 @@
 #pragma once
 
-#include "display/bitmap.hpp"
+#include "display/bitmap_file.hpp"
 #include "display/geometry.hpp"
 #include "logical_framebuffer.hpp"
 

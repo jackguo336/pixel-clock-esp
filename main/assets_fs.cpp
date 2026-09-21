@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "display/bitmap.hpp"
+#include "display/bitmap_file.hpp"
 #include "display/bitmap_file_loader.hpp"
 #include "esp_err.h"
 #include "esp_littlefs.h"
