@@ -33,6 +33,7 @@ enable_testing()
 set(NATIVE_HOST_TEST_COMPONENTS
     platform
     display
+    file_system
 )
 
 foreach(component IN LISTS NATIVE_HOST_TEST_COMPONENTS)

@@ -2,13 +2,13 @@
 # test/native_host/; does not load ESP-IDF. Compiles host-safe production
 # sources directly and exposes both public and private include paths.
 set(DISPLAY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(FILE_SYSTEM_INCLUDE "${DISPLAY_ROOT}/../file_system/include")
 
 add_executable(display
     test_bitmap_file.cpp
     test_logical_framebuffer.cpp
     test_bitmap_file_loader.cpp
     test_bitmap_rasterizer.cpp
-    test_managed_file_descriptor.cpp
     test_element_tree.cpp
     test_views.cpp
     "${DISPLAY_ROOT}/src/bitmap_file.cpp"
@@ -21,6 +21,7 @@ target_include_directories(display
     PRIVATE
         "${DISPLAY_ROOT}/include"
         "${DISPLAY_ROOT}/src"
+        "${FILE_SYSTEM_INCLUDE}"
 )
 
 target_compile_options(display
