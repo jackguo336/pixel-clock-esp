@@ -1,5 +1,5 @@
-#include "bitmap_file_loader.hpp"
-#include "managed_file_descriptor.hpp"
+#include "display/bitmap_file_loader.hpp"
+#include "file_system/managed_file_descriptor.hpp"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -266,7 +266,7 @@ BitmapLoadStatus BitmapFileLoader::load(const char* path, MutableBitmapFile dest
         return BitmapLoadStatus::InvalidArgument;
     }
 
-    ManagedFileDescriptor file{::open(path, O_RDONLY)};
+    file_system::ManagedFileDescriptor file{::open(path, O_RDONLY)};
     if (!file.is_open()) {
         return BitmapLoadStatus::OpenFailed;
     }

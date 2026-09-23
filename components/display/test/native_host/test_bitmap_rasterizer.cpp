@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "bitmap_rasterizer.hpp"
-#include "display/bitmap.hpp"
+#include "display/bitmap_file.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
 

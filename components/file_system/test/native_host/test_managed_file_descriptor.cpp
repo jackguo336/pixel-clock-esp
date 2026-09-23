@@ -4,8 +4,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "file_system/managed_file_descriptor.hpp"
 #include "gtest/gtest.h"
-#include "managed_file_descriptor.hpp"
 
 namespace {
 
@@ -23,7 +23,7 @@ namespace {
 
 TEST(ManagedFileDescriptor, DefaultConstructedIsClosed)
 {
-    const display::ManagedFileDescriptor file;
+    const file_system::ManagedFileDescriptor file;
 
     EXPECT_FALSE(file.is_open());
     EXPECT_EQ(file.file_descriptor(), -1);
@@ -31,8 +31,8 @@ TEST(ManagedFileDescriptor, DefaultConstructedIsClosed)
 
 TEST(ManagedFileDescriptor, NegativeDescriptorIsTreatedAsClosed)
 {
-    const display::ManagedFileDescriptor closed{-1};
-    const display::ManagedFileDescriptor also_closed{-2};
+    const file_system::ManagedFileDescriptor closed{-1};
+    const file_system::ManagedFileDescriptor also_closed{-2};
 
     EXPECT_FALSE(closed.is_open());
     EXPECT_EQ(closed.file_descriptor(), -1);
@@ -45,7 +45,7 @@ TEST(ManagedFileDescriptor, OwnsProvidedDescriptor)
     const int fd = open_read_only_null();
     ASSERT_GE(fd, 0);
 
-    const display::ManagedFileDescriptor file{fd};
+    const file_system::ManagedFileDescriptor file{fd};
 
     EXPECT_TRUE(file.is_open());
     EXPECT_EQ(file.file_descriptor(), fd);
@@ -56,7 +56,7 @@ TEST(ManagedFileDescriptor, DestructorClosesOwnedDescriptor)
 {
     int fd = -1;
     {
-        display::ManagedFileDescriptor file{open_read_only_null()};
+        file_system::ManagedFileDescriptor file{open_read_only_null()};
         fd = file.file_descriptor();
         ASSERT_GE(fd, 0);
         ASSERT_TRUE(descriptor_is_valid(fd));
@@ -67,11 +67,11 @@ TEST(ManagedFileDescriptor, DestructorClosesOwnedDescriptor)
 
 TEST(ManagedFileDescriptor, MoveConstructorTransfersOwnership)
 {
-    display::ManagedFileDescriptor source{open_read_only_null()};
+    file_system::ManagedFileDescriptor source{open_read_only_null()};
     const int fd = source.file_descriptor();
     ASSERT_GE(fd, 0);
 
-    display::ManagedFileDescriptor destination{std::move(source)};
+    file_system::ManagedFileDescriptor destination{std::move(source)};
 
     EXPECT_FALSE(source.is_open());
     EXPECT_EQ(source.file_descriptor(), -1);
@@ -82,8 +82,8 @@ TEST(ManagedFileDescriptor, MoveConstructorTransfersOwnership)
 
 TEST(ManagedFileDescriptor, MoveConstructorFromClosedSourceRemainsClosed)
 {
-    display::ManagedFileDescriptor source;
-    display::ManagedFileDescriptor destination{std::move(source)};
+    file_system::ManagedFileDescriptor source;
+    file_system::ManagedFileDescriptor destination{std::move(source)};
 
     EXPECT_FALSE(source.is_open());
     EXPECT_EQ(source.file_descriptor(), -1);
@@ -93,11 +93,11 @@ TEST(ManagedFileDescriptor, MoveConstructorFromClosedSourceRemainsClosed)
 
 TEST(ManagedFileDescriptor, MoveAssignmentClosesPreviousDescriptor)
 {
-    display::ManagedFileDescriptor destination{open_read_only_null()};
+    file_system::ManagedFileDescriptor destination{open_read_only_null()};
     const int previous_fd = destination.file_descriptor();
     ASSERT_GE(previous_fd, 0);
 
-    display::ManagedFileDescriptor source{open_read_only_null()};
+    file_system::ManagedFileDescriptor source{open_read_only_null()};
     const int transferred_fd = source.file_descriptor();
     ASSERT_GE(transferred_fd, 0);
 
@@ -113,10 +113,10 @@ TEST(ManagedFileDescriptor, MoveAssignmentClosesPreviousDescriptor)
 
 TEST(ManagedFileDescriptor, MoveAssignmentFromClosedSourceClosesDestination)
 {
-    display::ManagedFileDescriptor destination{open_read_only_null()};
+    file_system::ManagedFileDescriptor destination{open_read_only_null()};
     const int previous_fd = destination.file_descriptor();
     ASSERT_GE(previous_fd, 0);
-    display::ManagedFileDescriptor source;
+    file_system::ManagedFileDescriptor source;
 
     destination = std::move(source);
 
@@ -128,10 +128,10 @@ TEST(ManagedFileDescriptor, MoveAssignmentFromClosedSourceClosesDestination)
 
 TEST(ManagedFileDescriptor, SelfMoveAssignmentLeavesOwnershipIntact)
 {
-    display::ManagedFileDescriptor file{open_read_only_null()};
+    file_system::ManagedFileDescriptor file{open_read_only_null()};
     const int fd = file.file_descriptor();
     ASSERT_GE(fd, 0);
-    display::ManagedFileDescriptor& alias = file;
+    file_system::ManagedFileDescriptor& alias = file;
 
     file = std::move(alias);
 
@@ -142,8 +142,8 @@ TEST(ManagedFileDescriptor, SelfMoveAssignmentLeavesOwnershipIntact)
 
 TEST(ManagedFileDescriptor, CopyIsDeletedAndMoveIsNoexcept)
 {
-    static_assert(!std::is_copy_constructible_v<display::ManagedFileDescriptor>);
-    static_assert(!std::is_copy_assignable_v<display::ManagedFileDescriptor>);
-    static_assert(std::is_nothrow_move_constructible_v<display::ManagedFileDescriptor>);
-    static_assert(std::is_nothrow_move_assignable_v<display::ManagedFileDescriptor>);
+    static_assert(!std::is_copy_constructible_v<file_system::ManagedFileDescriptor>);
+    static_assert(!std::is_copy_assignable_v<file_system::ManagedFileDescriptor>);
+    static_assert(std::is_nothrow_move_constructible_v<file_system::ManagedFileDescriptor>);
+    static_assert(std::is_nothrow_move_assignable_v<file_system::ManagedFileDescriptor>);
 }

@@ -1,4 +1,4 @@
-#include "display/bitmap.hpp"
+#include "display/bitmap_file.hpp"
 
 #include <cstddef>
 

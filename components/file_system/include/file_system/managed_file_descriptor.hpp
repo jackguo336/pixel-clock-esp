@@ -2,7 +2,7 @@
 
 #include <unistd.h>
 
-namespace display {
+namespace file_system {
 
 class ManagedFileDescriptor final {
 public:
@@ -55,4 +55,4 @@ private:
     int fd_{-1};
 };
 
-}  // namespace display
+}  // namespace file_system
