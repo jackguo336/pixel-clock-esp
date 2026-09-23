@@ -33,13 +33,17 @@ display::Element make_container(
     display::ElementId id,
     display::Position position,
     display::SolidPaint paint,
-    display::LayoutDirection layout_direction)
+    display::StackDirection layout_direction,
+    display::LayoutSystem layout_system = display::LayoutSystem::ChildDefinedPositions)
 {
     return display::Element{
         .id = id,
         .position = position,
         .paint = paint,
-        .payload = display::ContainerElementPayload{.layout_direction = layout_direction},
+        .payload = display::ContainerElementPayload{
+            .layout_direction = layout_direction,
+            .layout_system = layout_system,
+        },
     };
 }
 
@@ -120,7 +124,7 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
     display::ElementTreeBuilder builder{storage};
 
     const bool built = builder.add_container(
-        make_container(kRootId, kRootPosition, kRootPaint, display::LayoutDirection::TopToBottom),
+        make_container(kRootId, kRootPosition, kRootPaint, display::StackDirection::TopToBottom),
         [](auto& children) {
             EXPECT_TRUE(children.add_terminal(
                 make_rectangle(kLeafId, kLeafPosition, kLeafPaint, kLeafSize)));
@@ -129,7 +133,8 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
                     kNestedContainerId,
                     kNestedContainerPosition,
                     kNestedContainerPaint,
-                    display::LayoutDirection::LeftToRight),
+                    display::StackDirection::LeftToRight,
+                    display::LayoutSystem::Stacked),
                 [](auto& nested_children) {
                     EXPECT_TRUE(nested_children.add_terminal(
                         make_text(kNestedLeafId, kNestedLeafPosition, kNestedLeafPaint, kNestedLeafText)));
@@ -148,7 +153,8 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
     expect_element(tree.nodes[0].element, kRootId, kRootPosition, kRootPaint);
     const auto* root_container = std::get_if<display::ContainerElementPayload>(&tree.nodes[0].element.payload);
     ASSERT_NE(root_container, nullptr);
-    EXPECT_EQ(root_container->layout_direction, display::LayoutDirection::TopToBottom);
+    EXPECT_EQ(root_container->layout_direction, display::StackDirection::TopToBottom);
+    EXPECT_EQ(root_container->layout_system, display::LayoutSystem::ChildDefinedPositions);
     expect_optional_index(tree.nodes[0].first_child, 1);
     EXPECT_FALSE(tree.nodes[0].next_sibling.has_value());
 
@@ -163,7 +169,8 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
     expect_element(tree.nodes[2].element, kNestedContainerId, kNestedContainerPosition, kNestedContainerPaint);
     const auto* nested_container = std::get_if<display::ContainerElementPayload>(&tree.nodes[2].element.payload);
     ASSERT_NE(nested_container, nullptr);
-    EXPECT_EQ(nested_container->layout_direction, display::LayoutDirection::LeftToRight);
+    EXPECT_EQ(nested_container->layout_direction, display::StackDirection::LeftToRight);
+    EXPECT_EQ(nested_container->layout_system, display::LayoutSystem::Stacked);
     expect_optional_index(tree.nodes[2].first_child, display::ElementNodeIndex{3});
     expect_optional_index(tree.nodes[2].next_sibling, display::ElementNodeIndex{4});
 
@@ -200,7 +207,7 @@ TEST(ElementTreeBuilder, SingleLeafRootSpansOnlyUsedStorage)
 TEST(ElementTreeBuilder, RejectsSecondRoot)
 {
     const auto root =
-        make_container(kRootId, kRootPosition, kRootPaint, display::LayoutDirection::TopToBottom);
+        make_container(kRootId, kRootPosition, kRootPaint, display::StackDirection::TopToBottom);
     const auto leaf = make_rectangle(kLeafId, kLeafPosition, kLeafPaint, kLeafSize);
     std::array<display::ElementTreeNode, 4> storage{};
     display::ElementTreeBuilder builder{storage};
@@ -229,7 +236,7 @@ TEST(ElementTreeBuilder, RejectsNonContainerPassedToAddContainer)
 TEST(ElementTreeBuilder, RejectsWhenNodeStorageIsExhausted)
 {
     const auto root =
-        make_container(kRootId, kRootPosition, kRootPaint, display::LayoutDirection::TopToBottom);
+        make_container(kRootId, kRootPosition, kRootPaint, display::StackDirection::TopToBottom);
     const auto leaf = make_rectangle(kLeafId, kLeafPosition, kLeafPaint, kLeafSize);
     std::array<display::ElementTreeNode, 1> storage{};
     display::ElementTreeBuilder builder{storage};
@@ -243,7 +250,7 @@ TEST(ElementTreeBuilder, RejectsWhenNodeStorageIsExhausted)
 TEST(ElementTreeBuilder, RejectsContainerPassedToAddTerminal)
 {
     const auto root =
-        make_container(kRootId, kRootPosition, kRootPaint, display::LayoutDirection::TopToBottom);
+        make_container(kRootId, kRootPosition, kRootPaint, display::StackDirection::TopToBottom);
     const auto leaf = make_rectangle(kLeafId, kLeafPosition, kLeafPaint, kLeafSize);
     std::array<display::ElementTreeNode, 4> storage{};
     display::ElementTreeBuilder builder{storage};
@@ -258,7 +265,7 @@ TEST(ElementTreeBuilder, GetTreeReturnsRootAndUsedNodesAfterSuccess)
     display::ElementTreeBuilder builder{storage};
 
     ASSERT_TRUE(builder.add_container(
-        make_container(kRootId, kRootPosition, kRootPaint, display::LayoutDirection::LeftToRight),
+        make_container(kRootId, kRootPosition, kRootPaint, display::StackDirection::LeftToRight),
         [](auto& children) {
             EXPECT_TRUE(children.add_terminal(make_rectangle(kLeafId, kLeafPosition, kLeafPaint, kLeafSize)));
             EXPECT_TRUE(children.add_terminal(

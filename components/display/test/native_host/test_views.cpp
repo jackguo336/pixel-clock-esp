@@ -34,7 +34,7 @@ display::Element make_outer_container()
         .id = kOuterId,
         .position = kOuterPosition,
         .paint = kOuterPaint,
-        .payload = display::ContainerElementPayload{.layout_direction = display::LayoutDirection::LeftToRight},
+        .payload = display::ContainerElementPayload{.layout_direction = display::StackDirection::LeftToRight},
     };
 }
 
@@ -44,7 +44,7 @@ display::Element make_root_container()
         .id = kRootId,
         .position = kRootPosition,
         .paint = kRootPaint,
-        .payload = display::ContainerElementPayload{.layout_direction = display::LayoutDirection::TopToBottom},
+        .payload = display::ContainerElementPayload{.layout_direction = display::StackDirection::TopToBottom},
     };
 }
 

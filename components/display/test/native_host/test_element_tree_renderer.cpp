@@ -36,14 +36,20 @@ void expect_rgb_at(const display::LogicalFramebuffer& framebuffer, int32_t x, in
     return true;
 }
 
-display::Element make_container(display::ElementId id, display::Position position,
-                                display::LayoutDirection layout_direction)
+display::Element make_container(
+    display::ElementId id,
+    display::Position position,
+    display::StackDirection layout_direction,
+    display::LayoutSystem layout_system = display::LayoutSystem::ChildDefinedPositions)
 {
     return display::Element{
         .id = id,
         .position = position,
         .paint = display::SolidPaint{},
-        .payload = display::ContainerElementPayload{.layout_direction = layout_direction},
+        .payload = display::ContainerElementPayload{
+            .layout_direction = layout_direction,
+            .layout_system = layout_system,
+        },
     };
 }
 
@@ -120,10 +126,10 @@ TEST(ElementTreeRenderer, ComposesNestedContainerOrigins)
     std::array<display::ElementTreeNode, 3> storage{};
     display::ElementTreeBuilder builder{storage};
     ASSERT_TRUE(builder.add_container(
-        make_container({.value = 1}, {.x = 2, .y = 1}, display::LayoutDirection::LeftToRight),
+        make_container({.value = 1}, {.x = 2, .y = 1}, display::StackDirection::LeftToRight),
         [&](auto& children) {
             EXPECT_TRUE(children.add_container(
-                make_container({.value = 2}, {.x = 3, .y = 2}, display::LayoutDirection::TopToBottom),
+                make_container({.value = 2}, {.x = 3, .y = 2}, display::StackDirection::TopToBottom),
                 [&](auto& nested) {
                     EXPECT_TRUE(nested.add_terminal(make_bitmap({.value = 3}, {.x = 4, .y = 1}, &bitmap)));
                 }));
@@ -168,11 +174,11 @@ TEST(ElementTreeRenderer, OverwritesEarlierBitmapsInDeclarationOrder)
     std::array<display::ElementTreeNode, 5> storage{};
     display::ElementTreeBuilder builder{storage};
     ASSERT_TRUE(builder.add_container(
-        make_container({.value = 1}, {.x = 1, .y = 1}, display::LayoutDirection::TopToBottom),
+        make_container({.value = 1}, {.x = 1, .y = 1}, display::StackDirection::TopToBottom),
         [&](auto& children) {
             EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 2}, {.x = 3, .y = 2}, &earlier_bitmap)));
             EXPECT_TRUE(children.add_container(
-                make_container({.value = 3}, {.x = 2, .y = 1}, display::LayoutDirection::LeftToRight),
+                make_container({.value = 3}, {.x = 2, .y = 1}, display::StackDirection::LeftToRight),
                 [&](auto& nested) {
                     EXPECT_TRUE(
                         nested.add_terminal(make_bitmap({.value = 4}, {.x = 1, .y = 1}, &nested_bitmap)));
@@ -193,7 +199,7 @@ TEST(ElementTreeRenderer, LeavesFramebufferUnchangedForEmptyContainer)
     std::array<display::ElementTreeNode, 1> storage{};
     display::ElementTreeBuilder builder{storage};
     ASSERT_TRUE(builder.add_container(
-        make_container({.value = 1}, {.x = 5, .y = 3}, display::LayoutDirection::RightToLeft),
+        make_container({.value = 1}, {.x = 5, .y = 3}, display::StackDirection::LeftToRight),
         [](auto&) {}));
 
     display::LogicalFramebuffer framebuffer;
@@ -217,7 +223,7 @@ TEST(ElementTreeRenderer, SkipsNullBitmapAndUnsupportedPayloads)
     std::array<display::ElementTreeNode, 5> storage{};
     display::ElementTreeBuilder builder{storage};
     ASSERT_TRUE(builder.add_container(
-        make_container({.value = 1}, {.x = 0, .y = 0}, display::LayoutDirection::BottomToTop),
+        make_container({.value = 1}, {.x = 0, .y = 0}, display::StackDirection::TopToBottom),
         [&](auto& children) {
             EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 2}, {.x = 0, .y = 0}, nullptr)));
             EXPECT_TRUE(children.add_terminal(make_text({.value = 3}, {.x = 1, .y = 0}, "skip")));
@@ -260,4 +266,230 @@ TEST(ElementTreeRenderer, DoesNotClearUnrelatedFramebufferPixels)
     expect_rgb_at(framebuffer, 7, 0, 10, 20, 30);
     expect_rgb_at(framebuffer, 8, 1, 10, 20, 30);
     expect_rgb_at(framebuffer, 31, 7, 10, 20, 30);
+}
+
+TEST(ElementTreeRenderer, StacksLeftToRightFromContainerOriginIgnoringChildDefinedPositions)
+{
+    const std::array<display::RgbColor, 2> first_pixels{
+        display::RgbColor{.red = 255, .green = 0, .blue = 0},
+        display::RgbColor{.red = 0, .green = 255, .blue = 0},
+    };
+    const std::array<display::RgbColor, 1> second_pixels{
+        display::RgbColor{.red = 0, .green = 0, .blue = 255},
+    };
+    const display::BitmapFile first_bitmap{
+        .size = {.width = 2, .height = 1},
+        .pixels = first_pixels,
+    };
+    const display::BitmapFile second_bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = second_pixels,
+    };
+
+    std::array<display::ElementTreeNode, 3> storage{};
+    display::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 1, .y = 2}, display::StackDirection::LeftToRight,
+                       display::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 2}, {.x = 7, .y = 7}, &first_bitmap)));
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 3}, {.x = 4, .y = 4}, &second_bitmap)));
+        }));
+
+    display::LogicalFramebuffer framebuffer;
+    const display::ElementTreeRenderer renderer;
+    renderer.render(builder.get_tree(), framebuffer);
+
+    expect_rgb_at(framebuffer, 1, 2, 255, 0, 0);
+    expect_rgb_at(framebuffer, 2, 2, 0, 255, 0);
+    expect_rgb_at(framebuffer, 3, 2, 0, 0, 255);
+    expect_rgb_at(framebuffer, 4, 4, 0, 0, 0);
+    expect_rgb_at(framebuffer, 7, 7, 0, 0, 0);
+}
+
+TEST(ElementTreeRenderer, StacksTopToBottomFromContainerOrigin)
+{
+    const std::array<display::RgbColor, 2> first_pixels{
+        display::RgbColor{.red = 255, .green = 0, .blue = 0},
+        display::RgbColor{.red = 0, .green = 255, .blue = 0},
+    };
+    const std::array<display::RgbColor, 1> second_pixels{
+        display::RgbColor{.red = 0, .green = 0, .blue = 255},
+    };
+    const display::BitmapFile first_bitmap{
+        .size = {.width = 1, .height = 2},
+        .pixels = first_pixels,
+    };
+    const display::BitmapFile second_bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = second_pixels,
+    };
+
+    std::array<display::ElementTreeNode, 3> storage{};
+    display::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 2, .y = 1}, display::StackDirection::TopToBottom,
+                       display::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 2}, {.x = 5, .y = 5}, &first_bitmap)));
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 3}, {.x = 6, .y = 6}, &second_bitmap)));
+        }));
+
+    display::LogicalFramebuffer framebuffer;
+    const display::ElementTreeRenderer renderer;
+    renderer.render(builder.get_tree(), framebuffer);
+
+    expect_rgb_at(framebuffer, 2, 1, 255, 0, 0);
+    expect_rgb_at(framebuffer, 2, 2, 0, 255, 0);
+    expect_rgb_at(framebuffer, 2, 3, 0, 0, 255);
+    expect_rgb_at(framebuffer, 3, 1, 0, 0, 0);
+}
+
+TEST(ElementTreeRenderer, StackedParentAdvancesPastPreviousContainerExtent)
+{
+    const std::array<display::RgbColor, 2> nested_pixels{
+        display::RgbColor{.red = 255, .green = 0, .blue = 0},
+        display::RgbColor{.red = 0, .green = 255, .blue = 0},
+    };
+    const std::array<display::RgbColor, 1> following_pixels{
+        display::RgbColor{.red = 0, .green = 0, .blue = 255},
+    };
+    const display::BitmapFile nested_bitmap{
+        .size = {.width = 2, .height = 1},
+        .pixels = nested_pixels,
+    };
+    const display::BitmapFile following_bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = following_pixels,
+    };
+
+    std::array<display::ElementTreeNode, 4> storage{};
+    display::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 0, .y = 1}, display::StackDirection::LeftToRight,
+                       display::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_container(
+                make_container({.value = 2}, {.x = 4, .y = 3}, display::StackDirection::LeftToRight),
+                [&](auto& nested) {
+                    EXPECT_TRUE(nested.add_terminal(make_bitmap({.value = 3}, {.x = 1, .y = 0}, &nested_bitmap)));
+                }));
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 4}, {.x = 0, .y = 0}, &following_bitmap)));
+        }));
+
+    display::LogicalFramebuffer framebuffer;
+    const display::ElementTreeRenderer renderer;
+    renderer.render(builder.get_tree(), framebuffer);
+
+    expect_rgb_at(framebuffer, 1, 1, 255, 0, 0);
+    expect_rgb_at(framebuffer, 2, 1, 0, 255, 0);
+    expect_rgb_at(framebuffer, 3, 1, 0, 0, 255);
+    expect_rgb_at(framebuffer, 0, 1, 0, 0, 0);
+    expect_rgb_at(framebuffer, 5, 4, 0, 0, 0);
+}
+
+TEST(ElementTreeRenderer, StackedContainerExtentUsesTheTallerChild)
+{
+    const std::array<display::RgbColor, 1> short_pixels{display::RgbColor{.red = 255, .green = 0, .blue = 0}};
+    const std::array<display::RgbColor, 2> tall_pixels{
+        display::RgbColor{.red = 0, .green = 255, .blue = 0},
+        display::RgbColor{.red = 0, .green = 0, .blue = 255},
+    };
+    const std::array<display::RgbColor, 1> following_pixels{
+        display::RgbColor{.red = 255, .green = 255, .blue = 255},
+    };
+    const display::BitmapFile short_bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = short_pixels,
+    };
+    const display::BitmapFile tall_bitmap{
+        .size = {.width = 1, .height = 2},
+        .pixels = tall_pixels,
+    };
+    const display::BitmapFile following_bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = following_pixels,
+    };
+
+    std::array<display::ElementTreeNode, 5> storage{};
+    display::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 0, .y = 0}, display::StackDirection::TopToBottom,
+                       display::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_container(
+                make_container({.value = 2}, {.x = 4, .y = 4}, display::StackDirection::LeftToRight,
+                               display::LayoutSystem::Stacked),
+                [&](auto& nested) {
+                    EXPECT_TRUE(nested.add_terminal(make_bitmap({.value = 3}, {.x = 1, .y = 1}, &short_bitmap)));
+                    EXPECT_TRUE(nested.add_terminal(make_bitmap({.value = 4}, {.x = 2, .y = 2}, &tall_bitmap)));
+                }));
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 5}, {.x = 3, .y = 3}, &following_bitmap)));
+        }));
+
+    display::LogicalFramebuffer framebuffer;
+    const display::ElementTreeRenderer renderer;
+    renderer.render(builder.get_tree(), framebuffer);
+
+    expect_rgb_at(framebuffer, 0, 0, 255, 0, 0);
+    expect_rgb_at(framebuffer, 1, 0, 0, 255, 0);
+    expect_rgb_at(framebuffer, 1, 1, 0, 0, 255);
+    expect_rgb_at(framebuffer, 0, 1, 0, 0, 0);
+    expect_rgb_at(framebuffer, 0, 2, 255, 255, 255);
+}
+
+TEST(ElementTreeRenderer, StackedLayoutAdvancesPastUndrawnRectangle)
+{
+    const std::array<display::RgbColor, 1> pixels{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
+    const display::BitmapFile bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = pixels,
+    };
+
+    std::array<display::ElementTreeNode, 3> storage{};
+    display::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 0, .y = 0}, display::StackDirection::LeftToRight,
+                       display::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 2}, {.x = 5, .y = 5}, {.width = 2, .height = 1})));
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 3}, {.x = 1, .y = 1}, &bitmap)));
+        }));
+
+    display::LogicalFramebuffer framebuffer;
+    framebuffer.clear(display::RgbColor{.red = 40, .green = 50, .blue = 60});
+    const display::ElementTreeRenderer renderer;
+    renderer.render(builder.get_tree(), framebuffer);
+
+    expect_rgb_at(framebuffer, 0, 0, 40, 50, 60);
+    expect_rgb_at(framebuffer, 1, 0, 40, 50, 60);
+    expect_rgb_at(framebuffer, 2, 0, 9, 8, 7);
+}
+
+TEST(ElementTreeRenderer, StackedLayoutGivesTextNoExtent)
+{
+    const std::array<display::RgbColor, 1> pixels{display::RgbColor{.red = 1, .green = 2, .blue = 3}};
+    const display::BitmapFile bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = pixels,
+    };
+
+    std::array<display::ElementTreeNode, 3> storage{};
+    display::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 4, .y = 2}, display::StackDirection::LeftToRight,
+                       display::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(make_text({.value = 2}, {.x = 1, .y = 1}, "hi")));
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 3}, {.x = 6, .y = 3}, &bitmap)));
+        }));
+
+    display::LogicalFramebuffer framebuffer;
+    const display::ElementTreeRenderer renderer;
+    renderer.render(builder.get_tree(), framebuffer);
+
+    expect_rgb_at(framebuffer, 4, 2, 1, 2, 3);
+    expect_rgb_at(framebuffer, 5, 2, 0, 0, 0);
+    expect_rgb_at(framebuffer, 6, 3, 0, 0, 0);
 }
