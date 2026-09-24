@@ -27,15 +27,19 @@ struct BitmapElementPayload {
     const BitmapFile* bitmap{};
 };
 
-enum class LayoutDirection : uint8_t {
+enum class StackDirection : uint8_t {
     TopToBottom = 0,
     LeftToRight = 1,
-    RightToLeft = 2,
-    BottomToTop = 3,
+};
+
+enum class LayoutSystem : uint8_t {
+    ChildDefinedPositions = 0,
+    Stacked = 1,
 };
 
 struct ContainerElementPayload {
-    LayoutDirection layout_direction{};
+    StackDirection layout_direction{};
+    LayoutSystem layout_system{};
     // Container children are defined in the ElementTree.
 };
 

@@ -10,11 +10,13 @@ add_executable(display
     test_bitmap_file_loader.cpp
     test_bitmap_rasterizer.cpp
     test_element_tree.cpp
+    test_element_tree_renderer.cpp
     test_views.cpp
     "${DISPLAY_ROOT}/src/bitmap_file.cpp"
     "${DISPLAY_ROOT}/src/logical_framebuffer.cpp"
     "${DISPLAY_ROOT}/src/bitmap_file_loader.cpp"
     "${DISPLAY_ROOT}/src/bitmap_rasterizer.cpp"
+    "${DISPLAY_ROOT}/src/element_tree_renderer.cpp"
 )
 
 target_include_directories(display
