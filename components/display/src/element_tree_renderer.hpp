@@ -2,7 +2,7 @@
 
 #include "bitmap_rasterizer.hpp"
 #include "display/element_tree.hpp"
-#include "logical_framebuffer.hpp"
+#include "display/logical_framebuffer.hpp"
 
 namespace display {
 

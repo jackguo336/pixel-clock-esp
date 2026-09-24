@@ -34,6 +34,7 @@ set(NATIVE_HOST_TEST_COMPONENTS
     platform
     display
     file_system
+    led_matrix
 )
 
 foreach(component IN LISTS NATIVE_HOST_TEST_COMPONENTS)

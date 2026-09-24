@@ -1,0 +1,43 @@
+#pragma once
+
+#include <cstdint>
+
+#include "display/logical_framebuffer.hpp"
+
+namespace led_matrix {
+
+enum class LedMatrixOrientation : uint8_t {
+    Horizontal,
+    HorizontalReversed,
+    Vertical,
+    VerticalReversed,
+};
+
+struct LedMatrixOutputConfig {
+    int gpio_num{3};
+    LedMatrixOrientation orientation{LedMatrixOrientation::Horizontal};
+    bool serpentine{true};
+};
+
+enum class LedMatrixOutputStatus : uint8_t {
+    Ok,
+    NotInitialized,
+    DriverError,
+};
+
+class LedMatrixOutput final {
+public:
+    explicit LedMatrixOutput(LedMatrixOutputConfig config);
+    ~LedMatrixOutput();
+    LedMatrixOutput(const LedMatrixOutput&) = delete;
+    LedMatrixOutput& operator=(const LedMatrixOutput&) = delete;
+
+    LedMatrixOutputStatus initialize();
+    LedMatrixOutputStatus present(const display::LogicalFramebuffer& framebuffer);
+
+private:
+    LedMatrixOutputConfig config_;
+    void* strip_{nullptr};
+};
+
+}  // namespace led_matrix

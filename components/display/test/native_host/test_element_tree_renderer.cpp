@@ -8,7 +8,7 @@
 #include "display/elements.hpp"
 #include "element_tree_renderer.hpp"
 #include "gtest/gtest.h"
-#include "logical_framebuffer.hpp"
+#include "display/logical_framebuffer.hpp"
 
 namespace {
 

@@ -1,9 +1,10 @@
 # Pixel Clock ESP
 
-ESP32-C6 firmware for a pixel clock. This tree currently contains only the
-platform runtime kernel: a single control task, a bounded event/command
-mailbox, and a timer scheduler. Domain services (Wi-Fi, BLE, weather, display,
-OTA) are not implemented yet.
+ESP32-C6 firmware for a pixel clock. The platform runtime kernel is a single
+control task, a bounded event/command mailbox, and a timer scheduler. Display
+rendering writes a fixed 32×8 logical framebuffer, and the startup demo
+presents that buffer on a WS2812 matrix. Wi-Fi, BLE, weather, and OTA are not
+implemented yet.
 
 Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
@@ -11,6 +12,8 @@ Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
 - `main/` — composition root (`app_main`) and temporary TickSource/TickSink demo
 - `components/platform/` — component interface, mailbox, runtime, scheduler, logging
+- `components/display/` — logical 32×8 framebuffer, bitmap loading, and element rendering
+- `components/led_matrix/` — WS2812 matrix output from the logical framebuffer
 - `components/<name>/test/native_host/` — GoogleTest cases owned by that component
 - `components/<name>/test/embedded/` — Unity cases and mocks owned by that component
 - `test/native_host/` — shared GoogleTest/CTest runner (no ESP-IDF; no `test_*.cpp`)
@@ -31,7 +34,11 @@ serial monitor with `Ctrl+]`.
 
 ## Runtime demo
 
-On boot, `TickSource` posts `Tick` events on a periodic timer. `TickSink` logs
+On boot, the firmware loads `/assets/test.bmp` into a caller-owned logical
+framebuffer and presents it once on the WS2812 matrix. The data line is GPIO 3.
+The matrix driver owns SPI2 for that strip (SPI with DMA); other devices must
+not use that bus. `TickSource` then posts `Tick` events on a periodic timer.
+`TickSink` logs
 each tick and, after a few counts, unicasts `PauseTicks`. `TickSource` cancels
 the timer and posts `TicksPaused`. Everything runs on the control task; the
 stubs will be removed when real services land.
