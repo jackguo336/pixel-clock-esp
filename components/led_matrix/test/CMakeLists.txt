@@ -4,7 +4,7 @@ idf_component_register(SRC_DIRS "embedded"
                        INCLUDE_DIRS "embedded"
                        PRIV_INCLUDE_DIRS "../src"
                        REQUIRES unity
-                       PRIV_REQUIRES led_matrix display)
+                       PRIV_REQUIRES led_matrix display led_strip esp_driver_spi)
 
 # Linker wraps replace the led_strip driver so matrix tests never touch SPI.
 target_link_libraries(${COMPONENT_LIB} INTERFACE
