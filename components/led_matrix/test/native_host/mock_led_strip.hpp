@@ -3,8 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "driver/spi_master.h"
-#include "esp_err.h"
 #include "led_strip.h"
 
 namespace mock_led_strip {
@@ -22,8 +20,6 @@ void set_next_set_pixel_result(esp_err_t result);
 void set_next_refresh_result(esp_err_t result);
 
 bool created();
-const led_strip_config_t* strip_config();
-const led_strip_spi_config_t* spi_config();
 std::size_t set_pixel_count();
 const PixelWrite* pixel_write_at(std::size_t index);
 std::size_t refresh_count();

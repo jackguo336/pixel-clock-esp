@@ -1,6 +1,8 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <string>
+#include <tuple>
 
 #include "display/logical_framebuffer.hpp"
 #include "gtest/gtest.h"
@@ -13,6 +15,31 @@ void expect_index(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orienta
 {
     EXPECT_EQ(led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine), expected);
 }
+
+std::string orientation_name(led_matrix::LedMatrixOrientation orientation)
+{
+    switch (orientation) {
+    case led_matrix::LedMatrixOrientation::Horizontal:
+        return "Horizontal";
+    case led_matrix::LedMatrixOrientation::HorizontalReversed:
+        return "HorizontalReversed";
+    case led_matrix::LedMatrixOrientation::Vertical:
+        return "Vertical";
+    case led_matrix::LedMatrixOrientation::VerticalReversed:
+        return "VerticalReversed";
+    }
+    return "Unknown";
+}
+
+using Wiring = std::tuple<led_matrix::LedMatrixOrientation, bool>;
+
+std::string wiring_test_name(const testing::TestParamInfo<Wiring>& info)
+{
+    const auto [orientation, serpentine] = info.param;
+    return orientation_name(orientation) + (serpentine ? "_Serpentine" : "_Straight");
+}
+
+class LedMatrixMapWiring : public testing::TestWithParam<Wiring> {};
 
 }  // namespace
 
@@ -81,30 +108,27 @@ TEST(LedMatrixMap, SerpentineReversesOddLanes)
     expect_index(15, 3, led_matrix::LedMatrixOrientation::VerticalReversed, true, 123);
 }
 
-TEST(LedMatrixMap, EveryOrientationIsABijectionOntoTheStrip)
+TEST_P(LedMatrixMapWiring, UsesEachLedExactlyOnce)
 {
-    constexpr led_matrix::LedMatrixOrientation orientations[] = {
-        led_matrix::LedMatrixOrientation::Horizontal,
-        led_matrix::LedMatrixOrientation::HorizontalReversed,
-        led_matrix::LedMatrixOrientation::Vertical,
-        led_matrix::LedMatrixOrientation::VerticalReversed,
-    };
-    constexpr bool serpentine_options[] = {false, true};
-
-    for (const led_matrix::LedMatrixOrientation orientation : orientations) {
-        for (const bool serpentine : serpentine_options) {
-            std::array<int, display::LogicalFramebuffer::kPixelCount> seen{};
-            for (int32_t y = 0; y < display::LogicalFramebuffer::kHeight; ++y) {
-                for (int32_t x = 0; x < display::LogicalFramebuffer::kWidth; ++x) {
-                    const std::size_t index =
-                        led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine);
-                    ASSERT_LT(index, display::LogicalFramebuffer::kPixelCount);
-                    seen[index] += 1;
-                }
-            }
-            for (const int count : seen) {
-                EXPECT_EQ(count, 1);
-            }
+    const auto [orientation, serpentine] = GetParam();
+    std::array<int, display::LogicalFramebuffer::kPixelCount> seen{};
+    for (int32_t y = 0; y < display::LogicalFramebuffer::kHeight; ++y) {
+        for (int32_t x = 0; x < display::LogicalFramebuffer::kWidth; ++x) {
+            const std::size_t index =
+                led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine);
+            ASSERT_LT(index, display::LogicalFramebuffer::kPixelCount);
+            seen[index] += 1;
         }
     }
+    for (const int count : seen) {
+        EXPECT_EQ(count, 1);
+    }
 }
+
+INSTANTIATE_TEST_SUITE_P(LedMatrixMap, LedMatrixMapWiring,
+                         testing::Combine(testing::Values(led_matrix::LedMatrixOrientation::Horizontal,
+                                                          led_matrix::LedMatrixOrientation::HorizontalReversed,
+                                                          led_matrix::LedMatrixOrientation::Vertical,
+                                                          led_matrix::LedMatrixOrientation::VerticalReversed),
+                                          testing::Bool()),
+                         wiring_test_name);

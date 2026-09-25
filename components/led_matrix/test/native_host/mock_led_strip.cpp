@@ -11,8 +11,6 @@ constexpr std::size_t kPixelCapacity = display::LogicalFramebuffer::kPixelCount;
 
 int g_handle_sentinel{0};
 bool g_created{false};
-led_strip_config_t g_strip_config{};
-led_strip_spi_config_t g_spi_config{};
 std::array<PixelWrite, kPixelCapacity> g_pixel_writes{};
 std::size_t g_set_pixel_count{0};
 std::size_t g_refresh_count{0};
@@ -26,8 +24,6 @@ esp_err_t g_next_refresh_result{ESP_OK};
 void reset()
 {
     g_created = false;
-    g_strip_config = led_strip_config_t{};
-    g_spi_config = led_strip_spi_config_t{};
     g_pixel_writes.fill(PixelWrite{});
     g_set_pixel_count = 0;
     g_refresh_count = 0;
@@ -55,22 +51,6 @@ void set_next_refresh_result(esp_err_t result)
 bool created()
 {
     return g_created;
-}
-
-const led_strip_config_t* strip_config()
-{
-    if (!g_created) {
-        return nullptr;
-    }
-    return &g_strip_config;
-}
-
-const led_strip_spi_config_t* spi_config()
-{
-    if (!g_created) {
-        return nullptr;
-    }
-    return &g_spi_config;
 }
 
 std::size_t set_pixel_count()
@@ -108,8 +88,6 @@ esp_err_t create_device(const led_strip_config_t* led_config, const led_strip_sp
         return ESP_ERR_INVALID_ARG;
     }
 
-    g_strip_config = *led_config;
-    g_spi_config = *spi_config;
     g_created = true;
     *ret_strip = reinterpret_cast<led_strip_handle_t>(&g_handle_sentinel);
     return ESP_OK;
@@ -163,25 +141,23 @@ esp_err_t release(led_strip_handle_t strip)
 
 extern "C" {
 
-esp_err_t __wrap_led_strip_new_spi_device(const led_strip_config_t* led_config,
-                                          const led_strip_spi_config_t* spi_config,
-                                          led_strip_handle_t* ret_strip)
+esp_err_t led_strip_new_spi_device(const led_strip_config_t* led_config, const led_strip_spi_config_t* spi_config,
+                                   led_strip_handle_t* ret_strip)
 {
     return mock_led_strip::create_device(led_config, spi_config, ret_strip);
 }
 
-esp_err_t __wrap_led_strip_set_pixel(led_strip_handle_t strip, uint32_t index, uint32_t red, uint32_t green,
-                                     uint32_t blue)
+esp_err_t led_strip_set_pixel(led_strip_handle_t strip, uint32_t index, uint32_t red, uint32_t green, uint32_t blue)
 {
     return mock_led_strip::set_pixel(strip, index, red, green, blue);
 }
 
-esp_err_t __wrap_led_strip_refresh(led_strip_handle_t strip)
+esp_err_t led_strip_refresh(led_strip_handle_t strip)
 {
     return mock_led_strip::refresh(strip);
 }
 
-esp_err_t __wrap_led_strip_del(led_strip_handle_t strip)
+esp_err_t led_strip_del(led_strip_handle_t strip)
 {
     return mock_led_strip::release(strip);
 }
