@@ -13,8 +13,8 @@ constexpr int kMatrixGpio = 3;
 
 // Pinned here so these cases keep the same expected colors if the firmware
 // brightness default changes.
-constexpr uint8_t kTestMaxChannelBrightness = 5;
-constexpr uint8_t kFullScaleChannelBrightness = 255;
+constexpr uint8_t kTestBrightness = 5;
+constexpr uint8_t kTestMaxColorChannelValue = 255;
 
 led_matrix::LedMatrixOutputConfig firmware_config()
 {
@@ -32,7 +32,7 @@ void reset_mocks()
 }
 
 void present_color(display::RgbColor color, const mock_led_strip::PixelWrite*& write,
-                   uint8_t max_brightness = kTestMaxChannelBrightness)
+                   uint8_t brightness = kTestBrightness)
 {
     write = nullptr;
     reset_mocks();
@@ -41,7 +41,7 @@ void present_color(display::RgbColor color, const mock_led_strip::PixelWrite*& w
     ASSERT_TRUE(framebuffer.set_pixel(0, 0, color));
 
     led_matrix::LedMatrixOutputConfig config = firmware_config();
-    config.max_brightness = max_brightness;
+    config.brightness = brightness;
     led_matrix::LedMatrixOutput output(config);
     ASSERT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
     ASSERT_EQ(output.present(framebuffer), led_matrix::LedMatrixOutputStatus::Ok);
@@ -51,10 +51,10 @@ void present_color(display::RgbColor color, const mock_led_strip::PixelWrite*& w
 }
 
 void expect_presented_color(display::RgbColor color, display::RgbColor expected,
-                            uint8_t max_brightness = kTestMaxChannelBrightness)
+                            uint8_t brightness = kTestBrightness)
 {
     const mock_led_strip::PixelWrite* write = nullptr;
-    present_color(color, write, max_brightness);
+    present_color(color, write, brightness);
     ASSERT_NE(write, nullptr);
     EXPECT_EQ(write->red, static_cast<uint32_t>(expected.red));
     EXPECT_EQ(write->green, static_cast<uint32_t>(expected.green));
@@ -102,7 +102,7 @@ TEST(LedMatrixOutput, PresentWritesEachFramebufferColorToItsMappedIndexAndRefres
                                       display::LogicalFramebuffer::kHeight - 1, kBottomRight));
 
     led_matrix::LedMatrixOutputConfig config = firmware_config();
-    config.max_brightness = kFullScaleChannelBrightness;
+    config.brightness = kTestMaxColorChannelValue;
     led_matrix::LedMatrixOutput output(config);
     ASSERT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
     ASSERT_EQ(output.present(framebuffer), led_matrix::LedMatrixOutputStatus::Ok);
@@ -118,16 +118,16 @@ TEST(LedMatrixOutput, PresentWritesEachFramebufferColorToItsMappedIndexAndRefres
 TEST(LedMatrixOutput, PresentScalesWhiteSoEveryChannelMeetsTheBrightnessLimit)
 {
     expect_presented_color({.red = 255, .green = 255, .blue = 255},
-                           {.red = kTestMaxChannelBrightness,
-                            .green = kTestMaxChannelBrightness,
-                            .blue = kTestMaxChannelBrightness});
+                           {.red = kTestBrightness,
+                            .green = kTestBrightness,
+                            .blue = kTestBrightness});
 }
 
 TEST(LedMatrixOutput, PresentScalesColorWithSomeChannelsOverTheBrightnessLimit)
 {
     // 128 * 5 / 255 = 2. Half of full-scale green stays half of the limited red.
     expect_presented_color({.red = 255, .green = 128, .blue = 0},
-                           {.red = kTestMaxChannelBrightness, .green = 2, .blue = 0});
+                           {.red = kTestBrightness, .green = 2, .blue = 0});
 }
 
 TEST(LedMatrixOutput, PresentLeavesBlackUnchanged)
