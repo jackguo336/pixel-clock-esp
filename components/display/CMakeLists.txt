@@ -1,7 +1,7 @@
-idf_component_register(SRCS "src/bitmap_file.cpp"
-                            "src/logical_framebuffer.cpp"
-                            "src/bitmap_file_loader.cpp"
-                            "src/bitmap_rasterizer.cpp"
-                            "src/element_tree_renderer.cpp"
+idf_component_register(SRCS "src/led_matrix_map.cpp"
+                            "src/led_matrix_output.cpp"
+                            "src/display.cpp"
                        INCLUDE_DIRS "include"
-                       PRIV_REQUIRES vfs file_system)
+                       PRIV_INCLUDE_DIRS "src"
+                       REQUIRES graphics platform
+                       PRIV_REQUIRES led_strip log)

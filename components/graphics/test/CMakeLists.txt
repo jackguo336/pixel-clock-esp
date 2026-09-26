@@ -5,4 +5,4 @@ idf_component_register(SRC_DIRS "embedded"
                        INCLUDE_DIRS "embedded"
                        PRIV_INCLUDE_DIRS "../src"
                        REQUIRES unity
-                       PRIV_REQUIRES display vfs)
+                       PRIV_REQUIRES graphics vfs)

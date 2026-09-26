@@ -11,7 +11,8 @@ Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
 - `main/` — composition root (`app_main`)
 - `components/platform/` — component interface, mailbox, runtime, scheduler, logging
-- `components/display_runtime/` — loads the test bitmap and presents it on the LED matrix
+- `components/graphics/` — framebuffer, element tree, and bitmap rendering
+- `components/display/` — LED matrix output; loads the test bitmap and presents it
 - `components/<name>/test/native_host/` — GoogleTest cases owned by that component
 - `components/<name>/test/embedded/` — Unity cases and mocks owned by that component
 - `test/native_host/` — shared GoogleTest/CTest runner (no ESP-IDF; no `test_*.cpp`)
