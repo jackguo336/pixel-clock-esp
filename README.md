@@ -1,16 +1,18 @@
 # Pixel Clock ESP
 
-ESP32-C6 firmware for a pixel clock. This tree currently contains only the
-platform runtime kernel: a single control task, a bounded event/command
-mailbox, and a timer scheduler. Domain services (Wi-Fi, BLE, weather, display,
-OTA) are not implemented yet.
+ESP32-C6 firmware for a pixel clock. Boot mounts an asset partition and
+presents a test bitmap on the LED matrix. The platform runtime is a single
+control task, a bounded event/command mailbox, and a timer scheduler. Wi-Fi,
+BLE, weather, and OTA are not implemented yet.
 
 Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
 ## Layout
 
-- `main/` — composition root (`app_main`) and temporary TickSource/TickSink demo
+- `main/` — composition root (`app_main`)
 - `components/platform/` — component interface, mailbox, runtime, scheduler, logging
+- `components/graphics/` — framebuffer, element tree, and bitmap rendering
+- `components/display/` — LED matrix output; loads the test bitmap and presents it
 - `components/<name>/test/native_host/` — GoogleTest cases owned by that component
 - `components/<name>/test/embedded/` — Unity cases and mocks owned by that component
 - `test/native_host/` — shared GoogleTest/CTest runner (no ESP-IDF; no `test_*.cpp`)
@@ -31,10 +33,14 @@ serial monitor with `Ctrl+]`.
 
 ## Runtime demo
 
-On boot, `TickSource` posts `Tick` events on a periodic timer. `TickSink` logs
-each tick and, after a few counts, unicasts `PauseTicks`. `TickSource` cancels
-the timer and posts `TicksPaused`. Everything runs on the control task; the
-stubs will be removed when real services land.
+On boot, `app_main` mounts the assets partition, registers `DisplayRuntime`,
+and arms a coalesced `RefreshDisplay` timer at 15 Hz before `runtime.start()`.
+`esp_timer` fires the first callback one period later (about 66.7 ms), after
+`DisplayRuntime::start` has loaded `/assets/test.bmp`, built one root bitmap
+element at the origin, and initialized the LED matrix. Each event clears the
+32×8 framebuffer, renders that element, and presents the frame. The event
+`coalesce_key` replaces a queued refresh when a frame is still waiting, so the
+mailbox keeps a single pending frame. The control task runs every step.
 
 ## Tests
 

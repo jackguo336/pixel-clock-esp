@@ -8,6 +8,7 @@ enum class EventType : uint16_t {
     None = 0,
     Tick = 1,
     TicksPaused = 2,
+    RefreshDisplay = 3,
 };
 
 enum class CommandType : uint16_t {

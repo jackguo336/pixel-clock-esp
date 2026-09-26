@@ -1,42 +1,65 @@
-# GoogleTest target for the display component. Added by the shared runner at
-# test/native_host/; does not load ESP-IDF. Compiles host-safe production
-# sources directly and exposes both public and private include paths.
-set(DISPLAY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-set(FILE_SYSTEM_INCLUDE "${DISPLAY_ROOT}/../file_system/include")
+# GoogleTest targets for led_matrix. Added by the shared runner at
+# test/native_host/; does not load ESP-IDF. The mapping suite compiles the
+# real mapper. The output suite compiles led_matrix_output.cpp against host
+# stubs and a test double for led_index_for_logical_pixel.
+set(LED_MATRIX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(GRAPHICS_ROOT "${LED_MATRIX_ROOT}/../graphics")
+set(GRAPHICS_INCLUDE "${GRAPHICS_ROOT}/include")
 
-add_executable(display
-    test_bitmap_file.cpp
-    test_logical_framebuffer.cpp
-    test_bitmap_file_loader.cpp
-    test_bitmap_rasterizer.cpp
-    test_element_tree.cpp
-    test_element_tree_renderer.cpp
-    test_views.cpp
-    "${DISPLAY_ROOT}/src/bitmap_file.cpp"
-    "${DISPLAY_ROOT}/src/logical_framebuffer.cpp"
-    "${DISPLAY_ROOT}/src/bitmap_file_loader.cpp"
-    "${DISPLAY_ROOT}/src/bitmap_rasterizer.cpp"
-    "${DISPLAY_ROOT}/src/element_tree_renderer.cpp"
+add_executable(led_matrix
+    test_led_matrix_map.cpp
+    "${LED_MATRIX_ROOT}/src/led_matrix_map.cpp"
 )
 
-target_include_directories(display
+target_include_directories(led_matrix
     PRIVATE
-        "${DISPLAY_ROOT}/include"
-        "${DISPLAY_ROOT}/src"
-        "${FILE_SYSTEM_INCLUDE}"
+        "${LED_MATRIX_ROOT}/include"
+        "${LED_MATRIX_ROOT}/src"
+        "${GRAPHICS_INCLUDE}"
 )
 
-target_compile_options(display
+target_compile_options(led_matrix
     PRIVATE
         -Wall
         -Wextra
         -Wpedantic
 )
 
-target_link_libraries(display
+target_link_libraries(led_matrix
+    PRIVATE
+        GTest::gtest_main
+)
+
+add_executable(led_matrix_output
+    test_led_matrix_output.cpp
+    mock_led_strip.cpp
+    mock_led_index.cpp
+    stubs/esp_err.cpp
+    "${LED_MATRIX_ROOT}/src/led_matrix_output.cpp"
+    "${GRAPHICS_ROOT}/src/logical_framebuffer.cpp"
+)
+
+target_include_directories(led_matrix_output
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stubs"
+        "${LED_MATRIX_ROOT}/include"
+        "${LED_MATRIX_ROOT}/src"
+        "${GRAPHICS_INCLUDE}"
+)
+
+target_compile_options(led_matrix_output
+    PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+)
+
+target_link_libraries(led_matrix_output
     PRIVATE
         GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(display TEST_PREFIX "display.")
+gtest_discover_tests(led_matrix TEST_PREFIX "led_matrix.")
+gtest_discover_tests(led_matrix_output TEST_PREFIX "led_matrix.")

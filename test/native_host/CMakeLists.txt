@@ -32,9 +32,9 @@ enable_testing()
 # components/<name>/test/native_host/CMakeLists.txt.
 set(NATIVE_HOST_TEST_COMPONENTS
     platform
-    display
+    graphics
     file_system
-    led_matrix
+    display
 )
 
 foreach(component IN LISTS NATIVE_HOST_TEST_COMPONENTS)
