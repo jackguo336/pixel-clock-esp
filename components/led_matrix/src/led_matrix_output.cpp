@@ -19,7 +19,7 @@ constexpr uint8_t kMaxColorChannelValue = 255;
 // Map red, green, and blue from the full 0-255 range into 0-max_brightness
 // using the same scale. Sharing the scale keeps the hue and only changes brightness,
 // so a brighter shade of a color stays brighter inside the limited range.
-[[nodiscard]] display::RgbColor color_within_brightness_limit(display::RgbColor color,
+[[nodiscard]] display::RgbColor scale_color_with_brightness_limit(display::RgbColor color,
                                                               uint8_t max_brightness)
 {
     const auto scale = [max_brightness](uint8_t channel) {
@@ -109,10 +109,10 @@ LedMatrixOutputStatus LedMatrixOutput::present(const display::LogicalFramebuffer
 
             const std::size_t index =
                 led_index_for_logical_pixel(x, y, config_.orientation, config_.serpentine);
-            const display::RgbColor safe_color =
-                color_within_brightness_limit(*color, config_.max_brightness);
-            const esp_err_t err = led_strip_set_pixel(strip, static_cast<uint32_t>(index), safe_color.red,
-                                                      safe_color.green, safe_color.blue);
+            const display::RgbColor scaled_color =
+                scale_color_with_brightness_limit(*color, config_.max_brightness);
+            const esp_err_t err = led_strip_set_pixel(strip, static_cast<uint32_t>(index), scaled_color.red,
+                                                      scaled_color.green, scaled_color.blue);
             if (err != ESP_OK) {
                 ESP_LOGE(kTag, "led_strip_set_pixel failed: %s", esp_err_to_name(err));
                 return LedMatrixOutputStatus::DriverError;
