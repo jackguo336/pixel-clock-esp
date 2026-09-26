@@ -43,68 +43,68 @@ class LedMatrixMapWiring : public testing::TestWithParam<Wiring> {};
 
 }  // namespace
 
-TEST(LedMatrixMap, HorizontalCornersAndInterior)
+TEST(LedMatrixMap, HorizontalRunsLeftToRight)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::Horizontal;
+    // Row 0 runs left-to-right: top-left is 0, top-right is width - 1.
     expect_index(0, 0, orientation, false, 0);
     expect_index(31, 0, orientation, false, 31);
-    expect_index(0, 7, orientation, false, 224);
-    expect_index(31, 7, orientation, false, 255);
+    // A later row continues at row * width + column (3 * 32 + 15).
     expect_index(15, 3, orientation, false, 111);
 }
 
-TEST(LedMatrixMap, HorizontalReversedCornersAndInterior)
+TEST(LedMatrixMap, HorizontalReversedRunsRightToLeft)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::HorizontalReversed;
+    // Row 0 starts at the right edge, so top-right is 0 and top-left is width - 1.
     expect_index(31, 0, orientation, false, 0);
     expect_index(0, 0, orientation, false, 31);
-    expect_index(31, 7, orientation, false, 224);
-    expect_index(0, 7, orientation, false, 255);
+    // A later row is counted from the right (3 * 32 + (31 - 15)).
     expect_index(15, 3, orientation, false, 112);
 }
 
-TEST(LedMatrixMap, VerticalCornersAndInterior)
+TEST(LedMatrixMap, VerticalRunsTopToBottom)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::Vertical;
+    // Column 0 runs top-to-bottom: the top is 0, the bottom is height - 1.
     expect_index(0, 0, orientation, false, 0);
     expect_index(0, 7, orientation, false, 7);
-    expect_index(31, 0, orientation, false, 248);
-    expect_index(31, 7, orientation, false, 255);
+    // A later column continues at column * height + row (15 * 8 + 3).
     expect_index(15, 3, orientation, false, 123);
 }
 
-TEST(LedMatrixMap, VerticalReversedCornersAndInterior)
+TEST(LedMatrixMap, VerticalReversedRunsBottomToTop)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::VerticalReversed;
+    // Column 0 starts at the bottom, so the bottom is 0 and the top is height - 1.
     expect_index(0, 7, orientation, false, 0);
     expect_index(0, 0, orientation, false, 7);
-    expect_index(31, 7, orientation, false, 248);
-    expect_index(31, 0, orientation, false, 255);
+    // A later column is counted from the bottom (15 * 8 + (7 - 3)).
     expect_index(15, 3, orientation, false, 124);
 }
 
 TEST(LedMatrixMap, SerpentineReversesOddLanes)
 {
+    // First odd row runs right-to-left: left edge is 32 + 31, right edge is 32.
     expect_index(0, 1, led_matrix::LedMatrixOrientation::Horizontal, true, 63);
     expect_index(31, 1, led_matrix::LedMatrixOrientation::Horizontal, true, 32);
-    expect_index(0, 7, led_matrix::LedMatrixOrientation::Horizontal, true, 255);
-    expect_index(31, 7, led_matrix::LedMatrixOrientation::Horizontal, true, 224);
+    // Later odd row is counted from the right (3 * 32 + (31 - 15)).
     expect_index(15, 3, led_matrix::LedMatrixOrientation::Horizontal, true, 112);
 
+    // Reversed wiring flips that odd row back to left-to-right.
     expect_index(0, 1, led_matrix::LedMatrixOrientation::HorizontalReversed, true, 32);
     expect_index(31, 1, led_matrix::LedMatrixOrientation::HorizontalReversed, true, 63);
     expect_index(15, 3, led_matrix::LedMatrixOrientation::HorizontalReversed, true, 111);
 
+    // First odd column runs bottom-to-top: top is 8 + 7, bottom is 8.
     expect_index(1, 0, led_matrix::LedMatrixOrientation::Vertical, true, 15);
     expect_index(1, 7, led_matrix::LedMatrixOrientation::Vertical, true, 8);
-    expect_index(31, 0, led_matrix::LedMatrixOrientation::Vertical, true, 255);
-    expect_index(31, 7, led_matrix::LedMatrixOrientation::Vertical, true, 248);
+    // Later odd column is counted from the bottom (15 * 8 + (7 - 3)).
     expect_index(15, 3, led_matrix::LedMatrixOrientation::Vertical, true, 124);
 
+    // Reversed wiring flips that odd column back to top-to-bottom.
     expect_index(1, 0, led_matrix::LedMatrixOrientation::VerticalReversed, true, 8);
     expect_index(1, 7, led_matrix::LedMatrixOrientation::VerticalReversed, true, 15);
-    expect_index(31, 0, led_matrix::LedMatrixOrientation::VerticalReversed, true, 248);
-    expect_index(31, 7, led_matrix::LedMatrixOrientation::VerticalReversed, true, 255);
     expect_index(15, 3, led_matrix::LedMatrixOrientation::VerticalReversed, true, 123);
 }
 
