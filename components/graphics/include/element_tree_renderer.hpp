@@ -3,6 +3,7 @@
 #include "bitmap_rasterizer.hpp"
 #include "element_tree.hpp"
 #include "logical_framebuffer.hpp"
+#include "text_rasterizer.hpp"
 
 namespace display {
 
@@ -12,6 +13,7 @@ public:
 
 private:
     BitmapRasterizer bitmap_rasterizer_{};
+    TextRasterizer text_rasterizer_{};
 };
 
 }  // namespace display

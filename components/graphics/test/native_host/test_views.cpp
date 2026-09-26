@@ -70,7 +70,7 @@ display::Element make_label()
         .id = kLabelId,
         .position = kLabelPosition,
         .paint = kLabelPaint,
-        .payload = display::TextElementPayload{.text = kLabelText},
+        .payload = display::TextElementPayload{.text = kLabelText, .font = nullptr},
     };
 }
 
@@ -184,6 +184,7 @@ TEST(View, BuildReadsViewDataAndAddsScopedElements)
     const auto* label = std::get_if<display::TextElementPayload>(&tree.nodes[2].element.payload);
     ASSERT_NE(label, nullptr);
     EXPECT_EQ(label->text, kLabelText);
+    EXPECT_EQ(label->font, nullptr);
 }
 
 TEST(View, BuildCanBeCalledInsideContainer)
@@ -215,6 +216,7 @@ TEST(View, BuildCanBeCalledInsideContainer)
     const auto* label = std::get_if<display::TextElementPayload>(&tree.nodes[3].element.payload);
     ASSERT_NE(label, nullptr);
     EXPECT_EQ(label->text, kLabelText);
+    EXPECT_EQ(label->font, nullptr);
 }
 
 TEST(View, BuildPropagatesBuilderFailures)

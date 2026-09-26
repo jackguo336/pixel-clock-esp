@@ -2,6 +2,8 @@ idf_component_register(SRCS "src/bitmap_file.cpp"
                             "src/logical_framebuffer.cpp"
                             "src/bitmap_file_loader.cpp"
                             "src/bitmap_rasterizer.cpp"
+                            "src/font.cpp"
+                            "src/text_rasterizer.cpp"
                             "src/element_tree_renderer.cpp"
                        INCLUDE_DIRS "include"
                        PRIV_REQUIRES vfs file_system)

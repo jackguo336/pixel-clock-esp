@@ -6,6 +6,7 @@
 
 #include "bitmap_file.hpp"
 #include "color.hpp"
+#include "font.hpp"
 #include "geometry.hpp"
 
 namespace display {
@@ -16,6 +17,8 @@ struct ElementId {
 
 struct TextElementPayload {
     std::string_view text{};
+    // Non-owning. The font and its bitmap pixels must outlive the element tree.
+    const Font* font{};
 };
 
 struct FilledRectangleElementPayload {
