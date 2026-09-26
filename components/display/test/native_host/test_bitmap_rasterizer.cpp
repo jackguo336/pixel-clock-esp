@@ -5,7 +5,7 @@
 #include "bitmap_rasterizer.hpp"
 #include "display/bitmap_file.hpp"
 #include "gtest/gtest.h"
-#include "logical_framebuffer.hpp"
+#include "display/logical_framebuffer.hpp"
 
 namespace {
 
