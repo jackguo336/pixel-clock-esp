@@ -35,19 +35,6 @@ void DisplayRuntime::start()
 
     bitmap_ = destination.as_read_only();
 
-    display::ElementTreeBuilder builder(nodes_);
-    const display::Element bitmap_element{
-        .id = {},
-        .position = {.x = 0, .y = 0},
-        .paint = display::SolidPaint{},
-        .payload = display::BitmapElementPayload{.bitmap = &bitmap_},
-    };
-    if (!builder.add_terminal(bitmap_element)) {
-        PLATFORM_LOGE(this, "failed to add bitmap element");
-        return;
-    }
-    tree_ = builder.get_tree();
-
     const led_matrix::LedMatrixOutputStatus output_status = output_.initialize();
     if (output_status != led_matrix::LedMatrixOutputStatus::Ok) {
         PLATFORM_LOGE(this, "led matrix initialize failed status=%u",
@@ -66,6 +53,19 @@ void DisplayRuntime::on_event(const platform::Event& event)
 
 void DisplayRuntime::refresh()
 {
+    display::ElementTreeBuilder builder(nodes_);
+    const display::Element bitmap_element{
+        .id = {},
+        .position = {.x = 0, .y = 0},
+        .paint = display::SolidPaint{},
+        .payload = display::BitmapElementPayload{.bitmap = &bitmap_},
+    };
+    if (!builder.add_terminal(bitmap_element)) {
+        PLATFORM_LOGE(this, "failed to add bitmap element");
+        return;
+    }
+    tree_ = builder.get_tree();
+
     framebuffer_.clear();
     renderer_.render(tree_, framebuffer_);
     const led_matrix::LedMatrixOutputStatus status = output_.present(framebuffer_);
