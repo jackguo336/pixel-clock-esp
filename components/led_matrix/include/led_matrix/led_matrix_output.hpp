@@ -20,7 +20,7 @@ struct LedMatrixOutputConfig {
     // WARNING: 256 WS2812Bs at full brightness can draw tens of amps. Consider power
     // supply current limits before increasing this value. Maximum value of a color
     // channel, from 0 to 255.
-    uint8_t max_brightness{5};
+    uint8_t max_brightness{50};
 };
 
 enum class LedMatrixOutputStatus : uint8_t {
