@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <variant>
 
-#include "display/geometry.hpp"
+#include "geometry.hpp"
 
 namespace display {
 

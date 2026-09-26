@@ -1,4 +1,4 @@
-#include "display/element_tree_renderer.hpp"
+#include "element_tree_renderer.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -6,8 +6,8 @@
 #include <optional>
 #include <variant>
 
-#include "display/elements.hpp"
-#include "display/geometry.hpp"
+#include "elements.hpp"
+#include "geometry.hpp"
 
 namespace display {
 namespace {

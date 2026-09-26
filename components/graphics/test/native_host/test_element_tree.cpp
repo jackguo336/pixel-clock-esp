@@ -3,9 +3,9 @@
 #include <string_view>
 #include <variant>
 
-#include "display/bitmap_file.hpp"
-#include "display/element_tree.hpp"
-#include "display/elements.hpp"
+#include "bitmap_file.hpp"
+#include "element_tree.hpp"
+#include "elements.hpp"
 #include "gtest/gtest.h"
 
 namespace {

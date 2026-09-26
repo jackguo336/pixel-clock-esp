@@ -1,6 +1,6 @@
 #include "led_matrix_map.hpp"
 
-#include "display/logical_framebuffer.hpp"
+#include "logical_framebuffer.hpp"
 
 namespace led_matrix {
 namespace {

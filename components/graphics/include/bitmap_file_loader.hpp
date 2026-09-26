@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "display/bitmap_file.hpp"
+#include "bitmap_file.hpp"
 
 namespace display {
 

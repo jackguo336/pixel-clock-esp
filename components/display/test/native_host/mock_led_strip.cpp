@@ -2,7 +2,7 @@
 
 #include <array>
 
-#include "display/logical_framebuffer.hpp"
+#include "logical_framebuffer.hpp"
 
 namespace mock_led_strip {
 namespace {

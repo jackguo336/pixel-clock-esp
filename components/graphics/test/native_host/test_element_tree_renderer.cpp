@@ -3,12 +3,12 @@
 #include <cstdint>
 #include <string_view>
 
-#include "display/bitmap_file.hpp"
-#include "display/element_tree.hpp"
-#include "display/elements.hpp"
-#include "display/element_tree_renderer.hpp"
+#include "bitmap_file.hpp"
+#include "element_tree.hpp"
+#include "elements.hpp"
+#include "element_tree_renderer.hpp"
 #include "gtest/gtest.h"
-#include "display/logical_framebuffer.hpp"
+#include "logical_framebuffer.hpp"
 
 namespace {
 

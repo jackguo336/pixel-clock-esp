@@ -4,10 +4,10 @@
 #include <type_traits>
 #include <variant>
 
-#include "display/element_tree.hpp"
-#include "display/elements.hpp"
-#include "display/view_data.hpp"
-#include "display/views.hpp"
+#include "element_tree.hpp"
+#include "elements.hpp"
+#include "view_data.hpp"
+#include "views.hpp"
 #include "gtest/gtest.h"
 
 namespace {

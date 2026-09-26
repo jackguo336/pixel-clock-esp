@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "led_matrix/led_matrix_output.hpp"
+#include "led_matrix_output.hpp"
 
 namespace mock_led_index {
 

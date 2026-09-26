@@ -1,7 +1,7 @@
 #include <array>
 #include <cstdint>
 
-#include "display/bitmap_file.hpp"
+#include "bitmap_file.hpp"
 #include "gtest/gtest.h"
 
 namespace {

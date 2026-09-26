@@ -4,12 +4,12 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "display/bitmap_file.hpp"
-#include "display/color.hpp"
-#include "display/element_tree.hpp"
-#include "display/element_tree_renderer.hpp"
-#include "display/logical_framebuffer.hpp"
-#include "led_matrix/led_matrix_output.hpp"
+#include "bitmap_file.hpp"
+#include "color.hpp"
+#include "element_tree.hpp"
+#include "element_tree_renderer.hpp"
+#include "logical_framebuffer.hpp"
+#include "led_matrix_output.hpp"
 #include "platform/runtime_component.hpp"
 
 namespace display_runtime {

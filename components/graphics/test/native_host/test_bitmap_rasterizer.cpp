@@ -2,10 +2,10 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "display/bitmap_rasterizer.hpp"
-#include "display/bitmap_file.hpp"
+#include "bitmap_rasterizer.hpp"
+#include "bitmap_file.hpp"
 #include "gtest/gtest.h"
-#include "display/logical_framebuffer.hpp"
+#include "logical_framebuffer.hpp"
 
 namespace {
 

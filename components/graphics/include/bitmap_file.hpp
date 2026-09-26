@@ -2,8 +2,8 @@
 
 #include <span>
 
-#include "display/color.hpp"
-#include "display/geometry.hpp"
+#include "color.hpp"
+#include "geometry.hpp"
 
 namespace display {
 

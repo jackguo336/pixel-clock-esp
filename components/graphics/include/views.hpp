@@ -1,7 +1,7 @@
 #pragma once
 
-#include "display/element_tree.hpp"
-#include "display/view_data.hpp"
+#include "element_tree.hpp"
+#include "view_data.hpp"
 
 namespace display {
 

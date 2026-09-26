@@ -4,7 +4,7 @@
 #include <string>
 #include <tuple>
 
-#include "display/logical_framebuffer.hpp"
+#include "logical_framebuffer.hpp"
 #include "gtest/gtest.h"
 #include "led_matrix_map.hpp"
 

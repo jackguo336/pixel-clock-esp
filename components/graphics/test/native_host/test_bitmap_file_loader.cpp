@@ -7,8 +7,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "display/bitmap_file_loader.hpp"
-#include "display/bitmap_file.hpp"
+#include "bitmap_file_loader.hpp"
+#include "bitmap_file.hpp"
 #include "gtest/gtest.h"
 
 namespace {

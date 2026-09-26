@@ -4,9 +4,9 @@
 #include <string_view>
 #include <variant>
 
-#include "display/bitmap_file.hpp"
-#include "display/color.hpp"
-#include "display/geometry.hpp"
+#include "bitmap_file.hpp"
+#include "color.hpp"
+#include "geometry.hpp"
 
 namespace display {
 

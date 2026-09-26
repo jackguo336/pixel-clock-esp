@@ -1,8 +1,8 @@
 #pragma once
 
-#include "display/bitmap_file.hpp"
-#include "display/geometry.hpp"
-#include "display/logical_framebuffer.hpp"
+#include "bitmap_file.hpp"
+#include "geometry.hpp"
+#include "logical_framebuffer.hpp"
 
 namespace display {
 

@@ -1,4 +1,4 @@
-#include "led_matrix/led_matrix_output.hpp"
+#include "led_matrix_output.hpp"
 
 #include <cstdint>
 

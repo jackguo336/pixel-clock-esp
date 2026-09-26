@@ -1,9 +1,9 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "display/logical_framebuffer.hpp"
+#include "logical_framebuffer.hpp"
 #include "gtest/gtest.h"
-#include "led_matrix/led_matrix_output.hpp"
+#include "led_matrix_output.hpp"
 #include "mock_led_index.hpp"
 #include "mock_led_strip.hpp"
 

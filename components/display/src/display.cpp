@@ -1,7 +1,7 @@
-#include "display_runtime/display_runtime.hpp"
+#include "display.hpp"
 
-#include "display/bitmap_file_loader.hpp"
-#include "display/elements.hpp"
+#include "bitmap_file_loader.hpp"
+#include "elements.hpp"
 #include "platform/log.hpp"
 
 namespace display_runtime {

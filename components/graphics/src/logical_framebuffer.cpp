@@ -1,4 +1,4 @@
-#include "display/logical_framebuffer.hpp"
+#include "logical_framebuffer.hpp"
 
 namespace display {
 
