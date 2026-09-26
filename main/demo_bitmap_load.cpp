@@ -6,7 +6,6 @@
 
 #include "display/bitmap_file.hpp"
 #include "display/bitmap_file_loader.hpp"
-#include "display/logical_framebuffer.hpp"
 #include "esp_log.h"
 
 namespace app {
@@ -21,10 +20,8 @@ constexpr std::size_t kTestBitmapPixelCount =
 
 }  // namespace
 
-void load_test_bitmap(display::LogicalFramebuffer& framebuffer)
+void load_test_bitmap()
 {
-    framebuffer.clear();
-
     std::array<display::RgbColor, kTestBitmapPixelCount> pixels{};
     display::MutableBitmapFile destination{};
     destination.size.width = kTestBitmapWidth;
@@ -40,18 +37,9 @@ void load_test_bitmap(display::LogicalFramebuffer& framebuffer)
     }
 
     ESP_LOGI(kTag, "loaded %s %ux%u", kTestBitmapPath, kTestBitmapWidth, kTestBitmapHeight);
-    for (uint16_t y = 0; y < kTestBitmapHeight; ++y) {
-        for (uint16_t x = 0; x < kTestBitmapWidth; ++x) {
-            const std::size_t index = static_cast<std::size_t>(y) * static_cast<std::size_t>(kTestBitmapWidth) +
-                                      static_cast<std::size_t>(x);
-            const display::RgbColor color = pixels[index];
-            ESP_LOGI(kTag, "pixel[%u] rgb=(%u,%u,%u)", static_cast<unsigned>(index), color.red, color.green,
-                     color.blue);
-            if (!framebuffer.set_pixel(x, y, color)) {
-                ESP_LOGE(kTag, "framebuffer rejected pixel x=%u y=%u", x, y);
-                return;
-            }
-        }
+    for (std::size_t i = 0; i < pixels.size(); ++i) {
+        ESP_LOGI(kTag, "pixel[%u] rgb=(%u,%u,%u)", static_cast<unsigned>(i), pixels[i].red,
+                 pixels[i].green, pixels[i].blue);
     }
 }
 
