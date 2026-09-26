@@ -1,4 +1,4 @@
-#include "element_tree_renderer.hpp"
+#include "display/element_tree_renderer.hpp"
 
 #include <algorithm>
 #include <cstdint>

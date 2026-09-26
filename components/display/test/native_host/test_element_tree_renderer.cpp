@@ -6,7 +6,7 @@
 #include "display/bitmap_file.hpp"
 #include "display/element_tree.hpp"
 #include "display/elements.hpp"
-#include "element_tree_renderer.hpp"
+#include "display/element_tree_renderer.hpp"
 #include "gtest/gtest.h"
 #include "display/logical_framebuffer.hpp"
 

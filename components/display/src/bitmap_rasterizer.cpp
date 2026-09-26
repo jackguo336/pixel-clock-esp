@@ -1,4 +1,4 @@
-#include "bitmap_rasterizer.hpp"
+#include "display/bitmap_rasterizer.hpp"
 
 #include <cstddef>
 #include <cstdint>

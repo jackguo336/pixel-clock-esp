@@ -2,7 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "bitmap_rasterizer.hpp"
+#include "display/bitmap_rasterizer.hpp"
 #include "display/bitmap_file.hpp"
 #include "gtest/gtest.h"
 #include "display/logical_framebuffer.hpp"
