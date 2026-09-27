@@ -1,11 +1,7 @@
 #pragma once
 
 #include <array>
-#include <cstddef>
-#include <cstdint>
 
-#include "bitmap_file.hpp"
-#include "color.hpp"
 #include "element_tree.hpp"
 #include "element_tree_renderer.hpp"
 #include "logical_framebuffer.hpp"
@@ -23,13 +19,6 @@ public:
 private:
     void refresh();
 
-    static constexpr uint16_t kTestBitmapWidth = 2;
-    static constexpr uint16_t kTestBitmapHeight = 2;
-    static constexpr std::size_t kTestBitmapPixelCount =
-        static_cast<std::size_t>(kTestBitmapWidth) * static_cast<std::size_t>(kTestBitmapHeight);
-
-    std::array<display::RgbColor, kTestBitmapPixelCount> pixels_{};
-    display::BitmapFile bitmap_{};
     std::array<display::ElementTreeNode, 1> nodes_{};
     display::ElementTree tree_{};
     display::LogicalFramebuffer framebuffer_{};

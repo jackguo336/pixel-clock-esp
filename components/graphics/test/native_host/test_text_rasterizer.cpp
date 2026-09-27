@@ -75,6 +75,32 @@ void expect_size(display::Size size, uint16_t width, uint16_t height)
 
 }  // namespace
 
+TEST(FontConfig, ConfiguresStackedBitmapStorage)
+{
+    constexpr display::FontConfig config =
+        display::configure_font<2, 3>("/assets/fonts/atlas.bmp", "ABC");
+
+    static_assert(config.pixel_count() == 22);
+    expect_size(config.bitmap_size(), 2, 11);
+    EXPECT_EQ(config.character_size.width, 2);
+    EXPECT_EQ(config.character_size.height, 3);
+    EXPECT_EQ(config.character_lookup, "ABC");
+    EXPECT_STREQ(config.bitmap_path, "/assets/fonts/atlas.bmp");
+}
+
+TEST(FontConfig, ReturnsEmptyStorageDimensionsForInvalidConfiguration)
+{
+    constexpr display::FontConfig empty_lookup =
+        display::configure_font<2, 3>("/assets/fonts/atlas.bmp", "");
+    constexpr display::FontConfig overflowing_height =
+        display::configure_font<1, 32768>("/assets/fonts/atlas.bmp", "AB");
+
+    expect_size(empty_lookup.bitmap_size(), 0, 0);
+    EXPECT_EQ(empty_lookup.pixel_count(), 0);
+    expect_size(overflowing_height.bitmap_size(), 0, 0);
+    EXPECT_EQ(overflowing_height.pixel_count(), 0);
+}
+
 TEST(Font, AcceptsOneCharacterWideStackedAtlas)
 {
     const std::array<display::RgbColor, 1> single_glyph{kAtlasMark};
