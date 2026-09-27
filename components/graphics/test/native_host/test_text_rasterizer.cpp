@@ -174,7 +174,6 @@ TEST(TextRasterizer, PaintsNonBlackAtlasPixelsWithSolidColorAndLeavesBlackUnchan
         font, "M", display::RgbColor{.red = 10, .green = 20, .blue = 30}, {.x = 1, .y = 1}, framebuffer);
 
     expect_size(size, 3, 1);
-    expect_size(rasterizer.measure(font, "M"), 3, 1);
     expect_rgb_at(framebuffer, 1, 1, 10, 20, 30);
     expect_rgb_at(framebuffer, 2, 1, 40, 50, 60);
     expect_rgb_at(framebuffer, 3, 1, 10, 20, 30);
@@ -200,7 +199,6 @@ TEST(TextRasterizer, LeavesOneTransparentPixelBetweenCharacters)
         rasterizer.rasterize(font, "AB", kForeground, {.x = 2, .y = 3}, framebuffer);
 
     expect_size(size, 3, 1);
-    expect_size(rasterizer.measure(font, "AB"), 3, 1);
     expect_rgb_at(framebuffer, 2, 3, 0, 200, 0);
     expect_rgb_at(framebuffer, 3, 3, 9, 9, 9);
     expect_rgb_at(framebuffer, 4, 3, 0, 200, 0);
@@ -220,7 +218,6 @@ TEST(TextRasterizer, AdvancesUnknownCharactersAsBlankGlyphs)
     const display::Size size = rasterizer.rasterize(font, "A?B", kForeground, {}, framebuffer);
 
     expect_size(size, 8, 2);
-    expect_size(rasterizer.measure(font, "A?B"), 8, 2);
     expect_rgb_at(framebuffer, 1, 0, 0, 200, 0);
     expect_rgb_at(framebuffer, 0, 1, 0, 200, 0);
     expect_rgb_at(framebuffer, 3, 0, 9, 9, 9);
@@ -243,9 +240,7 @@ TEST(TextRasterizer, ReturnsZeroSizeAndDrawsNothingForEmptyTextOrInvalidFont)
     const display::LogicalFramebuffer original = framebuffer;
     const display::TextRasterizer rasterizer;
 
-    expect_size(rasterizer.measure(font, ""), 0, 0);
     expect_size(rasterizer.rasterize(font, "", kForeground, {}, framebuffer), 0, 0);
-    expect_size(rasterizer.measure(invalid_font, "A"), 0, 0);
     expect_size(rasterizer.rasterize(invalid_font, "A", kForeground, {}, framebuffer), 0, 0);
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }
@@ -305,6 +300,5 @@ TEST(TextRasterizer, ReturnsUnclippedSizeWhenTextIsFullyOffCanvas)
     expect_size(rasterizer.rasterize(font, "Q", kForeground, {.x = 32, .y = 0}, framebuffer), 2, 2);
     expect_size(rasterizer.rasterize(font, "Q", kForeground, {.x = 0, .y = -2}, framebuffer), 2, 2);
     expect_size(rasterizer.rasterize(font, "Q", kForeground, {.x = 0, .y = 8}, framebuffer), 2, 2);
-    expect_size(rasterizer.measure(font, "QQ"), 5, 2);
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }

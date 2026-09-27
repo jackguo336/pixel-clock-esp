@@ -132,7 +132,8 @@ Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex 
                 return renderer.text_rasterizer_.rasterize(*payload.font, payload.text, solid_paint->color,
                                                             element_origin, framebuffer);
             }
-            return renderer.text_rasterizer_.measure(*payload.font, payload.text);
+            // TODO: Rasterize text with LinearGradientPaint instead of skipping and reporting an empty size.
+            return Size{};
         }
 
         Size operator()(const FilledRectangleElementPayload& payload) const

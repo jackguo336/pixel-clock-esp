@@ -744,7 +744,7 @@ TEST(ElementTreeRenderer, StacksTextTopToBottomUsingMeasuredHeight)
     expect_rgb_at(framebuffer, 3, 1, 8, 8, 8);
 }
 
-TEST(ElementTreeRenderer, GradientTextStaysUndrawnAndStillAdvancesStackedLayout)
+TEST(ElementTreeRenderer, GradientTextStaysUndrawnAndContributesNoSize)
 {
     const std::array<display::RgbColor, 1> glyph{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
     const std::array<display::RgbColor, 1> bitmap_pixels{display::RgbColor{.red = 0, .green = 0, .blue = 255}};
@@ -784,10 +784,10 @@ TEST(ElementTreeRenderer, GradientTextStaysUndrawnAndStillAdvancesStackedLayout)
     const display::ElementTreeRenderer renderer;
     renderer.render(builder.get_tree(), framebuffer);
 
-    expect_rgb_at(framebuffer, 1, 2, 40, 50, 60);
+    expect_rgb_at(framebuffer, 1, 2, 0, 0, 255);
     expect_rgb_at(framebuffer, 2, 2, 40, 50, 60);
     expect_rgb_at(framebuffer, 3, 2, 40, 50, 60);
-    expect_rgb_at(framebuffer, 4, 2, 0, 0, 255);
+    expect_rgb_at(framebuffer, 4, 2, 40, 50, 60);
 }
 
 TEST(ElementTreeRenderer, StackedLayoutGivesInvalidFontTextNoSize)

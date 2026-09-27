@@ -71,11 +71,6 @@ void draw_text(const Font& font, std::string_view text, RgbColor foreground, Pos
 
 }  // namespace
 
-Size TextRasterizer::measure(const Font& font, std::string_view text) const
-{
-    return measured_text_size(font, text);
-}
-
 Size TextRasterizer::rasterize(const Font& font, std::string_view text, RgbColor foreground,
                                Position canvas_origin, LogicalFramebuffer& framebuffer) const
 {
