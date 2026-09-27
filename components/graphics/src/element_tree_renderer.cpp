@@ -57,14 +57,11 @@ namespace {
     return static_cast<uint16_t>(std::clamp(far_edge, int32_t{0}, kMaxExtent));
 }
 
-Size render_node(const ElementTree& tree, ElementNodeIndex index, Position canvas_origin,
-                 LogicalFramebuffer& framebuffer, const BitmapRasterizer& bitmap_rasterizer,
-                 const TextRasterizer& text_rasterizer);
+}  // namespace
 
-Size render_children(const ElementTree& tree, std::optional<ElementNodeIndex> first_child,
-                     Position container_origin, const ContainerElementPayload& container,
-                     LogicalFramebuffer& framebuffer, const BitmapRasterizer& bitmap_rasterizer,
-                     const TextRasterizer& text_rasterizer)
+Size ElementTreeRenderer::render_children(const ElementTree& tree, std::optional<ElementNodeIndex> first_child,
+                                          Position container_origin, const ContainerElementPayload& container,
+                                          LogicalFramebuffer& framebuffer) const
 {
     int32_t max_right = 0;
     int32_t max_bottom = 0;
@@ -78,8 +75,7 @@ Size render_children(const ElementTree& tree, std::optional<ElementNodeIndex> fi
         const Position relative_position = child_relative_position(
             child.element, container, has_previous_sibling, previous_position, previous_size);
         const Position child_origin = element_origin_on_canvas(container_origin, relative_position);
-        const Size child_size = render_node(tree, *child_index, child_origin, framebuffer, bitmap_rasterizer,
-                                             text_rasterizer);
+        const Size child_size = render_node(tree, *child_index, child_origin, framebuffer);
 
         const int32_t right = static_cast<int32_t>(relative_position.x) + static_cast<int32_t>(child_size.width);
         const int32_t bottom =
@@ -103,71 +99,64 @@ Size render_children(const ElementTree& tree, std::optional<ElementNodeIndex> fi
     };
 }
 
-struct ElementPayloadVisitor {
-    const ElementTree& tree;
-    const ElementTreeNode& node;
-    Position element_origin;
-    LogicalFramebuffer& framebuffer;
-    const BitmapRasterizer& bitmap_rasterizer;
-    const TextRasterizer& text_rasterizer;
-
-    Size operator()(const ContainerElementPayload& payload) const
-    {
-        return render_children(tree, node.first_child, element_origin, payload, framebuffer, bitmap_rasterizer,
-                               text_rasterizer);
-    }
-
-    Size operator()(const BitmapElementPayload& payload) const
-    {
-        if (payload.bitmap == nullptr) {
-            return Size{};
-        }
-        bitmap_rasterizer.rasterize(*payload.bitmap, element_origin, framebuffer);
-        return payload.bitmap->size;
-    }
-
-    Size operator()(const TextElementPayload& payload) const
-    {
-        if (payload.font == nullptr || !payload.font->is_valid()) {
-            return Size{};
-        }
-        if (const auto* solid_paint = std::get_if<SolidPaint>(&node.element.paint)) {
-            return text_rasterizer.rasterize(*payload.font, payload.text, solid_paint->color, element_origin,
-                                              framebuffer);
-        }
-        return text_rasterizer.measure(*payload.font, payload.text);
-    }
-
-    Size operator()(const FilledRectangleElementPayload& payload) const
-    {
-        return payload.size;
-    }
-};
-
-Size render_node(const ElementTree& tree, ElementNodeIndex index, Position canvas_origin,
-                 LogicalFramebuffer& framebuffer, const BitmapRasterizer& bitmap_rasterizer,
-                 const TextRasterizer& text_rasterizer)
+Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex index, Position canvas_origin,
+                                      LogicalFramebuffer& framebuffer) const
 {
+    struct ElementPayloadVisitor {
+        const ElementTreeRenderer& renderer;
+        const ElementTree& tree;
+        const ElementTreeNode& node;
+        Position element_origin;
+        LogicalFramebuffer& framebuffer;
+
+        Size operator()(const ContainerElementPayload& payload) const
+        {
+            return renderer.render_children(tree, node.first_child, element_origin, payload, framebuffer);
+        }
+
+        Size operator()(const BitmapElementPayload& payload) const
+        {
+            if (payload.bitmap == nullptr) {
+                return Size{};
+            }
+            renderer.bitmap_rasterizer_.rasterize(*payload.bitmap, element_origin, framebuffer);
+            return payload.bitmap->size;
+        }
+
+        Size operator()(const TextElementPayload& payload) const
+        {
+            if (payload.font == nullptr || !payload.font->is_valid()) {
+                return Size{};
+            }
+            if (const auto* solid_paint = std::get_if<SolidPaint>(&node.element.paint)) {
+                return renderer.text_rasterizer_.rasterize(*payload.font, payload.text, solid_paint->color,
+                                                            element_origin, framebuffer);
+            }
+            return renderer.text_rasterizer_.measure(*payload.font, payload.text);
+        }
+
+        Size operator()(const FilledRectangleElementPayload& payload) const
+        {
+            return payload.size;
+        }
+    };
+
     const ElementTreeNode& node = tree.nodes[index];
     return std::visit(ElementPayloadVisitor{
+                          .renderer = *this,
                           .tree = tree,
                           .node = node,
                           .element_origin = canvas_origin,
                           .framebuffer = framebuffer,
-                          .bitmap_rasterizer = bitmap_rasterizer,
-                          .text_rasterizer = text_rasterizer,
                       },
                       node.element.payload);
 }
-
-}  // namespace
 
 void ElementTreeRenderer::render(const ElementTree& tree, LogicalFramebuffer& framebuffer) const
 {
     constexpr Position kCanvasOrigin{.x = 0, .y = 0};
     const Position root_origin = element_origin_on_canvas(kCanvasOrigin, tree.nodes[tree.root].element.position);
-    static_cast<void>(
-        render_node(tree, tree.root, root_origin, framebuffer, bitmap_rasterizer_, text_rasterizer_));
+    static_cast<void>(render_node(tree, tree.root, root_origin, framebuffer));
 }
 
 }  // namespace display
