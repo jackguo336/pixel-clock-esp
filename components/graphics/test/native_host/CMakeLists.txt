@@ -10,6 +10,7 @@ add_executable(graphics
     test_bitmap_file_loader.cpp
     test_bitmap_rasterizer.cpp
     test_text_rasterizer.cpp
+    test_font.cpp
     test_font_manager.cpp
     test_element_tree.cpp
     test_element_tree_renderer.cpp
