@@ -138,6 +138,12 @@ Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex 
 
         Size operator()(const FilledRectangleElementPayload& payload) const
         {
+            if (const auto* solid_paint = std::get_if<SolidPaint>(&node.element.paint)) {
+                renderer.rectangle_rasterizer_.rasterize(payload.size, solid_paint->color, element_origin,
+                                                          framebuffer);
+                return payload.size;
+            }
+            // TODO: Rasterize filled rectangles with LinearGradientPaint instead of skipping the fill.
             return payload.size;
         }
     };
