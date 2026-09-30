@@ -10,6 +10,9 @@
 #include "bitmap_file_loader.hpp"
 #include "bitmap_file.hpp"
 #include "gtest/gtest.h"
+#include "utils.hpp"
+
+using graphics_test::expect_rgb;
 
 namespace {
 
@@ -17,13 +20,6 @@ constexpr uint16_t kBitmapSignature = 0x4D42;
 constexpr uint32_t kBitmapInfoHeaderSize = 40;
 constexpr uint32_t kFileHeaderSize = 14;
 constexpr uint8_t kIgnoredAlpha = 0x7A;
-
-void expect_rgb(const display::RgbColor& actual, uint8_t red, uint8_t green, uint8_t blue)
-{
-    EXPECT_EQ(actual.red, red);
-    EXPECT_EQ(actual.green, green);
-    EXPECT_EQ(actual.blue, blue);
-}
 
 void append_le16(std::vector<uint8_t>& out, uint16_t value)
 {

@@ -6,6 +6,7 @@
 
 #include "bitmap_file.hpp"
 #include "color.hpp"
+#include "font.hpp"
 #include "geometry.hpp"
 
 namespace display {
@@ -16,6 +17,8 @@ struct ElementId {
 
 struct TextElementPayload {
     std::string_view text{};
+    // Reference to a font in memory.
+    const Font* font{};
 };
 
 struct FilledRectangleElementPayload {
@@ -23,7 +26,7 @@ struct FilledRectangleElementPayload {
 };
 
 struct BitmapElementPayload {
-    // Reference to a static bitmap file in memory.
+    // Reference to a bitmap file in memory.
     const BitmapFile* bitmap{};
 };
 

@@ -9,6 +9,9 @@ add_executable(graphics
     test_logical_framebuffer.cpp
     test_bitmap_file_loader.cpp
     test_bitmap_rasterizer.cpp
+    test_text_rasterizer.cpp
+    test_font.cpp
+    test_font_manager.cpp
     test_element_tree.cpp
     test_element_tree_renderer.cpp
     test_views.cpp
@@ -16,6 +19,9 @@ add_executable(graphics
     "${GRAPHICS_ROOT}/src/logical_framebuffer.cpp"
     "${GRAPHICS_ROOT}/src/bitmap_file_loader.cpp"
     "${GRAPHICS_ROOT}/src/bitmap_rasterizer.cpp"
+    "${GRAPHICS_ROOT}/src/font.cpp"
+    "${GRAPHICS_ROOT}/src/font_manager.cpp"
+    "${GRAPHICS_ROOT}/src/text_rasterizer.cpp"
     "${GRAPHICS_ROOT}/src/element_tree_renderer.cpp"
 )
 

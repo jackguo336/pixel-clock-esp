@@ -1,42 +1,13 @@
 #include <array>
-#include <cstddef>
-#include <cstdint>
 
 #include "bitmap_rasterizer.hpp"
 #include "bitmap_file.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
+#include "utils.hpp"
 
-namespace {
-
-void expect_rgb(const display::RgbColor* pixel, uint8_t red, uint8_t green, uint8_t blue)
-{
-    ASSERT_NE(pixel, nullptr);
-    EXPECT_EQ(pixel->red, red);
-    EXPECT_EQ(pixel->green, green);
-    EXPECT_EQ(pixel->blue, blue);
-}
-
-void expect_rgb_at(const display::LogicalFramebuffer& framebuffer, int32_t x, int32_t y, uint8_t red,
-                   uint8_t green, uint8_t blue)
-{
-    expect_rgb(framebuffer.pixel_at(x, y), red, green, blue);
-}
-
-[[nodiscard]] bool framebuffers_equal(const display::LogicalFramebuffer& lhs,
-                                      const display::LogicalFramebuffer& rhs)
-{
-    const auto left = lhs.pixels();
-    const auto right = rhs.pixels();
-    for (std::size_t i = 0; i < left.size(); ++i) {
-        if (left[i].red != right[i].red || left[i].green != right[i].green || left[i].blue != right[i].blue) {
-            return false;
-        }
-    }
-    return true;
-}
-
-}  // namespace
+using graphics_test::expect_rgb_at;
+using graphics_test::framebuffers_equal;
 
 TEST(BitmapRasterizer, RendersMultiColorBitmapAtRequestedOrigin)
 {

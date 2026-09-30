@@ -3,15 +3,11 @@
 
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
+#include "utils.hpp"
+
+using graphics_test::expect_rgb;
 
 namespace {
-
-void expect_rgb(const display::RgbColor& actual, uint8_t red, uint8_t green, uint8_t blue)
-{
-    EXPECT_EQ(actual.red, red);
-    EXPECT_EQ(actual.green, green);
-    EXPECT_EQ(actual.blue, blue);
-}
 
 void expect_all_pixels(const display::LogicalFramebuffer& framebuffer, uint8_t red, uint8_t green, uint8_t blue)
 {

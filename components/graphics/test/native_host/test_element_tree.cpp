@@ -6,6 +6,7 @@
 #include "bitmap_file.hpp"
 #include "element_tree.hpp"
 #include "elements.hpp"
+#include "font.hpp"
 #include "gtest/gtest.h"
 
 namespace {
@@ -28,6 +29,13 @@ constexpr display::SolidPaint kBitmapLeafPaint{.color = {.red = 13, .green = 14,
 constexpr display::Size kLeafSize{.width = 11, .height = 13};
 constexpr display::BitmapFile kBitmap{};
 constexpr std::string_view kNestedLeafText = "nested";
+const display::Font kNestedLeafFont{
+    .config = {
+        .character_size = {},
+        .character_lookup = {},
+        .bitmap_path = "/assets/fonts/nested.bmp",
+    },
+};
 
 display::Element make_container(
     display::ElementId id,
@@ -65,13 +73,14 @@ display::Element make_text(
     display::ElementId id,
     display::Position position,
     display::SolidPaint paint,
-    std::string_view text)
+    std::string_view text,
+    const display::Font* font = nullptr)
 {
     return display::Element{
         .id = id,
         .position = position,
         .paint = paint,
-        .payload = display::TextElementPayload{.text = text},
+        .payload = display::TextElementPayload{.text = text, .font = font},
     };
 }
 
@@ -136,8 +145,8 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
                     display::StackDirection::LeftToRight,
                     display::LayoutSystem::Stacked),
                 [](auto& nested_children) {
-                    EXPECT_TRUE(nested_children.add_terminal(
-                        make_text(kNestedLeafId, kNestedLeafPosition, kNestedLeafPaint, kNestedLeafText)));
+                    EXPECT_TRUE(nested_children.add_terminal(make_text(
+                        kNestedLeafId, kNestedLeafPosition, kNestedLeafPaint, kNestedLeafText, &kNestedLeafFont)));
                 }));
             EXPECT_TRUE(children.add_terminal(
                 make_bitmap(kBitmapLeafId, kBitmapLeafPosition, kBitmapLeafPaint, &kBitmap)));
@@ -178,6 +187,7 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
     const auto* nested_leaf = std::get_if<display::TextElementPayload>(&tree.nodes[3].element.payload);
     ASSERT_NE(nested_leaf, nullptr);
     EXPECT_EQ(nested_leaf->text, kNestedLeafText);
+    EXPECT_EQ(nested_leaf->font, &kNestedLeafFont);
     EXPECT_FALSE(tree.nodes[3].first_child.has_value());
     EXPECT_FALSE(tree.nodes[3].next_sibling.has_value());
 

@@ -1,40 +1,19 @@
 #include <array>
-#include <cstddef>
-#include <cstdint>
 #include <string_view>
 
 #include "bitmap_file.hpp"
 #include "element_tree.hpp"
 #include "elements.hpp"
 #include "element_tree_renderer.hpp"
+#include "font.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
+#include "utils.hpp"
+
+using graphics_test::expect_rgb_at;
+using graphics_test::framebuffers_equal;
 
 namespace {
-
-void expect_rgb_at(const display::LogicalFramebuffer& framebuffer, int32_t x, int32_t y, uint8_t red,
-                   uint8_t green, uint8_t blue)
-{
-    const display::RgbColor* pixel = framebuffer.pixel_at(x, y);
-    ASSERT_NE(pixel, nullptr);
-    EXPECT_EQ(pixel->red, red);
-    EXPECT_EQ(pixel->green, green);
-    EXPECT_EQ(pixel->blue, blue);
-}
-
-[[nodiscard]] bool framebuffers_equal(const display::LogicalFramebuffer& lhs,
-                                      const display::LogicalFramebuffer& rhs)
-{
-    const auto left = lhs.pixels();
-    const auto right = rhs.pixels();
-    for (std::size_t i = 0; i < left.size(); ++i) {
-        if (left[i].red != right[i].red || left[i].green != right[i].green
-            || left[i].blue != right[i].blue) {
-            return false;
-        }
-    }
-    return true;
-}
 
 display::Element make_container(
     display::ElementId id,
@@ -77,19 +56,21 @@ display::Element make_bitmap(display::ElementId id, const display::BitmapFile* b
     return make_bitmap(id, {}, bitmap);
 }
 
-display::Element make_text(display::ElementId id, display::Position position, std::string_view text)
+display::Element make_text(display::ElementId id, display::Position position, std::string_view text,
+                           const display::Font* font = nullptr, display::Paint paint = display::SolidPaint{})
 {
     return display::Element{
         .id = id,
         .position = position,
-        .paint = display::SolidPaint{},
-        .payload = display::TextElementPayload{.text = text},
+        .paint = paint,
+        .payload = display::TextElementPayload{.text = text, .font = font},
     };
 }
 
-display::Element make_text(display::ElementId id, std::string_view text)
+display::Element make_text(display::ElementId id, std::string_view text, const display::Font* font = nullptr,
+                           display::Paint paint = display::SolidPaint{})
 {
-    return make_text(id, {}, text);
+    return make_text(id, {}, text, font, paint);
 }
 
 display::Element make_rectangle(display::ElementId id, display::Position position, display::Size size)
@@ -487,7 +468,7 @@ TEST(ElementTreeRenderer, StackedLayoutAdvancesPastUndrawnRectangle)
     expect_rgb_at(framebuffer, 2, 0, 9, 8, 7);
 }
 
-TEST(ElementTreeRenderer, StackedLayoutGivesTextNoSize)
+TEST(ElementTreeRenderer, StackedLayoutGivesNullFontTextNoSize)
 {
     const std::array<display::RgbColor, 1> pixels{display::RgbColor{.red = 1, .green = 2, .blue = 3}};
     const display::BitmapFile bitmap{
@@ -501,7 +482,7 @@ TEST(ElementTreeRenderer, StackedLayoutGivesTextNoSize)
         make_container({.value = 1}, {.x = 4, .y = 2}, display::StackDirection::LeftToRight,
                        display::LayoutSystem::Stacked),
         [&](auto& children) {
-            EXPECT_TRUE(children.add_terminal(make_text({.value = 2}, "hi")));
+            EXPECT_TRUE(children.add_terminal(make_text({.value = 2}, "hi", nullptr)));
             EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 3}, &bitmap)));
         }));
 
@@ -511,4 +492,40 @@ TEST(ElementTreeRenderer, StackedLayoutGivesTextNoSize)
 
     expect_rgb_at(framebuffer, 4, 2, 1, 2, 3);
     expect_rgb_at(framebuffer, 5, 2, 0, 0, 0);
+}
+
+TEST(ElementTreeRenderer, RendersSolidTextRelativeToItsContainer)
+{
+    const std::array<display::RgbColor, 1> character{display::RgbColor{.red = 255, .green = 0, .blue = 0}};
+    const display::Font font{
+        .config = {
+            .character_size = {.width = 1, .height = 1},
+            .character_lookup = "A",
+            .bitmap_path = "/assets/fonts/bitmap.bmp",
+        },
+        .bitmap = {
+            .size = {.width = 1, .height = 1},
+            .pixels = character,
+        },
+    };
+    const display::SolidPaint paint{.color = {.red = 0, .green = 180, .blue = 20}};
+
+    std::array<display::ElementTreeNode, 2> storage{};
+    display::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 2, .y = 1}, display::StackDirection::LeftToRight),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(
+                make_text({.value = 2}, {.x = 3, .y = 2}, "A", &font, paint)));
+        }));
+
+    display::LogicalFramebuffer framebuffer;
+    framebuffer.clear(display::RgbColor{.red = 4, .green = 5, .blue = 6});
+    const display::ElementTreeRenderer renderer;
+    renderer.render(builder.get_tree(), framebuffer);
+
+    expect_rgb_at(framebuffer, 5, 3, 0, 180, 20);
+    expect_rgb_at(framebuffer, 2, 1, 4, 5, 6);
+    expect_rgb_at(framebuffer, 4, 3, 4, 5, 6);
+    expect_rgb_at(framebuffer, 6, 3, 4, 5, 6);
 }
