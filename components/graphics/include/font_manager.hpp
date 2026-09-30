@@ -16,15 +16,11 @@ enum class FontLoadStatus : uint8_t {
     UnknownFont,
 };
 
-// Built-in bitmaps. Add a font by appending an enumerator, declaring its config
-// and pixel array, appending references to both in builtin_fonts_, and
-// increasing kBuiltinFontCount.
+// Supported fonts
 enum class FontId : uint8_t {
     English7x3 = 0,
 };
 
-// Owns every built-in bitmap and the Font view over it. The singleton outlives
-// every class that shares font().
 class FontManager final {
 public:
     static FontManager& instance();
@@ -32,23 +28,18 @@ public:
     FontManager(const FontManager&) = delete;
     FontManager& operator=(const FontManager&) = delete;
 
-    // Loads every built-in bitmap. A bitmap that is already loaded is skipped.
-    // Returns Ok when every bitmap is loaded. When one fails, the remaining
-    // bitmaps are still loaded and the first failure is returned, so a later
-    // call retries only the bitmaps that failed.
+    // Loads all supported fonts.
     [[nodiscard]] FontLoadStatus load();
 
-    // Loads one bitmap. A successful load is kept; a later call returns Ok
-    // without reading the file again. A failed load can be retried.
     [[nodiscard]] FontLoadStatus load(FontId id);
 
     [[nodiscard]] bool is_loaded(FontId id) const;
     [[nodiscard]] const Font& font(FontId id) const;
 
 private:
-    // config and pixels refer to this manager's members for that font.
     struct ManagedFont {
         const FontConfig& config;
+        // A reference to the font's bitmap pixels owned by the manager.
         std::span<RgbColor> pixels;
         Font font;
         bool loaded;
@@ -61,12 +52,13 @@ private:
 
     [[nodiscard]] static bool is_known(FontId id);
 
-    static constexpr std::size_t kBuiltinFontCount = 1;
+    // Number of supported fonts.
+    static constexpr std::size_t kFontCount = 1;
 
     std::array<RgbColor, english_7x3_config_.pixel_count()> english_7x3_pixels_{};
 
-    // Indexed by FontId.
-    std::array<ManagedFont, kBuiltinFontCount> builtin_fonts_{{
+    // Allow font configuration and pixel storage to be indexed by FontId.
+    std::array<ManagedFont, kFontCount> fonts_{{
         {
             .config = english_7x3_config_,
             .pixels = english_7x3_pixels_,

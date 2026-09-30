@@ -17,7 +17,7 @@ struct ElementId {
 
 struct TextElementPayload {
     std::string_view text{};
-    // Non-owning. The font and its bitmap pixels must outlive the element tree.
+    // Reference to a font in memory.
     const Font* font{};
 };
 
@@ -26,7 +26,7 @@ struct FilledRectangleElementPayload {
 };
 
 struct BitmapElementPayload {
-    // Reference to a static bitmap file in memory.
+    // Reference to a bitmap file in memory.
     const BitmapFile* bitmap{};
 };
 
