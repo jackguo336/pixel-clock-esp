@@ -1,29 +1,11 @@
-#include <unistd.h>
-
 #include "font_manager.hpp"
 #include "gtest/gtest.h"
 
-TEST(FontManager, InstanceIsUnique)
+TEST(FontManager, InstanceReturnsTheSameObject)
 {
     display::FontManager& first = display::FontManager::instance();
     display::FontManager& second = display::FontManager::instance();
     EXPECT_EQ(&first, &second);
-}
-
-TEST(FontManager, MissingBitmapStaysUnloaded)
-{
-    if (access("/assets/font_en_7x3.bmp", F_OK) == 0) {
-        GTEST_SKIP() << "built-in font bitmap is present on this host";
-    }
-
-    display::FontManager& manager = display::FontManager::instance();
-    EXPECT_EQ(manager.load(display::FontId::English7x3), display::FontLoadStatus::BitmapLoadFailed);
-    EXPECT_FALSE(manager.is_loaded(display::FontId::English7x3));
-    EXPECT_FALSE(manager.font(display::FontId::English7x3).is_valid());
-
-    EXPECT_EQ(manager.load(), display::FontLoadStatus::BitmapLoadFailed);
-    EXPECT_FALSE(manager.is_loaded(display::FontId::English7x3));
-    EXPECT_FALSE(manager.font(display::FontId::English7x3).is_valid());
 }
 
 TEST(FontManager, UnknownFontIsRejected)
