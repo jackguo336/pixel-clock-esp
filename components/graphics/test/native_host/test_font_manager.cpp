@@ -10,10 +10,10 @@ TEST(FontManager, InstanceIsUnique)
     EXPECT_EQ(&first, &second);
 }
 
-TEST(FontManager, MissingAtlasStaysUnloaded)
+TEST(FontManager, MissingBitmapStaysUnloaded)
 {
     if (access("/assets/font_en_7x3.bmp", F_OK) == 0) {
-        GTEST_SKIP() << "built-in font atlas is present on this host";
+        GTEST_SKIP() << "built-in font bitmap is present on this host";
     }
 
     display::FontManager& manager = display::FontManager::instance();

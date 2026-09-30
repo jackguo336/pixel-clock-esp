@@ -12,18 +12,18 @@ namespace display {
 enum class FontLoadStatus : uint8_t {
     Ok = 0,
     BitmapLoadFailed,
-    InvalidAtlas,
+    InvalidBitmap,
     UnknownFont,
 };
 
-// Built-in atlases. Add a font by appending an enumerator, declaring its config
+// Built-in bitmaps. Add a font by appending an enumerator, declaring its config
 // and pixel array, appending references to both in builtin_fonts_, and
 // increasing kBuiltinFontCount.
 enum class FontId : uint8_t {
     English7x3 = 0,
 };
 
-// Owns every built-in atlas and the Font view over it. The singleton outlives
+// Owns every built-in bitmap and the Font view over it. The singleton outlives
 // every class that shares font().
 class FontManager final {
 public:
@@ -32,13 +32,13 @@ public:
     FontManager(const FontManager&) = delete;
     FontManager& operator=(const FontManager&) = delete;
 
-    // Loads every built-in atlas. An atlas that is already loaded is skipped.
-    // Returns Ok when every atlas is loaded. When one fails, the remaining
-    // atlases are still loaded and the first failure is returned, so a later
-    // call retries only the atlases that failed.
+    // Loads every built-in bitmap. A bitmap that is already loaded is skipped.
+    // Returns Ok when every bitmap is loaded. When one fails, the remaining
+    // bitmaps are still loaded and the first failure is returned, so a later
+    // call retries only the bitmaps that failed.
     [[nodiscard]] FontLoadStatus load();
 
-    // Loads one atlas. A successful load is kept; a later call returns Ok
+    // Loads one bitmap. A successful load is kept; a later call returns Ok
     // without reading the file again. A failed load can be retried.
     [[nodiscard]] FontLoadStatus load(FontId id);
 

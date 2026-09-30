@@ -13,10 +13,10 @@ namespace {
 
 constexpr display::RgbColor kBackground{.red = 9, .green = 9, .blue = 9};
 constexpr display::RgbColor kForeground{.red = 0, .green = 200, .blue = 0};
-constexpr display::RgbColor kAtlasMark{.red = 255, .green = 0, .blue = 0};
+constexpr display::RgbColor kBitmapMark{.red = 255, .green = 0, .blue = 0};
 constexpr display::RgbColor kBlack{};
-constexpr display::Size kWideGlyph{.width = 2, .height = 2};
-constexpr const char* kAtlasPath = "/assets/fonts/atlas.bmp";
+constexpr display::Size kWideCharacter{.width = 2, .height = 2};
+constexpr const char* kBitmapPath = "/assets/fonts/bitmap.bmp";
 
 void expect_rgb_at(const display::LogicalFramebuffer& framebuffer, int32_t x, int32_t y, uint8_t red,
                    uint8_t green, uint8_t blue)
@@ -70,7 +70,7 @@ void expect_size(display::Size size, uint16_t width, uint16_t height)
 // A: black, mark / mark, black
 [[nodiscard]] display::Font make_lookup_font(std::span<const display::RgbColor> pixels)
 {
-    return make_font(kWideGlyph, "BA", pixels, {.width = 2, .height = 5}, kAtlasPath);
+    return make_font(kWideCharacter, "BA", pixels, {.width = 2, .height = 5}, kBitmapPath);
 }
 
 }  // namespace
@@ -78,22 +78,22 @@ void expect_size(display::Size size, uint16_t width, uint16_t height)
 TEST(FontConfig, ConfiguresStackedBitmapStorage)
 {
     constexpr display::FontConfig config =
-        display::configure_font<2, 3>("/assets/fonts/atlas.bmp", "ABC");
+        display::configure_font<2, 3>("/assets/fonts/bitmap.bmp", "ABC");
 
     static_assert(config.pixel_count() == 22);
     expect_size(config.bitmap_size(), 2, 11);
     EXPECT_EQ(config.character_size.width, 2);
     EXPECT_EQ(config.character_size.height, 3);
     EXPECT_EQ(config.character_lookup, "ABC");
-    EXPECT_STREQ(config.bitmap_path, "/assets/fonts/atlas.bmp");
+    EXPECT_STREQ(config.bitmap_path, "/assets/fonts/bitmap.bmp");
 }
 
 TEST(FontConfig, ReturnsEmptyStorageDimensionsForInvalidConfiguration)
 {
     constexpr display::FontConfig empty_lookup =
-        display::configure_font<2, 3>("/assets/fonts/atlas.bmp", "");
+        display::configure_font<2, 3>("/assets/fonts/bitmap.bmp", "");
     constexpr display::FontConfig overflowing_height =
-        display::configure_font<1, 32768>("/assets/fonts/atlas.bmp", "AB");
+        display::configure_font<1, 32768>("/assets/fonts/bitmap.bmp", "AB");
 
     expect_size(empty_lookup.bitmap_size(), 0, 0);
     EXPECT_EQ(empty_lookup.pixel_count(), 0);
@@ -101,26 +101,26 @@ TEST(FontConfig, ReturnsEmptyStorageDimensionsForInvalidConfiguration)
     EXPECT_EQ(overflowing_height.pixel_count(), 0);
 }
 
-TEST(Font, AcceptsOneCharacterWideStackedAtlas)
+TEST(Font, AcceptsOneCharacterWideStackedBitmap)
 {
-    const std::array<display::RgbColor, 1> single_glyph{kAtlasMark};
-    const display::Font single_glyph_font = make_font(
-        {.width = 1, .height = 1}, "A", single_glyph, {.width = 1, .height = 1});
-    EXPECT_TRUE(single_glyph_font.is_valid());
-    EXPECT_EQ(single_glyph_font.config.bitmap_path, nullptr);
+    const std::array<display::RgbColor, 1> single_character{kBitmapMark};
+    const display::Font single_character_font = make_font(
+        {.width = 1, .height = 1}, "A", single_character, {.width = 1, .height = 1});
+    EXPECT_TRUE(single_character_font.is_valid());
+    EXPECT_EQ(single_character_font.config.bitmap_path, nullptr);
 
-    const std::array<display::RgbColor, 10> stacked_atlas{
-        kAtlasMark, kBlack, kBlack, kAtlasMark, kAtlasMark, kAtlasMark, kBlack, kAtlasMark, kAtlasMark, kBlack,
+    const std::array<display::RgbColor, 10> stacked_bitmap{
+        kBitmapMark, kBlack, kBlack, kBitmapMark, kBitmapMark, kBitmapMark, kBlack, kBitmapMark, kBitmapMark, kBlack,
     };
-    const display::Font stacked_font = make_lookup_font(stacked_atlas);
+    const display::Font stacked_font = make_lookup_font(stacked_bitmap);
     EXPECT_TRUE(stacked_font.is_valid());
-    EXPECT_STREQ(stacked_font.config.bitmap_path, kAtlasPath);
+    EXPECT_STREQ(stacked_font.config.bitmap_path, kBitmapPath);
 }
 
-TEST(Font, RejectsEmptyAndMismatchedAtlases)
+TEST(Font, RejectsEmptyAndMismatchedBitmaps)
 {
-    const std::array<display::RgbColor, 1> one_pixel{kAtlasMark};
-    const std::array<display::RgbColor, 2> two_pixels{kAtlasMark, kBlack};
+    const std::array<display::RgbColor, 1> one_pixel{kBitmapMark};
+    const std::array<display::RgbColor, 2> two_pixels{kBitmapMark, kBlack};
     const display::Font empty_font{};
     const display::Font empty_lookup =
         make_font({.width = 1, .height = 1}, "", one_pixel, {.width = 1, .height = 1});
@@ -152,10 +152,10 @@ TEST(Font, RejectsEmptyAndMismatchedAtlases)
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }
 
-TEST(TextRasterizer, LooksUpGlyphRowsAndSkipsSourceSeparators)
+TEST(TextRasterizer, LooksUpCharacterRowsAndSkipsSourceSeparators)
 {
     const std::array<display::RgbColor, 10> pixels{
-        kAtlasMark, kBlack, kBlack, kAtlasMark, kAtlasMark, kAtlasMark, kBlack, kAtlasMark, kAtlasMark, kBlack,
+        kBitmapMark, kBlack, kBlack, kBitmapMark, kBitmapMark, kBitmapMark, kBlack, kBitmapMark, kBitmapMark, kBlack,
     };
     const display::Font font = make_lookup_font(pixels);
     ASSERT_TRUE(font.is_valid());
@@ -182,7 +182,7 @@ TEST(TextRasterizer, LooksUpGlyphRowsAndSkipsSourceSeparators)
     expect_rgb_at(framebuffer, 1, 2, 9, 9, 9);
 }
 
-TEST(TextRasterizer, PaintsNonBlackAtlasPixelsWithSolidColorAndLeavesBlackUnchanged)
+TEST(TextRasterizer, PaintsNonBlackBitmapPixelsWithSolidColorAndLeavesBlackUnchanged)
 {
     const std::array<display::RgbColor, 3> pixels{
         display::RgbColor{.red = 255, .green = 0, .blue = 0},
@@ -190,7 +190,7 @@ TEST(TextRasterizer, PaintsNonBlackAtlasPixelsWithSolidColorAndLeavesBlackUnchan
         display::RgbColor{.red = 0, .green = 0, .blue = 1},
     };
     const display::Font font =
-        make_font({.width = 3, .height = 1}, "M", pixels, {.width = 3, .height = 1}, kAtlasPath);
+        make_font({.width = 3, .height = 1}, "M", pixels, {.width = 3, .height = 1}, kBitmapPath);
     ASSERT_TRUE(font.is_valid());
 
     display::LogicalFramebuffer framebuffer;
@@ -211,11 +211,11 @@ TEST(TextRasterizer, LeavesOneTransparentPixelBetweenCharacters)
 {
     const std::array<display::RgbColor, 3> pixels{
         display::RgbColor{.red = 255, .green = 255, .blue = 255},
-        kAtlasMark,
+        kBitmapMark,
         display::RgbColor{.red = 0, .green = 0, .blue = 255},
     };
     const display::Font font =
-        make_font({.width = 1, .height = 1}, "AB", pixels, {.width = 1, .height = 3}, kAtlasPath);
+        make_font({.width = 1, .height = 1}, "AB", pixels, {.width = 1, .height = 3}, kBitmapPath);
     ASSERT_TRUE(font.is_valid());
 
     display::LogicalFramebuffer framebuffer;
@@ -232,10 +232,10 @@ TEST(TextRasterizer, LeavesOneTransparentPixelBetweenCharacters)
     expect_rgb_at(framebuffer, 4, 4, 9, 9, 9);
 }
 
-TEST(TextRasterizer, AdvancesUnknownCharactersAsBlankGlyphs)
+TEST(TextRasterizer, AdvancesUnknownCharactersAsBlankCharacters)
 {
     const std::array<display::RgbColor, 10> pixels{
-        kAtlasMark, kBlack, kBlack, kAtlasMark, kAtlasMark, kAtlasMark, kBlack, kAtlasMark, kAtlasMark, kBlack,
+        kBitmapMark, kBlack, kBlack, kBitmapMark, kBitmapMark, kBitmapMark, kBlack, kBitmapMark, kBitmapMark, kBlack,
     };
     const display::Font font = make_lookup_font(pixels);
     display::LogicalFramebuffer framebuffer;
@@ -257,7 +257,7 @@ TEST(TextRasterizer, AdvancesUnknownCharactersAsBlankGlyphs)
 
 TEST(TextRasterizer, ReturnsZeroSizeAndDrawsNothingForEmptyTextOrInvalidFont)
 {
-    const std::array<display::RgbColor, 1> pixels{kAtlasMark};
+    const std::array<display::RgbColor, 1> pixels{kBitmapMark};
     const display::Font font = make_font({.width = 1, .height = 1}, "A", pixels, {.width = 1, .height = 1});
     const display::Font invalid_font{};
 
@@ -273,9 +273,9 @@ TEST(TextRasterizer, ReturnsZeroSizeAndDrawsNothingForEmptyTextOrInvalidFont)
 
 TEST(TextRasterizer, ClipsEachCanvasEdge)
 {
-    const std::array<display::RgbColor, 4> pixels{kAtlasMark, kBlack, kBlack, kAtlasMark};
+    const std::array<display::RgbColor, 4> pixels{kBitmapMark, kBlack, kBlack, kBitmapMark};
     const display::Font font =
-        make_font({.width = 2, .height = 2}, "Q", pixels, {.width = 2, .height = 2}, kAtlasPath);
+        make_font({.width = 2, .height = 2}, "Q", pixels, {.width = 2, .height = 2}, kBitmapPath);
     ASSERT_TRUE(font.is_valid());
     const display::TextRasterizer rasterizer;
 
@@ -315,7 +315,7 @@ TEST(TextRasterizer, ClipsEachCanvasEdge)
 
 TEST(TextRasterizer, ReturnsUnclippedSizeWhenTextIsFullyOffCanvas)
 {
-    const std::array<display::RgbColor, 4> pixels{kAtlasMark, kAtlasMark, kAtlasMark, kAtlasMark};
+    const std::array<display::RgbColor, 4> pixels{kBitmapMark, kBitmapMark, kBitmapMark, kBitmapMark};
     const display::Font font = make_font({.width = 2, .height = 2}, "Q", pixels, {.width = 2, .height = 2});
     display::LogicalFramebuffer framebuffer;
     framebuffer.clear(kBackground);

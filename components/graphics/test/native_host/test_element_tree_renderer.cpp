@@ -518,16 +518,16 @@ TEST(ElementTreeRenderer, StackedLayoutGivesNullFontTextNoSize)
 
 TEST(ElementTreeRenderer, RendersSolidTextRelativeToItsContainer)
 {
-    const std::array<display::RgbColor, 1> glyph{display::RgbColor{.red = 255, .green = 0, .blue = 0}};
+    const std::array<display::RgbColor, 1> character{display::RgbColor{.red = 255, .green = 0, .blue = 0}};
     const display::Font font{
         .config = {
             .character_size = {.width = 1, .height = 1},
             .character_lookup = "A",
-            .bitmap_path = "/assets/fonts/atlas.bmp",
+            .bitmap_path = "/assets/fonts/bitmap.bmp",
         },
         .bitmap = {
             .size = {.width = 1, .height = 1},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
     const display::SolidPaint paint{.color = {.red = 0, .green = 180, .blue = 20}};
@@ -554,7 +554,7 @@ TEST(ElementTreeRenderer, RendersSolidTextRelativeToItsContainer)
 
 TEST(ElementTreeRenderer, UsesEachTextElementsFontPointer)
 {
-    const std::array<display::RgbColor, 1> glyph{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
+    const std::array<display::RgbColor, 1> character{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
     const display::Font font_a{
         .config = {
             .character_size = {.width = 1, .height = 1},
@@ -562,7 +562,7 @@ TEST(ElementTreeRenderer, UsesEachTextElementsFontPointer)
         },
         .bitmap = {
             .size = {.width = 1, .height = 1},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
     const display::Font font_b{
@@ -572,7 +572,7 @@ TEST(ElementTreeRenderer, UsesEachTextElementsFontPointer)
         },
         .bitmap = {
             .size = {.width = 1, .height = 1},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
     const display::Font invalid_font{};
@@ -608,7 +608,7 @@ TEST(ElementTreeRenderer, LaterTextOverwritesForegroundAndPreservesTransparentPi
         display::RgbColor{.red = 255, .green = 0, .blue = 0},
         display::RgbColor{.red = 0, .green = 255, .blue = 0},
     };
-    const std::array<display::RgbColor, 2> glyph{
+    const std::array<display::RgbColor, 2> character{
         display::RgbColor{.red = 255, .green = 255, .blue = 255},
         display::RgbColor{},
     };
@@ -630,7 +630,7 @@ TEST(ElementTreeRenderer, LaterTextOverwritesForegroundAndPreservesTransparentPi
         },
         .bitmap = {
             .size = {.width = 2, .height = 1},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
 
@@ -660,7 +660,7 @@ TEST(ElementTreeRenderer, LaterTextOverwritesForegroundAndPreservesTransparentPi
 
 TEST(ElementTreeRenderer, StacksTextLeftToRightUsingMeasuredWidth)
 {
-    const std::array<display::RgbColor, 1> glyph{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
+    const std::array<display::RgbColor, 1> character{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
     const std::array<display::RgbColor, 1> bitmap_pixels{display::RgbColor{.red = 0, .green = 0, .blue = 255}};
     const display::Font font{
         .config = {
@@ -669,7 +669,7 @@ TEST(ElementTreeRenderer, StacksTextLeftToRightUsingMeasuredWidth)
         },
         .bitmap = {
             .size = {.width = 1, .height = 1},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
     const display::BitmapFile bitmap{
@@ -702,7 +702,7 @@ TEST(ElementTreeRenderer, StacksTextLeftToRightUsingMeasuredWidth)
 
 TEST(ElementTreeRenderer, StacksTextTopToBottomUsingMeasuredHeight)
 {
-    const std::array<display::RgbColor, 2> glyph{
+    const std::array<display::RgbColor, 2> character{
         display::RgbColor{.red = 255, .green = 255, .blue = 255},
         display::RgbColor{.red = 1, .green = 0, .blue = 0},
     };
@@ -714,7 +714,7 @@ TEST(ElementTreeRenderer, StacksTextTopToBottomUsingMeasuredHeight)
         },
         .bitmap = {
             .size = {.width = 1, .height = 2},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
     const display::BitmapFile bitmap{
@@ -746,7 +746,7 @@ TEST(ElementTreeRenderer, StacksTextTopToBottomUsingMeasuredHeight)
 
 TEST(ElementTreeRenderer, GradientTextStaysUndrawnAndContributesNoSize)
 {
-    const std::array<display::RgbColor, 1> glyph{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
+    const std::array<display::RgbColor, 1> character{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
     const std::array<display::RgbColor, 1> bitmap_pixels{display::RgbColor{.red = 0, .green = 0, .blue = 255}};
     const display::Font font{
         .config = {
@@ -755,7 +755,7 @@ TEST(ElementTreeRenderer, GradientTextStaysUndrawnAndContributesNoSize)
         },
         .bitmap = {
             .size = {.width = 1, .height = 1},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
     const display::BitmapFile bitmap{
@@ -792,7 +792,7 @@ TEST(ElementTreeRenderer, GradientTextStaysUndrawnAndContributesNoSize)
 
 TEST(ElementTreeRenderer, StackedLayoutGivesInvalidFontTextNoSize)
 {
-    const std::array<display::RgbColor, 1> glyph{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
+    const std::array<display::RgbColor, 1> character{display::RgbColor{.red = 255, .green = 255, .blue = 255}};
     const std::array<display::RgbColor, 1> bitmap_pixels{display::RgbColor{.red = 1, .green = 2, .blue = 3}};
     const display::Font invalid_font{
         .config = {
@@ -801,7 +801,7 @@ TEST(ElementTreeRenderer, StackedLayoutGivesInvalidFontTextNoSize)
         },
         .bitmap = {
             .size = {.width = 1, .height = 1},
-            .pixels = glyph,
+            .pixels = character,
         },
     };
     const display::BitmapFile bitmap{

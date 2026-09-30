@@ -60,7 +60,7 @@ FontLoadStatus FontManager::load(FontId id)
     };
     if (!managed_font.font.is_valid()) {
         managed_font.font = Font{};
-        return FontLoadStatus::InvalidAtlas;
+        return FontLoadStatus::InvalidBitmap;
     }
 
     managed_font.loaded = true;

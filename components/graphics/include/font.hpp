@@ -10,13 +10,12 @@
 
 namespace display {
 
-// Fixed gap between vertically stacked glyph rows in a font atlas.
-inline constexpr uint16_t kAtlasRowSeparatorPixels = 1;
+// Fixed gap between vertically stacked characters in a font bitmap.
+inline constexpr uint16_t kBitmapCharacterSeparatorPixels = 1;
 
 struct FontConfig {
     Size character_size{};
     std::string_view character_lookup{};
-    // Optional asset path. Glyph rendering reads bitmap, not this path.
     const char* bitmap_path{};
 
     [[nodiscard]] constexpr Size bitmap_size() const
@@ -25,16 +24,16 @@ struct FontConfig {
             return {};
         }
 
-        const uint64_t glyph_rows = character_lookup.size();
-        const uint64_t atlas_height = glyph_rows * character_size.height
-            + (glyph_rows - 1) * kAtlasRowSeparatorPixels;
-        if (atlas_height > std::numeric_limits<uint16_t>::max()) {
+        const uint64_t character_count = character_lookup.size();
+        const uint64_t bitmap_height = character_count * character_size.height
+            + (character_count - 1) * kBitmapCharacterSeparatorPixels;
+        if (bitmap_height > std::numeric_limits<uint16_t>::max()) {
             return {};
         }
 
         return {
             .width = character_size.width,
-            .height = static_cast<uint16_t>(atlas_height),
+            .height = static_cast<uint16_t>(bitmap_height),
         };
     }
 
@@ -56,13 +55,11 @@ template <uint16_t CharacterWidth, uint16_t CharacterHeight>
     };
 }
 
-// Non-owning atlas. The config views and bitmap pixels must outlive the Font.
 struct Font {
     FontConfig config{};
     BitmapFile bitmap{};
 
-    // True when the atlas is one character wide and stacks one glyph row per
-    // lookup character, with a one-pixel separator between rows.
+    // Verifies that the font bitmap matches the font config specifications.
     [[nodiscard]] bool is_valid() const;
 };
 
