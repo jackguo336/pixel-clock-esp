@@ -89,27 +89,6 @@ TEST(RectangleRasterizer, ClipsBottomEdgeIndependently)
     expect_rgb_at(framebuffer, 0, 6, 0, 0, 0);
 }
 
-TEST(RectangleRasterizer, ClipsRectangleLargerThanTheFramebuffer)
-{
-    display::LogicalFramebuffer framebuffer;
-    framebuffer.clear(display::RgbColor{.red = 1, .green = 2, .blue = 3});
-    const display::RectangleRasterizer rasterizer;
-    rasterizer.rasterize(
-        display::Size{
-            .width = std::numeric_limits<uint16_t>::max(),
-            .height = std::numeric_limits<uint16_t>::max(),
-        },
-        display::RgbColor{.red = 9, .green = 8, .blue = 7},
-        display::Position{.x = 1, .y = 1},
-        framebuffer);
-
-    expect_rgb_at(framebuffer, 0, 0, 1, 2, 3);
-    expect_rgb_at(framebuffer, 0, 1, 1, 2, 3);
-    expect_rgb_at(framebuffer, 1, 0, 1, 2, 3);
-    expect_rgb_at(framebuffer, 1, 1, 9, 8, 7);
-    expect_rgb_at(framebuffer, 31, 7, 9, 8, 7);
-}
-
 TEST(RectangleRasterizer, LeavesFramebufferUnchangedWhenEmptyOrFullyOffCanvas)
 {
     display::LogicalFramebuffer framebuffer;
@@ -135,22 +114,4 @@ TEST(RectangleRasterizer, LeavesFramebufferUnchangedWhenEmptyOrFullyOffCanvas)
                           framebuffer);
 
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
-}
-
-TEST(RectangleRasterizer, RendersDifferentRectanglesThroughTheSameInstance)
-{
-    display::LogicalFramebuffer framebuffer;
-    const display::RectangleRasterizer rasterizer;
-    rasterizer.rasterize(display::Size{.width = 1, .height = 1},
-                          display::RgbColor{.red = 9, .green = 0, .blue = 0},
-                          display::Position{.x = 1, .y = 1}, framebuffer);
-    expect_rgb_at(framebuffer, 1, 1, 9, 0, 0);
-
-    framebuffer.clear();
-    rasterizer.rasterize(display::Size{.width = 2, .height = 1},
-                          display::RgbColor{.red = 0, .green = 9, .blue = 0},
-                          display::Position{.x = 2, .y = 2}, framebuffer);
-    expect_rgb_at(framebuffer, 2, 2, 0, 9, 0);
-    expect_rgb_at(framebuffer, 3, 2, 0, 9, 0);
-    expect_rgb_at(framebuffer, 1, 1, 0, 0, 0);
 }

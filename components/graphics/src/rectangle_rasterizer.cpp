@@ -12,9 +12,7 @@ void RectangleRasterizer::rasterize(Size size, RgbColor color, Position canvas_o
         return;
     }
 
-    // Half-open span [origin, origin + size). Clip before iterating: a uint16 extent can be
-    // far larger than the framebuffer, and set_pixel only rejects a coordinate after the
-    // loop has already visited it.
+    // Only draw pixels inside the framebuffer boundary that will be visible.
     const int32_t rectangle_left = canvas_origin.x;
     const int32_t rectangle_top = canvas_origin.y;
     const int32_t rectangle_right = rectangle_left + static_cast<int32_t>(size.width);
