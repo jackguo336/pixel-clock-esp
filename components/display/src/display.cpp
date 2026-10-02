@@ -10,6 +10,7 @@ namespace display_runtime {
 namespace {
 
 constexpr display::RgbColor kWhite{.red = 255, .green = 255, .blue = 255};
+constexpr display::SolidPaint kTextPaint{.color = kWhite};
 constexpr std::string_view kHelloText{"HELLO"};
 
 }  // namespace
@@ -51,7 +52,7 @@ void DisplayRuntime::refresh()
     const display::Element text_element{
         .id = {},
         .position = {.x = 0, .y = 0},
-        .paint = display::SolidPaint{.color = kWhite},
+        .paint = display::Paint{kTextPaint},
         .payload = display::TextElementPayload{
             .text = kHelloText,
             .font = &display::FontManager::instance().font(display::FontId::English7x3),

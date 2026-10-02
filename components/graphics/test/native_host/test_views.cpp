@@ -33,7 +33,7 @@ display::Element make_outer_container()
     return display::Element{
         .id = kOuterId,
         .position = kOuterPosition,
-        .paint = kOuterPaint,
+        .paint = display::Paint{kOuterPaint},
         .payload = display::ContainerElementPayload{.layout_direction = display::StackDirection::LeftToRight},
     };
 }
@@ -43,7 +43,7 @@ display::Element make_root_container()
     return display::Element{
         .id = kRootId,
         .position = kRootPosition,
-        .paint = kRootPaint,
+        .paint = display::Paint{kRootPaint},
         .payload = display::ContainerElementPayload{.layout_direction = display::StackDirection::TopToBottom},
     };
 }
@@ -53,7 +53,7 @@ display::Element make_revision_box(uint32_t revision)
     return display::Element{
         .id = kBoxId,
         .position = kBoxPosition,
-        .paint = kBoxPaint,
+        .paint = display::Paint{kBoxPaint},
         .payload = display::FilledRectangleElementPayload{
             .size =
                 {
@@ -69,7 +69,7 @@ display::Element make_label()
     return display::Element{
         .id = kLabelId,
         .position = kLabelPosition,
-        .paint = kLabelPaint,
+        .paint = display::Paint{kLabelPaint},
         .payload = display::TextElementPayload{.text = kLabelText, .font = nullptr},
     };
 }

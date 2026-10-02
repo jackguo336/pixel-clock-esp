@@ -59,8 +59,30 @@ namespace {
 
 }  // namespace
 
+std::optional<ElementTreeRenderer::ResolvedPaint> ElementTreeRenderer::resolve_paint(
+    const std::optional<Paint>& element_paint, Position element_origin,
+    const std::optional<ResolvedPaint>& inherited_paint)
+{
+    if (!element_paint.has_value()) {
+        return inherited_paint;
+    }
+    return ResolvedPaint{
+        .paint = *element_paint,
+        .defining_origin = element_origin,
+    };
+}
+
+const SolidPaint* ElementTreeRenderer::as_solid_paint(const std::optional<ResolvedPaint>& resolved_paint)
+{
+    if (!resolved_paint.has_value()) {
+        return nullptr;
+    }
+    return std::get_if<SolidPaint>(&resolved_paint->paint);
+}
+
 Size ElementTreeRenderer::render_children(const ElementTree& tree, std::optional<ElementNodeIndex> first_child,
                                           Position container_origin, const ContainerElementPayload& container,
+                                          const std::optional<ResolvedPaint>& inherited_paint,
                                           LogicalFramebuffer& framebuffer) const
 {
     int32_t max_right = 0;
@@ -75,7 +97,7 @@ Size ElementTreeRenderer::render_children(const ElementTree& tree, std::optional
         const Position relative_position = child_relative_position(
             child.element, container, has_previous_sibling, previous_position, previous_size);
         const Position child_origin = element_origin_on_canvas(container_origin, relative_position);
-        const Size child_size = render_node(tree, *child_index, child_origin, framebuffer);
+        const Size child_size = render_node(tree, *child_index, child_origin, inherited_paint, framebuffer);
 
         const int32_t right = static_cast<int32_t>(relative_position.x) + static_cast<int32_t>(child_size.width);
         const int32_t bottom =
@@ -100,18 +122,25 @@ Size ElementTreeRenderer::render_children(const ElementTree& tree, std::optional
 }
 
 Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex index, Position canvas_origin,
+                                      const std::optional<ResolvedPaint>& inherited_paint,
                                       LogicalFramebuffer& framebuffer) const
 {
+    const ElementTreeNode& node = tree.nodes[index];
+    const std::optional<ResolvedPaint> resolved_paint =
+        resolve_paint(node.element.paint, canvas_origin, inherited_paint);
+
     struct ElementPayloadVisitor {
         const ElementTreeRenderer& renderer;
         const ElementTree& tree;
         const ElementTreeNode& node;
         Position element_origin;
+        const std::optional<ResolvedPaint>& resolved_paint;
         LogicalFramebuffer& framebuffer;
 
         Size operator()(const ContainerElementPayload& payload) const
         {
-            return renderer.render_children(tree, node.first_child, element_origin, payload, framebuffer);
+            return renderer.render_children(tree, node.first_child, element_origin, payload, resolved_paint,
+                                            framebuffer);
         }
 
         Size operator()(const BitmapElementPayload& payload) const
@@ -128,32 +157,34 @@ Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex 
             if (payload.font == nullptr || !payload.font->is_valid()) {
                 return Size{};
             }
-            if (const auto* solid_paint = std::get_if<SolidPaint>(&node.element.paint)) {
+            if (const SolidPaint* solid_paint = ElementTreeRenderer::as_solid_paint(resolved_paint)) {
                 return renderer.text_rasterizer_.rasterize(*payload.font, payload.text, solid_paint->color,
                                                             element_origin, framebuffer);
             }
             // TODO: Rasterize text with LinearGradientPaint instead of skipping and reporting an empty size.
+            // resolved_paint keeps that gradient's start, end, and colors with the defining ancestor origin.
             return Size{};
         }
 
         Size operator()(const FilledRectangleElementPayload& payload) const
         {
-            if (const auto* solid_paint = std::get_if<SolidPaint>(&node.element.paint)) {
+            if (const SolidPaint* solid_paint = ElementTreeRenderer::as_solid_paint(resolved_paint)) {
                 renderer.rectangle_rasterizer_.rasterize(payload.size, solid_paint->color, element_origin,
                                                           framebuffer);
                 return payload.size;
             }
             // TODO: Rasterize filled rectangles with LinearGradientPaint instead of skipping the fill.
+            // Layout size is retained. resolved_paint keeps the gradient and its defining ancestor origin.
             return payload.size;
         }
     };
 
-    const ElementTreeNode& node = tree.nodes[index];
     return std::visit(ElementPayloadVisitor{
                           .renderer = *this,
                           .tree = tree,
                           .node = node,
                           .element_origin = canvas_origin,
+                          .resolved_paint = resolved_paint,
                           .framebuffer = framebuffer,
                       },
                       node.element.payload);
@@ -163,7 +194,7 @@ void ElementTreeRenderer::render(const ElementTree& tree, LogicalFramebuffer& fr
 {
     constexpr Position kCanvasOrigin{.x = 0, .y = 0};
     const Position root_origin = element_origin_on_canvas(kCanvasOrigin, tree.nodes[tree.root].element.position);
-    static_cast<void>(render_node(tree, tree.root, root_origin, framebuffer));
+    static_cast<void>(render_node(tree, tree.root, root_origin, std::nullopt, framebuffer));
 }
 
 }  // namespace display

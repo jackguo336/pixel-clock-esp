@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string_view>
 #include <variant>
 
@@ -53,7 +54,8 @@ using ElementPayload =
 struct Element {
     ElementId id{};
     Position position{};
-    Paint paint{};
+    // Unset paint inherits the nearest ancestor's paint during rendering.
+    std::optional<Paint> paint{};
     ElementPayload payload{};
 };
 
