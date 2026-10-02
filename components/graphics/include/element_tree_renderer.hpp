@@ -5,6 +5,7 @@
 #include "bitmap_rasterizer.hpp"
 #include "element_tree.hpp"
 #include "logical_framebuffer.hpp"
+#include "rectangle_rasterizer.hpp"
 #include "text_rasterizer.hpp"
 
 namespace display {
@@ -23,6 +24,7 @@ private:
 
     BitmapRasterizer bitmap_rasterizer_{};
     TextRasterizer text_rasterizer_{};
+    RectangleRasterizer rectangle_rasterizer_{};
 };
 
 }  // namespace display
