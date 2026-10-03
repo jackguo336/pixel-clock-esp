@@ -68,7 +68,7 @@ std::optional<ElementTreeRenderer::ResolvedPaint> ElementTreeRenderer::resolve_p
     }
     return ResolvedPaint{
         .paint = *element_paint,
-        .defining_origin = element_origin,
+        .origin = element_origin,
     };
 }
 
@@ -162,7 +162,6 @@ Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex 
                                                             element_origin, framebuffer);
             }
             // TODO: Rasterize text with LinearGradientPaint instead of skipping and reporting an empty size.
-            // resolved_paint keeps that gradient's start, end, and colors with the defining ancestor origin.
             return Size{};
         }
 
@@ -174,7 +173,6 @@ Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex 
                 return payload.size;
             }
             // TODO: Rasterize filled rectangles with LinearGradientPaint instead of skipping the fill.
-            // Layout size is retained. resolved_paint keeps the gradient and its defining ancestor origin.
             return payload.size;
         }
     };

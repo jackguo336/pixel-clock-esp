@@ -15,12 +15,11 @@ public:
     void render(const ElementTree& tree, LogicalFramebuffer& framebuffer) const;
 
 private:
-    // Paint in effect for a node, plus the canvas origin of the element that
-    // defined it. A descendant with no paint reuses both, so a later gradient
-    // rasterizer can interpret start and end in that ancestor's coordinates.
     struct ResolvedPaint {
+        // Paint to apply for a node
         Paint paint{};
-        Position defining_origin{};
+        // Origin of the element that defined the paint
+        Position origin{};
     };
 
     [[nodiscard]] static std::optional<ResolvedPaint> resolve_paint(
