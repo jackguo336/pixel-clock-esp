@@ -38,8 +38,8 @@ struct LanePlacement {
 [[nodiscard]] LanePlacement place_on_lane(int32_t x, int32_t y, LedMatrixOrientation orientation,
                                           bool serpentine)
 {
-    const int32_t width = display::LogicalFramebuffer::kWidth;
-    const int32_t height = display::LogicalFramebuffer::kHeight;
+    const int32_t width = graphics::LogicalFramebuffer::kWidth;
+    const int32_t height = graphics::LogicalFramebuffer::kHeight;
     const bool horizontal = orientation == LedMatrixOrientation::Horizontal ||
                             orientation == LedMatrixOrientation::HorizontalReversed;
     const int32_t lane = horizontal ? y : x;

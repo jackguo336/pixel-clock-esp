@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace display {
+namespace graphics {
 namespace {
 
 [[nodiscard]] bool has_matching_pixel_count(Size size, std::size_t pixel_count)
@@ -36,4 +36,4 @@ BitmapFile MutableBitmapFile::as_read_only() const
     };
 }
 
-}  // namespace display
+}  // namespace graphics

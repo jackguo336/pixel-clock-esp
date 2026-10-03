@@ -7,7 +7,7 @@
 
 #include "esp_err.h"
 
-namespace display::test {
+namespace graphics::test {
 
 class MemoryVfs final {
 public:
@@ -38,4 +38,4 @@ private:
     bool registered_{false};
 };
 
-}  // namespace display::test
+}  // namespace graphics::test

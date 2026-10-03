@@ -7,7 +7,7 @@
 #include "geometry.hpp"
 #include "logical_framebuffer.hpp"
 
-namespace display {
+namespace graphics {
 
 class TextRasterizer final {
 public:
@@ -15,4 +15,4 @@ public:
                                  Position canvas_origin, LogicalFramebuffer& framebuffer) const;
 };
 
-}  // namespace display
+}  // namespace graphics

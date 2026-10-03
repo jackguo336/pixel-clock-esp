@@ -8,7 +8,7 @@
 #include "rectangle_rasterizer.hpp"
 #include "text_rasterizer.hpp"
 
-namespace display {
+namespace graphics {
 
 class ElementTreeRenderer final {
 public:
@@ -42,4 +42,4 @@ private:
     RectangleRasterizer rectangle_rasterizer_{};
 };
 
-}  // namespace display
+}  // namespace graphics

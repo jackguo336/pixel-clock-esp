@@ -2,7 +2,7 @@
 
 #include "bitmap_file_loader.hpp"
 
-namespace display {
+namespace graphics {
 namespace {
 
 const Font kEmptyFont{};
@@ -83,4 +83,4 @@ const Font& FontManager::font(FontId id) const
     return fonts_[static_cast<std::size_t>(id)].font;
 }
 
-}  // namespace display
+}  // namespace graphics

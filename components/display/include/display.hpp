@@ -19,10 +19,10 @@ public:
 private:
     void refresh();
 
-    std::array<display::ElementTreeNode, 1> nodes_{};
-    display::ElementTree tree_{};
-    display::LogicalFramebuffer framebuffer_{};
-    display::ElementTreeRenderer renderer_{};
+    std::array<graphics::ElementTreeNode, 1> nodes_{};
+    graphics::ElementTree tree_{};
+    graphics::LogicalFramebuffer framebuffer_{};
+    graphics::ElementTreeRenderer renderer_{};
     led_matrix::LedMatrixOutput output_{led_matrix::LedMatrixOutputConfig{}};
     bool scene_ready_{false};
 };

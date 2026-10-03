@@ -8,7 +8,7 @@
 #include "bitmap_file.hpp"
 #include "geometry.hpp"
 
-namespace display {
+namespace graphics {
 
 // Fixed gap between vertically stacked characters in a font bitmap.
 inline constexpr uint16_t kBitmapCharacterSeparatorPixels = 1;
@@ -63,4 +63,4 @@ struct Font {
     [[nodiscard]] bool is_valid() const;
 };
 
-}  // namespace display
+}  // namespace graphics

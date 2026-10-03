@@ -32,7 +32,7 @@ void append_le32(std::vector<uint8_t>& out, uint32_t value)
     out.push_back(static_cast<uint8_t>(value >> 24));
 }
 
-std::vector<uint8_t> make_24bit_bmp(const display::RgbColor& color)
+std::vector<uint8_t> make_24bit_bmp(const graphics::RgbColor& color)
 {
     constexpr uint32_t kPixelOffset = kFileHeaderSize + kBitmapInfoHeaderSize;
     constexpr uint32_t kRowStride = 4;
@@ -64,7 +64,7 @@ std::vector<uint8_t> make_24bit_bmp(const display::RgbColor& color)
 
 class RegisteredMemoryVfs {
 public:
-    explicit RegisteredMemoryVfs(display::test::MemoryVfs& vfs) : vfs_(&vfs)
+    explicit RegisteredMemoryVfs(graphics::test::MemoryVfs& vfs) : vfs_(&vfs)
     {
         TEST_ASSERT_EQUAL(ESP_OK, vfs_->register_fs());
     }
@@ -78,26 +78,26 @@ public:
     RegisteredMemoryVfs& operator=(const RegisteredMemoryVfs&) = delete;
 
 private:
-    display::test::MemoryVfs* vfs_;
+    graphics::test::MemoryVfs* vfs_;
 };
 
 }  // namespace
 
 TEST_CASE("loads a valid BMP through the /bitmap-test VFS prefix", "[display][vfs]")
 {
-    const auto bytes = make_24bit_bmp(display::RgbColor{.red = 12, .green = 34, .blue = 56});
-    display::test::MemoryVfs vfs;
+    const auto bytes = make_24bit_bmp(graphics::RgbColor{.red = 12, .green = 34, .blue = 56});
+    graphics::test::MemoryVfs vfs;
     vfs.set_file(kRelativePath, bytes);
     const RegisteredMemoryVfs registered(vfs);
 
-    std::array<display::RgbColor, 1> destination{};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
-    const display::BitmapFileLoader loader;
+    const graphics::BitmapFileLoader loader;
 
-    TEST_ASSERT_EQUAL(static_cast<int>(display::BitmapLoadStatus::Ok),
+    TEST_ASSERT_EQUAL(static_cast<int>(graphics::BitmapLoadStatus::Ok),
                       static_cast<int>(loader.load(kFullPath, view)));
     TEST_ASSERT_EQUAL_UINT8(12, destination[0].red);
     TEST_ASSERT_EQUAL_UINT8(34, destination[0].green);
@@ -108,19 +108,19 @@ TEST_CASE("loads a valid BMP through the /bitmap-test VFS prefix", "[display][vf
 
 TEST_CASE("maps a missing VFS path to OpenFailed", "[display][vfs]")
 {
-    const auto bytes = make_24bit_bmp(display::RgbColor{.red = 1, .green = 2, .blue = 3});
-    display::test::MemoryVfs vfs;
+    const auto bytes = make_24bit_bmp(graphics::RgbColor{.red = 1, .green = 2, .blue = 3});
+    graphics::test::MemoryVfs vfs;
     vfs.set_file(kRelativePath, bytes);
     const RegisteredMemoryVfs registered(vfs);
 
-    std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{graphics::RgbColor{.red = 9, .green = 8, .blue = 7}};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
-    const display::BitmapFileLoader loader;
+    const graphics::BitmapFileLoader loader;
 
-    TEST_ASSERT_EQUAL(static_cast<int>(display::BitmapLoadStatus::OpenFailed),
+    TEST_ASSERT_EQUAL(static_cast<int>(graphics::BitmapLoadStatus::OpenFailed),
                       static_cast<int>(loader.load(kMissingPath, view)));
     TEST_ASSERT_EQUAL(0, vfs.close_count());
     TEST_ASSERT_EQUAL_UINT8(9, destination[0].red);
@@ -130,20 +130,20 @@ TEST_CASE("maps a missing VFS path to OpenFailed", "[display][vfs]")
 
 TEST_CASE("maps a driver read failure to ReadFailed and closes the descriptor", "[display][vfs]")
 {
-    const auto bytes = make_24bit_bmp(display::RgbColor{.red = 1, .green = 2, .blue = 3});
-    display::test::MemoryVfs vfs;
+    const auto bytes = make_24bit_bmp(graphics::RgbColor{.red = 1, .green = 2, .blue = 3});
+    graphics::test::MemoryVfs vfs;
     vfs.set_file(kRelativePath, bytes);
     vfs.set_fail_reads(true);
     const RegisteredMemoryVfs registered(vfs);
 
-    std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{graphics::RgbColor{.red = 9, .green = 8, .blue = 7}};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
-    const display::BitmapFileLoader loader;
+    const graphics::BitmapFileLoader loader;
 
-    TEST_ASSERT_EQUAL(static_cast<int>(display::BitmapLoadStatus::ReadFailed),
+    TEST_ASSERT_EQUAL(static_cast<int>(graphics::BitmapLoadStatus::ReadFailed),
                       static_cast<int>(loader.load(kFullPath, view)));
     TEST_ASSERT_EQUAL(1, vfs.close_count());
     TEST_ASSERT_FALSE(vfs.has_open_descriptor());
@@ -152,20 +152,20 @@ TEST_CASE("maps a driver read failure to ReadFailed and closes the descriptor", 
 
 TEST_CASE("closes the VFS descriptor after truncated input", "[display][vfs]")
 {
-    auto bytes = make_24bit_bmp(display::RgbColor{.red = 1, .green = 2, .blue = 3});
+    auto bytes = make_24bit_bmp(graphics::RgbColor{.red = 1, .green = 2, .blue = 3});
     bytes.resize(10);
-    display::test::MemoryVfs vfs;
+    graphics::test::MemoryVfs vfs;
     vfs.set_file(kRelativePath, bytes);
     const RegisteredMemoryVfs registered(vfs);
 
-    std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{graphics::RgbColor{.red = 9, .green = 8, .blue = 7}};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
-    const display::BitmapFileLoader loader;
+    const graphics::BitmapFileLoader loader;
 
-    TEST_ASSERT_EQUAL(static_cast<int>(display::BitmapLoadStatus::TruncatedFile),
+    TEST_ASSERT_EQUAL(static_cast<int>(graphics::BitmapLoadStatus::TruncatedFile),
                       static_cast<int>(loader.load(kFullPath, view)));
     TEST_ASSERT_EQUAL(1, vfs.close_count());
     TEST_ASSERT_FALSE(vfs.has_open_descriptor());

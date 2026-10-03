@@ -14,17 +14,17 @@ using graphics_test::make_lookup_font;
 
 namespace {
 
-constexpr display::RgbColor kBackground{.red = 9, .green = 9, .blue = 9};
-constexpr display::RgbColor kForeground{.red = 0, .green = 200, .blue = 0};
-constexpr display::RgbColor kBitmapMark{.red = 255, .green = 0, .blue = 0};
-constexpr display::RgbColor kBlack{};
+constexpr graphics::RgbColor kBackground{.red = 9, .green = 9, .blue = 9};
+constexpr graphics::RgbColor kForeground{.red = 0, .green = 200, .blue = 0};
+constexpr graphics::RgbColor kBitmapMark{.red = 255, .green = 0, .blue = 0};
+constexpr graphics::RgbColor kBlack{};
 
 }  // namespace
 
 TEST(FontConfig, ConfiguresStackedBitmapStorage)
 {
-    constexpr display::FontConfig config =
-        display::configure_font<2, 3>("/assets/fonts/bitmap.bmp", "ABC");
+    constexpr graphics::FontConfig config =
+        graphics::configure_font<2, 3>("/assets/fonts/bitmap.bmp", "ABC");
 
     static_assert(config.pixel_count() == 22);
     expect_size(config.bitmap_size(), 2, 11);
@@ -36,10 +36,10 @@ TEST(FontConfig, ConfiguresStackedBitmapStorage)
 
 TEST(FontConfig, ReturnsEmptyStorageDimensionsForInvalidConfiguration)
 {
-    constexpr display::FontConfig empty_lookup =
-        display::configure_font<2, 3>("/assets/fonts/bitmap.bmp", "");
-    constexpr display::FontConfig overflowing_height =
-        display::configure_font<1, 32768>("/assets/fonts/bitmap.bmp", "AB");
+    constexpr graphics::FontConfig empty_lookup =
+        graphics::configure_font<2, 3>("/assets/fonts/bitmap.bmp", "");
+    constexpr graphics::FontConfig overflowing_height =
+        graphics::configure_font<1, 32768>("/assets/fonts/bitmap.bmp", "AB");
 
     expect_size(empty_lookup.bitmap_size(), 0, 0);
     EXPECT_EQ(empty_lookup.pixel_count(), 0);
@@ -49,35 +49,35 @@ TEST(FontConfig, ReturnsEmptyStorageDimensionsForInvalidConfiguration)
 
 TEST(Font, AcceptsOneCharacterWideStackedBitmap)
 {
-    const std::array<display::RgbColor, 1> single_character{kBitmapMark};
-    const display::Font single_character_font = make_font(
+    const std::array<graphics::RgbColor, 1> single_character{kBitmapMark};
+    const graphics::Font single_character_font = make_font(
         {.width = 1, .height = 1}, "A", single_character, {.width = 1, .height = 1});
     EXPECT_TRUE(single_character_font.is_valid());
     EXPECT_EQ(single_character_font.config.bitmap_path, nullptr);
 
-    const std::array<display::RgbColor, 10> stacked_bitmap{
+    const std::array<graphics::RgbColor, 10> stacked_bitmap{
         kBitmapMark, kBlack, kBlack, kBitmapMark, kBitmapMark, kBitmapMark, kBlack, kBitmapMark, kBitmapMark, kBlack,
     };
-    const display::Font stacked_font = make_lookup_font(stacked_bitmap);
+    const graphics::Font stacked_font = make_lookup_font(stacked_bitmap);
     EXPECT_TRUE(stacked_font.is_valid());
     EXPECT_STREQ(stacked_font.config.bitmap_path, kBitmapPath);
 }
 
 TEST(Font, RejectsEmptyAndMismatchedBitmaps)
 {
-    const std::array<display::RgbColor, 1> one_pixel{kBitmapMark};
-    const std::array<display::RgbColor, 2> two_pixels{kBitmapMark, kBlack};
-    const display::Font empty_font{};
-    const display::Font empty_lookup =
+    const std::array<graphics::RgbColor, 1> one_pixel{kBitmapMark};
+    const std::array<graphics::RgbColor, 2> two_pixels{kBitmapMark, kBlack};
+    const graphics::Font empty_font{};
+    const graphics::Font empty_lookup =
         make_font({.width = 1, .height = 1}, "", one_pixel, {.width = 1, .height = 1});
-    const display::Font zero_character_size = make_font({}, "A", one_pixel, {.width = 1, .height = 1});
-    const display::Font wider_than_one_character =
+    const graphics::Font zero_character_size = make_font({}, "A", one_pixel, {.width = 1, .height = 1});
+    const graphics::Font wider_than_one_character =
         make_font({.width = 1, .height = 1}, "A", two_pixels, {.width = 2, .height = 1});
-    const display::Font missing_separator =
+    const graphics::Font missing_separator =
         make_font({.width = 1, .height = 1}, "AB", two_pixels, {.width = 1, .height = 2});
-    const display::Font extra_separator_row =
+    const graphics::Font extra_separator_row =
         make_font({.width = 1, .height = 1}, "A", two_pixels, {.width = 1, .height = 2});
-    const display::Font short_pixel_span =
+    const graphics::Font short_pixel_span =
         make_font({.width = 2, .height = 1}, "A", one_pixel, {.width = 2, .height = 1});
 
     EXPECT_FALSE(empty_font.is_valid());
@@ -88,10 +88,10 @@ TEST(Font, RejectsEmptyAndMismatchedBitmaps)
     EXPECT_FALSE(extra_separator_row.is_valid());
     EXPECT_FALSE(short_pixel_span.is_valid());
 
-    display::LogicalFramebuffer framebuffer;
+    graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(kBackground);
-    const display::LogicalFramebuffer original = framebuffer;
-    const display::TextRasterizer rasterizer;
+    const graphics::LogicalFramebuffer original = framebuffer;
+    const graphics::TextRasterizer rasterizer;
     expect_size(rasterizer.rasterize(empty_font, "A", kForeground, {}, framebuffer), 0, 0);
     expect_size(rasterizer.rasterize(missing_separator, "AB", kForeground, {}, framebuffer), 0, 0);
     expect_size(rasterizer.rasterize(wider_than_one_character, "A", kForeground, {}, framebuffer), 0, 0);

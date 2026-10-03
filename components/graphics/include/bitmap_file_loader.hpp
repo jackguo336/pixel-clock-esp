@@ -4,7 +4,7 @@
 
 #include "bitmap_file.hpp"
 
-namespace display {
+namespace graphics {
 
 enum class BitmapLoadStatus : uint8_t {
     Ok = 0,
@@ -21,4 +21,4 @@ public:
     [[nodiscard]] BitmapLoadStatus load(const char* path, MutableBitmapFile destination) const;
 };
 
-}  // namespace display
+}  // namespace graphics

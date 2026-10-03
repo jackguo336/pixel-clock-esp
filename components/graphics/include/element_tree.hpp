@@ -11,7 +11,7 @@
 
 #include "elements.hpp"
 
-namespace display {
+namespace graphics {
 
 using ElementNodeIndex = uint16_t;
 
@@ -183,4 +183,4 @@ inline ElementTree ElementTreeBuilder::get_tree() const
     };
 }
 
-}  // namespace display
+}  // namespace graphics

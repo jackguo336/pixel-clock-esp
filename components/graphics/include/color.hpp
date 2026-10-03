@@ -5,7 +5,7 @@
 
 #include "geometry.hpp"
 
-namespace display {
+namespace graphics {
 
 struct RgbColor {
     uint8_t red{0};
@@ -26,4 +26,4 @@ struct LinearGradientPaint {
 
 using Paint = std::variant<SolidPaint, LinearGradientPaint>;
 
-}  // namespace display
+}  // namespace graphics

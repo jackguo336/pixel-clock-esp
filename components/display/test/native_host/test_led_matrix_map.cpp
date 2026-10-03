@@ -111,12 +111,12 @@ TEST(LedMatrixMap, SerpentineReversesOddLanes)
 TEST_P(LedMatrixMapWiring, UsesEachLedExactlyOnce)
 {
     const auto [orientation, serpentine] = GetParam();
-    std::array<int, display::LogicalFramebuffer::kPixelCount> seen{};
-    for (int32_t y = 0; y < display::LogicalFramebuffer::kHeight; ++y) {
-        for (int32_t x = 0; x < display::LogicalFramebuffer::kWidth; ++x) {
+    std::array<int, graphics::LogicalFramebuffer::kPixelCount> seen{};
+    for (int32_t y = 0; y < graphics::LogicalFramebuffer::kHeight; ++y) {
+        for (int32_t x = 0; x < graphics::LogicalFramebuffer::kWidth; ++x) {
             const std::size_t index =
                 led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine);
-            ASSERT_LT(index, display::LogicalFramebuffer::kPixelCount);
+            ASSERT_LT(index, graphics::LogicalFramebuffer::kPixelCount);
             seen[index] += 1;
         }
     }

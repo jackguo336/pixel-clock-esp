@@ -10,7 +10,7 @@
 #include "font.hpp"
 #include "geometry.hpp"
 
-namespace display {
+namespace graphics {
 
 struct ElementId {
     uint16_t value{0};
@@ -59,4 +59,4 @@ struct Element {
     ElementPayload payload{};
 };
 
-}  // namespace display
+}  // namespace graphics

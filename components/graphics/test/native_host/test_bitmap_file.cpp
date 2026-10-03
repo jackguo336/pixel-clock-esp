@@ -6,15 +6,15 @@
 
 namespace {
 
-constexpr display::RgbColor kRed{255, 0, 0};
-constexpr display::RgbColor kGreen{0, 255, 0};
+constexpr graphics::RgbColor kRed{255, 0, 0};
+constexpr graphics::RgbColor kGreen{0, 255, 0};
 
 }  // namespace
 
 TEST(BitmapFile, AcceptsNonZeroDimensionsWithExactPixelCount)
 {
-    const std::array<display::RgbColor, 6> pixels{kRed, kGreen, kRed, kGreen, kRed, kGreen};
-    const display::BitmapFile view{
+    const std::array<graphics::RgbColor, 6> pixels{kRed, kGreen, kRed, kGreen, kRed, kGreen};
+    const graphics::BitmapFile view{
         .size = {.width = 3, .height = 2},
         .pixels = pixels,
     };
@@ -24,8 +24,8 @@ TEST(BitmapFile, AcceptsNonZeroDimensionsWithExactPixelCount)
 
 TEST(BitmapFile, RejectsZeroWidth)
 {
-    const std::array<display::RgbColor, 2> pixels{kRed, kGreen};
-    const display::BitmapFile view{
+    const std::array<graphics::RgbColor, 2> pixels{kRed, kGreen};
+    const graphics::BitmapFile view{
         .size = {.width = 0, .height = 2},
         .pixels = pixels,
     };
@@ -35,8 +35,8 @@ TEST(BitmapFile, RejectsZeroWidth)
 
 TEST(BitmapFile, RejectsZeroHeight)
 {
-    const std::array<display::RgbColor, 2> pixels{kRed, kGreen};
-    const display::BitmapFile view{
+    const std::array<graphics::RgbColor, 2> pixels{kRed, kGreen};
+    const graphics::BitmapFile view{
         .size = {.width = 2, .height = 0},
         .pixels = pixels,
     };
@@ -46,8 +46,8 @@ TEST(BitmapFile, RejectsZeroHeight)
 
 TEST(BitmapFile, RejectsUndersizedSpan)
 {
-    const std::array<display::RgbColor, 3> pixels{kRed, kGreen, kRed};
-    const display::BitmapFile view{
+    const std::array<graphics::RgbColor, 3> pixels{kRed, kGreen, kRed};
+    const graphics::BitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = pixels,
     };
@@ -57,8 +57,8 @@ TEST(BitmapFile, RejectsUndersizedSpan)
 
 TEST(BitmapFile, RejectsOversizedSpan)
 {
-    const std::array<display::RgbColor, 5> pixels{kRed, kGreen, kRed, kGreen, kRed};
-    const display::BitmapFile view{
+    const std::array<graphics::RgbColor, 5> pixels{kRed, kGreen, kRed, kGreen, kRed};
+    const graphics::BitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = pixels,
     };
@@ -68,13 +68,13 @@ TEST(BitmapFile, RejectsOversizedSpan)
 
 TEST(MutableBitmapFile, ConvertsToReadOnlyWithoutChangingStorage)
 {
-    std::array<display::RgbColor, 4> pixels{kRed, kGreen, kRed, kGreen};
-    const display::MutableBitmapFile mutable_view{
+    std::array<graphics::RgbColor, 4> pixels{kRed, kGreen, kRed, kGreen};
+    const graphics::MutableBitmapFile mutable_view{
         .size = {.width = 2, .height = 2},
         .pixels = pixels,
     };
 
-    const display::BitmapFile view = mutable_view.as_read_only();
+    const graphics::BitmapFile view = mutable_view.as_read_only();
 
     EXPECT_TRUE(mutable_view.is_valid());
     EXPECT_TRUE(view.is_valid());

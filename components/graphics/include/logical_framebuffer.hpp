@@ -7,7 +7,7 @@
 
 #include "color.hpp"
 
-namespace display {
+namespace graphics {
 
 class LogicalFramebuffer final {
 public:
@@ -27,4 +27,4 @@ private:
     std::array<RgbColor, kPixelCount> pixels_{};
 };
 
-}  // namespace display
+}  // namespace graphics

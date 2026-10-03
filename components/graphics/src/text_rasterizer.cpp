@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace display {
+namespace graphics {
 namespace {
 
 // Blank columns left between adjacent characters when measuring and drawing a string.
@@ -87,4 +87,4 @@ Size TextRasterizer::rasterize(const Font& font, std::string_view text, RgbColor
     return size;
 }
 
-}  // namespace display
+}  // namespace graphics

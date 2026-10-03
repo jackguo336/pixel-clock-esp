@@ -4,11 +4,11 @@
 #include "geometry.hpp"
 #include "logical_framebuffer.hpp"
 
-namespace display {
+namespace graphics {
 
 class BitmapRasterizer final {
 public:
     void rasterize(BitmapFile bitmap, Position canvas_origin, LogicalFramebuffer& framebuffer) const;
 };
 
-}  // namespace display
+}  // namespace graphics

@@ -9,8 +9,8 @@
 namespace display_runtime {
 namespace {
 
-constexpr display::RgbColor kWhite{.red = 255, .green = 255, .blue = 255};
-constexpr display::SolidPaint kTextPaint{.color = kWhite};
+constexpr graphics::RgbColor kWhite{.red = 255, .green = 255, .blue = 255};
+constexpr graphics::SolidPaint kTextPaint{.color = kWhite};
 constexpr std::string_view kHelloText{"HELLO"};
 
 }  // namespace
@@ -24,8 +24,8 @@ void DisplayRuntime::start()
 {
     scene_ready_ = false;
 
-    const display::FontLoadStatus font_status = display::FontManager::instance().load();
-    if (font_status != display::FontLoadStatus::Ok) {
+    const graphics::FontLoadStatus font_status = graphics::FontManager::instance().load();
+    if (font_status != graphics::FontLoadStatus::Ok) {
         PLATFORM_LOGE(this, "failed to load font status=%u", static_cast<unsigned>(font_status));
         return;
     }
@@ -48,14 +48,14 @@ void DisplayRuntime::on_event(const platform::Event& event)
 
 void DisplayRuntime::refresh()
 {
-    display::ElementTreeBuilder builder(nodes_);
-    const display::Element text_element{
+    graphics::ElementTreeBuilder builder(nodes_);
+    const graphics::Element text_element{
         .id = {},
         .position = {.x = 0, .y = 0},
-        .paint = display::Paint{kTextPaint},
-        .payload = display::TextElementPayload{
+        .paint = graphics::Paint{kTextPaint},
+        .payload = graphics::TextElementPayload{
             .text = kHelloText,
-            .font = &display::FontManager::instance().font(display::FontId::English7x3),
+            .font = &graphics::FontManager::instance().font(graphics::FontId::English7x3),
         },
     };
     if (!builder.add_terminal(text_element)) {

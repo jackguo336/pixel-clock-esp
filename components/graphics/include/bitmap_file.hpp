@@ -5,7 +5,7 @@
 #include "color.hpp"
 #include "geometry.hpp"
 
-namespace display {
+namespace graphics {
 
 struct BitmapFile {
     Size size{};
@@ -22,4 +22,4 @@ struct MutableBitmapFile {
     [[nodiscard]] BitmapFile as_read_only() const;
 };
 
-}  // namespace display
+}  // namespace graphics
