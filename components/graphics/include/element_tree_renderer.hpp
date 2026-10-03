@@ -20,13 +20,18 @@ private:
         Paint paint{};
         // Origin of the element that defined the paint
         Position origin{};
+        // Computed size of the element that defined the paint
+        Size size{};
     };
 
     [[nodiscard]] static std::optional<ResolvedPaint> resolve_paint(
-        const std::optional<Paint>& element_paint, Position element_origin,
+        const std::optional<Paint>& element_paint, Position element_origin, Size element_size,
         const std::optional<ResolvedPaint>& inherited_paint);
 
-    [[nodiscard]] static const SolidPaint* as_solid_paint(const std::optional<ResolvedPaint>& resolved_paint);
+    [[nodiscard]] Size measure_node(const ElementTree& tree, ElementNodeIndex index) const;
+
+    [[nodiscard]] Size measure_children(const ElementTree& tree, std::optional<ElementNodeIndex> first_child,
+                                        const ContainerElementPayload& container) const;
 
     [[nodiscard]] Size render_node(const ElementTree& tree, ElementNodeIndex index, Position canvas_origin,
                                    const std::optional<ResolvedPaint>& inherited_paint,
