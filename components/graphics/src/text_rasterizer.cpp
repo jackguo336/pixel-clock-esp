@@ -16,6 +16,11 @@ constexpr int32_t kInterCharacterGapPixels = 1;
     return color.red != 0 || color.green != 0 || color.blue != 0;
 }
 
+[[nodiscard]] bool is_inside_framebuffer(int32_t x, int32_t y)
+{
+    return x >= 0 && y >= 0 && x < LogicalFramebuffer::kWidth && y < LogicalFramebuffer::kHeight;
+}
+
 [[nodiscard]] Size measured_text_size(const Font& font, std::string_view text)
 {
     if (!font.is_valid() || text.empty()) {
@@ -34,7 +39,7 @@ constexpr int32_t kInterCharacterGapPixels = 1;
 }
 
 void draw_character(const Font& font, std::size_t character_index, int32_t origin_x, int32_t origin_y,
-                    RgbColor foreground_color, LogicalFramebuffer& framebuffer)
+                    const ColorSampler& foreground, LogicalFramebuffer& framebuffer)
 {
     const int32_t character_width = static_cast<int32_t>(font.config.character_size.width);
     const int32_t character_height = static_cast<int32_t>(font.config.character_size.height);
@@ -52,12 +57,20 @@ void draw_character(const Font& font, std::size_t character_index, int32_t origi
             if (!is_foreground_bitmap_pixel(bitmap_pixel)) {
                 continue;
             }
-            static_cast<void>(framebuffer.set_pixel(origin_x + column, canvas_y, foreground_color));
+            const int32_t canvas_x = origin_x + column;
+            if (!is_inside_framebuffer(canvas_x, canvas_y)) {
+                continue;
+            }
+            const RgbColor color = foreground.sample(Position{
+                .x = static_cast<int16_t>(canvas_x),
+                .y = static_cast<int16_t>(canvas_y),
+            });
+            static_cast<void>(framebuffer.set_pixel(canvas_x, canvas_y, color));
         }
     }
 }
 
-void draw_text(const Font& font, std::string_view text, RgbColor foreground_color, Position canvas_origin,
+void draw_text(const Font& font, std::string_view text, const ColorSampler& foreground, Position canvas_origin,
                LogicalFramebuffer& framebuffer)
 {
     const int32_t character_width_plus_gap =
@@ -70,20 +83,25 @@ void draw_text(const Font& font, std::string_view text, RgbColor foreground_colo
         }
         const int32_t character_position_x =
             canvas_origin.x + static_cast<int32_t>(text_index) * character_width_plus_gap;
-        draw_character(font, character_index, character_position_x, canvas_origin.y, foreground_color, framebuffer);
+        draw_character(font, character_index, character_position_x, canvas_origin.y, foreground, framebuffer);
     }
 }
 
 }  // namespace
 
-Size TextRasterizer::rasterize(const Font& font, std::string_view text, RgbColor foreground_color,
+Size TextRasterizer::measure(const Font& font, std::string_view text) const
+{
+    return measured_text_size(font, text);
+}
+
+Size TextRasterizer::rasterize(const Font& font, std::string_view text, const ColorSampler& foreground,
                                Position canvas_origin, LogicalFramebuffer& framebuffer) const
 {
-    const Size size = measured_text_size(font, text);
+    const Size size = measure(font, text);
     if (size.width == 0 || size.height == 0) {
         return size;
     }
-    draw_text(font, text, foreground_color, canvas_origin, framebuffer);
+    draw_text(font, text, foreground, canvas_origin, framebuffer);
     return size;
 }
 

@@ -7,6 +7,7 @@
 #include <variant>
 
 #include "color.hpp"
+#include "color_sampler.hpp"
 #include "elements.hpp"
 #include "geometry.hpp"
 
@@ -60,7 +61,7 @@ namespace {
 }  // namespace
 
 std::optional<ElementTreeRenderer::ResolvedPaint> ElementTreeRenderer::resolve_paint(
-    const std::optional<Paint>& element_paint, Position element_origin,
+    const std::optional<Paint>& element_paint, Position element_origin, Size element_size,
     const std::optional<ResolvedPaint>& inherited_paint)
 {
     if (!element_paint.has_value()) {
@@ -69,15 +70,90 @@ std::optional<ElementTreeRenderer::ResolvedPaint> ElementTreeRenderer::resolve_p
     return ResolvedPaint{
         .paint = *element_paint,
         .origin = element_origin,
+        .size = element_size,
     };
 }
 
-const SolidPaint* ElementTreeRenderer::as_solid_paint(const std::optional<ResolvedPaint>& resolved_paint)
+Size ElementTreeRenderer::measure_children(const ElementTree& tree, std::optional<ElementNodeIndex> first_child,
+                                           const ContainerElementPayload& container) const
 {
-    if (!resolved_paint.has_value()) {
-        return nullptr;
+    int32_t max_right = 0;
+    int32_t max_bottom = 0;
+    Position previous_position{};
+    Size previous_size{};
+    bool has_previous_sibling = false;
+
+    std::optional<ElementNodeIndex> child_index = first_child;
+    while (child_index.has_value()) {
+        const ElementTreeNode& child = tree.nodes[*child_index];
+        const Position relative_position = child_relative_position(
+            child.element, container, has_previous_sibling, previous_position, previous_size);
+        const Size child_size = measure_node(tree, *child_index);
+
+        const int32_t right = static_cast<int32_t>(relative_position.x) + static_cast<int32_t>(child_size.width);
+        const int32_t bottom =
+            static_cast<int32_t>(relative_position.y) + static_cast<int32_t>(child_size.height);
+        if (right > max_right) {
+            max_right = right;
+        }
+        if (bottom > max_bottom) {
+            max_bottom = bottom;
+        }
+
+        previous_position = relative_position;
+        previous_size = child_size;
+        has_previous_sibling = true;
+        child_index = child.next_sibling;
     }
-    return std::get_if<SolidPaint>(&resolved_paint->paint);
+
+    return Size{
+        .width = clamp_int32_to_uint16(max_right),
+        .height = clamp_int32_to_uint16(max_bottom),
+    };
+}
+
+Size ElementTreeRenderer::measure_node(const ElementTree& tree, ElementNodeIndex index) const
+{
+    const ElementTreeNode& node = tree.nodes[index];
+
+    struct MeasureVisitor {
+        const ElementTreeRenderer& renderer;
+        const ElementTree& tree;
+        const ElementTreeNode& node;
+
+        Size operator()(const ContainerElementPayload& payload) const
+        {
+            return renderer.measure_children(tree, node.first_child, payload);
+        }
+
+        Size operator()(const BitmapElementPayload& payload) const
+        {
+            if (payload.bitmap == nullptr) {
+                return {};
+            }
+            return payload.bitmap->size;
+        }
+
+        Size operator()(const TextElementPayload& payload) const
+        {
+            if (payload.font == nullptr || !payload.font->is_valid()) {
+                return {};
+            }
+            return renderer.text_rasterizer_.measure(*payload.font, payload.text);
+        }
+
+        Size operator()(const FilledRectangleElementPayload& payload) const
+        {
+            return payload.size;
+        }
+    };
+
+    return std::visit(MeasureVisitor{
+                          .renderer = *this,
+                          .tree = tree,
+                          .node = node,
+                      },
+                      node.element.payload);
 }
 
 Size ElementTreeRenderer::render_children(const ElementTree& tree, std::optional<ElementNodeIndex> first_child,
@@ -126,8 +202,10 @@ Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex 
                                       LogicalFramebuffer& framebuffer) const
 {
     const ElementTreeNode& node = tree.nodes[index];
+    // A gradient covers the defining element's computed bounds, so measure before drawing descendants.
+    const Size defined_size = node.element.paint.has_value() ? measure_node(tree, index) : Size{};
     const std::optional<ResolvedPaint> resolved_paint =
-        resolve_paint(node.element.paint, canvas_origin, inherited_paint);
+        resolve_paint(node.element.paint, canvas_origin, defined_size, inherited_paint);
 
     struct ElementPayloadVisitor {
         const ElementTreeRenderer& renderer;
@@ -157,22 +235,20 @@ Size ElementTreeRenderer::render_node(const ElementTree& tree, ElementNodeIndex 
             if (payload.font == nullptr || !payload.font->is_valid()) {
                 return Size{};
             }
-            if (const SolidPaint* solid_paint = ElementTreeRenderer::as_solid_paint(resolved_paint)) {
-                return renderer.text_rasterizer_.rasterize(*payload.font, payload.text, solid_paint->color,
-                                                            element_origin, framebuffer);
+            if (!resolved_paint.has_value()) {
+                return Size{};
             }
-            // TODO: Rasterize text with LinearGradientPaint instead of skipping and reporting an empty size.
-            return Size{};
+            const ColorSampler foreground{resolved_paint->paint, resolved_paint->origin, resolved_paint->size};
+            return renderer.text_rasterizer_.rasterize(*payload.font, payload.text, foreground, element_origin,
+                                                        framebuffer);
         }
 
         Size operator()(const FilledRectangleElementPayload& payload) const
         {
-            if (const SolidPaint* solid_paint = ElementTreeRenderer::as_solid_paint(resolved_paint)) {
-                renderer.rectangle_rasterizer_.rasterize(payload.size, solid_paint->color, element_origin,
-                                                          framebuffer);
-                return payload.size;
+            if (resolved_paint.has_value()) {
+                const ColorSampler color_sampler{resolved_paint->paint, resolved_paint->origin, resolved_paint->size};
+                renderer.rectangle_rasterizer_.rasterize(payload.size, color_sampler, element_origin, framebuffer);
             }
-            // TODO: Rasterize filled rectangles with LinearGradientPaint instead of skipping the fill.
             return payload.size;
         }
     };
