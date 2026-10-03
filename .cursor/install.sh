@@ -45,31 +45,32 @@ if [[ ! -f "${ACTIVATE}" ]]; then
   exit 1
 fi
 
-# shellcheck disable=SC1090
-. "${ACTIVATE}"
-
-echo "==> Installing QEMU (RISC-V) for embedded unit tests"
-python "${IDF_PATH}/tools/idf_tools.py" install qemu-riscv32
-# Re-source so the freshly installed QEMU binary is on PATH.
-# shellcheck disable=SC1090
-. "${ACTIVATE}"
-
-echo "==> Installing pytest-embedded QEMU test runner"
-python -m pip install --disable-pip-version-check "pytest-embedded-qemu[idf]~=2.9"
-
 echo "==> Making ESP-IDF available to login shells"
 # Cloud Agent install/start run as non-interactive login shells. Those shells
-# read /etc/profile.d and do not read ~/.bashrc, so the activation script has
-# to live here for idf.py to be on PATH.
+# read /etc/profile.d and do not read ~/.bashrc. Source the activation script
+# from a login shell: EIM's script refuses to run when sourced from another
+# script (it checks \$0), and it reads ZSH_VERSION under nounset.
 sudo tee /etc/profile.d/esp-idf.sh >/dev/null <<EOF
 # Activate ESP-IDF ${IDF_VERSION} (pixel-clock-esp Cloud Agent setup).
 if [ -z "\${IDF_PATH:-}" ] && [ -f "\${HOME}/.espressif/tools/activate_idf_${IDF_VERSION}.sh" ]; then
   . "\${HOME}/.espressif/tools/activate_idf_${IDF_VERSION}.sh" >/dev/null 2>&1 || true
 fi
+if ! command -v qemu-system-riscv32 >/dev/null 2>&1; then
+  for qemu_bin in "\${HOME}"/.espressif/tools/qemu-riscv32/*/qemu/bin; do
+    if [ -x "\${qemu_bin}/qemu-system-riscv32" ]; then
+      PATH="\${qemu_bin}:\${PATH}"
+      export PATH
+      break
+    fi
+  done
+fi
 EOF
 sudo chmod 644 /etc/profile.d/esp-idf.sh
 
+echo "==> Installing QEMU (RISC-V) and pytest-embedded"
+# QEMU cannot emulate esp32c6, so the embedded suite runs on esp32c3.
+bash -lc "python \"\$IDF_PATH/tools/idf_tools.py\" install qemu-riscv32"
+bash -lc "python -m pip install --disable-pip-version-check 'pytest-embedded-qemu[idf]~=2.9'"
+
 echo "==> ESP-IDF environment ready"
-idf.py --version
-command -v eim
-command -v qemu-system-riscv32 || true
+bash -lc 'idf.py --version && command -v eim && command -v qemu-system-riscv32'
