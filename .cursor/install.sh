@@ -59,8 +59,13 @@ echo "==> Making ESP-IDF available to login shells"
 # script (it checks $0), and it reads ZSH_VERSION under nounset.
 sudo tee /etc/profile.d/esp-idf.sh >/dev/null <<EOF
 # Activate ESP-IDF ${IDF_VERSION} (pixel-clock-esp Cloud Agent setup).
-if [ -z "\${IDF_PATH:-}" ] && [ -f "\${HOME}/.espressif/tools/activate_idf_${IDF_VERSION}.sh" ]; then
-  . "\${HOME}/.espressif/tools/activate_idf_${IDF_VERSION}.sh" >/dev/null 2>&1 || true
+# Replace an inherited legacy IDF_PATH; login shells source this file before
+# ~/.bashrc, but a parent process may already have exported the old clone.
+eim_idf="\${HOME}/.espressif/${IDF_VERSION}/esp-idf"
+activate="\${HOME}/.espressif/tools/activate_idf_${IDF_VERSION}.sh"
+if [ "\${IDF_PATH:-}" != "\${eim_idf}" ] && [ -f "\${activate}" ]; then
+  unset IDF_PATH
+  . "\${activate}" >/dev/null 2>&1 || true
 fi
 if ! command -v qemu-system-riscv32 >/dev/null 2>&1; then
   for qemu_bin in "\${HOME}"/.espressif/tools/qemu-riscv32/*/qemu/bin; do
