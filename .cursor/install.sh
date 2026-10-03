@@ -68,7 +68,10 @@ sudo tee /etc/profile.d/esp-idf.sh >/dev/null <<EOF
 # ~/.bashrc, but a parent process may already have exported the old clone.
 eim_idf="\${HOME}/.espressif/${IDF_VERSION}/esp-idf"
 activate="\${HOME}/.espressif/tools/activate_idf_${IDF_VERSION}.sh"
-if [ "\${IDF_PATH:-}" != "\${eim_idf}" ] && [ -f "\${activate}" ]; then
+# idf.py is a shell function from the activation script, not a binary. A nested
+# login shell inherits IDF_PATH and would otherwise skip activation, so idf.py
+# is missing. Source again unless this shell already has the EIM function.
+if [ -f "\${activate}" ] && { [ "\${IDF_PATH:-}" != "\${eim_idf}" ] || ! command -v idf.py >/dev/null 2>&1; }; then
   unset IDF_PATH
   . "\${activate}" >/dev/null 2>&1 || true
 fi
