@@ -45,11 +45,18 @@ if [[ ! -f "${ACTIVATE}" ]]; then
   exit 1
 fi
 
+# Login shells source ~/.profile, which sources ~/.bashrc after /etc/profile.d.
+# An older bootstrap appended the legacy export.sh hook there, and that hook
+# overrides the EIM activation. Drop it when it is still present.
+if [[ -f "${HOME}/.bashrc" ]] && grep -q 'esp/esp-idf/export.sh' "${HOME}/.bashrc"; then
+  sed -i '/pixel-clock-esp Cloud Agent setup/d;/esp\/esp-idf\/export.sh/d' "${HOME}/.bashrc"
+fi
+
 echo "==> Making ESP-IDF available to login shells"
 # Cloud Agent install/start run as non-interactive login shells. Those shells
 # read /etc/profile.d and do not read ~/.bashrc. Source the activation script
 # from a login shell: EIM's script refuses to run when sourced from another
-# script (it checks \$0), and it reads ZSH_VERSION under nounset.
+# script (it checks $0), and it reads ZSH_VERSION under nounset.
 sudo tee /etc/profile.d/esp-idf.sh >/dev/null <<EOF
 # Activate ESP-IDF ${IDF_VERSION} (pixel-clock-esp Cloud Agent setup).
 if [ -z "\${IDF_PATH:-}" ] && [ -f "\${HOME}/.espressif/tools/activate_idf_${IDF_VERSION}.sh" ]; then
