@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace display {
+namespace graphics {
 
 void BitmapRasterizer::rasterize(BitmapFile bitmap, Position canvas_origin,
                                  LogicalFramebuffer& framebuffer) const
@@ -29,4 +29,4 @@ void BitmapRasterizer::rasterize(BitmapFile bitmap, Position canvas_origin,
     }
 }
 
-}  // namespace display
+}  // namespace graphics

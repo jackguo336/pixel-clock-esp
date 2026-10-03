@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace display {
+namespace graphics {
 
 struct Position {
     int16_t x{0};
@@ -14,4 +14,4 @@ struct Size {
     uint16_t height{0};
 };
 
-}  // namespace display
+}  // namespace graphics

@@ -8,7 +8,7 @@
 namespace mock_led_index {
 namespace {
 
-constexpr std::size_t kCallCapacity = display::LogicalFramebuffer::kPixelCount;
+constexpr std::size_t kCallCapacity = graphics::LogicalFramebuffer::kPixelCount;
 
 std::array<Call, kCallCapacity> g_calls{};
 std::size_t g_call_count{0};

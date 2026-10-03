@@ -4,7 +4,7 @@
 #include "geometry.hpp"
 #include "logical_framebuffer.hpp"
 
-namespace display {
+namespace graphics {
 
 class RectangleRasterizer final {
 public:
@@ -12,4 +12,4 @@ public:
                    LogicalFramebuffer& framebuffer) const;
 };
 
-}  // namespace display
+}  // namespace graphics

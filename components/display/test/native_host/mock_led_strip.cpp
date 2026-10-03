@@ -7,7 +7,7 @@
 namespace mock_led_strip {
 namespace {
 
-constexpr std::size_t kPixelCapacity = display::LogicalFramebuffer::kPixelCount;
+constexpr std::size_t kPixelCapacity = graphics::LogicalFramebuffer::kPixelCount;
 
 int g_handle_sentinel{0};
 bool g_created{false};

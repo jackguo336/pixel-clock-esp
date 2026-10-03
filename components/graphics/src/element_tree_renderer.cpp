@@ -10,7 +10,7 @@
 #include "elements.hpp"
 #include "geometry.hpp"
 
-namespace display {
+namespace graphics {
 namespace {
 
 [[nodiscard]] Position element_origin_on_canvas(Position parent_origin, Position element_position)
@@ -195,4 +195,4 @@ void ElementTreeRenderer::render(const ElementTree& tree, LogicalFramebuffer& fr
     static_cast<void>(render_node(tree, tree.root, root_origin, std::nullopt, framebuffer));
 }
 
-}  // namespace display
+}  // namespace graphics

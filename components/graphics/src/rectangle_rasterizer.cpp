@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace display {
+namespace graphics {
 
 void RectangleRasterizer::rasterize(Size size, RgbColor color, Position canvas_origin,
                                      LogicalFramebuffer& framebuffer) const
@@ -30,4 +30,4 @@ void RectangleRasterizer::rasterize(Size size, RgbColor color, Position canvas_o
     }
 }
 
-}  // namespace display
+}  // namespace graphics

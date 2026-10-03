@@ -1,6 +1,6 @@
 #include "font.hpp"
 
-namespace display {
+namespace graphics {
 
 bool Font::is_valid() const
 {
@@ -12,4 +12,4 @@ bool Font::is_valid() const
         && bitmap.size.height == expected_size.height;
 }
 
-}  // namespace display
+}  // namespace graphics

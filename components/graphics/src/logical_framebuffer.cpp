@@ -1,6 +1,6 @@
 #include "logical_framebuffer.hpp"
 
-namespace display {
+namespace graphics {
 
 void LogicalFramebuffer::clear(RgbColor color)
 {
@@ -41,4 +41,4 @@ size_t LogicalFramebuffer::index_unchecked(int32_t x, int32_t y) const
     return static_cast<size_t>(y) * static_cast<size_t>(kWidth) + static_cast<size_t>(x);
 }
 
-}  // namespace display
+}  // namespace graphics

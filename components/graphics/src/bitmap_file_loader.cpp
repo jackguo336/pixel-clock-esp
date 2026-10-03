@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace display {
+namespace graphics {
 namespace {
 
 constexpr uint16_t kBitmapSignature = 0x4D42;
@@ -291,4 +291,4 @@ BitmapLoadStatus BitmapFileLoader::load(const char* path, MutableBitmapFile dest
     return BitmapLoadStatus::Ok;
 }
 
-}  // namespace display
+}  // namespace graphics

@@ -44,7 +44,7 @@ struct BmpFields {
     uint16_t bit_count = 24;
     uint32_t compression = 0;
     uint32_t extra_bytes_before_pixels = 0;
-    std::vector<display::RgbColor> pixels{};
+    std::vector<graphics::RgbColor> pixels{};
     std::size_t truncate_to_bytes = 0;
 };
 
@@ -105,8 +105,8 @@ struct BmpFields {
         for (uint32_t column = 0; column < width; ++column) {
             const std::size_t index =
                 static_cast<std::size_t>(source_row) * static_cast<std::size_t>(width) + column;
-            const display::RgbColor color =
-                index < fields.pixels.size() ? fields.pixels[index] : display::RgbColor{};
+            const graphics::RgbColor color =
+                index < fields.pixels.size() ? fields.pixels[index] : graphics::RgbColor{};
             bytes.push_back(color.blue);
             bytes.push_back(color.green);
             bytes.push_back(color.red);
@@ -177,16 +177,16 @@ protected:
 
     std::string directory_;
     std::vector<std::string> files_;
-    display::BitmapFileLoader loader_{};
+    graphics::BitmapFileLoader loader_{};
 };
 
 }  // namespace
 
 TEST_F(BitmapFileLoaderTest, DecodesUncompressed24BitBottomUpBmpWithRowPadding)
 {
-    const std::array<display::RgbColor, 2> expected{
-        display::RgbColor{.red = 255, .green = 0, .blue = 0},
-        display::RgbColor{.red = 0, .green = 0, .blue = 255},
+    const std::array<graphics::RgbColor, 2> expected{
+        graphics::RgbColor{.red = 255, .green = 0, .blue = 0},
+        graphics::RgbColor{.red = 0, .green = 0, .blue = 255},
     };
     const std::string path = write_bmp("padded24.bmp", BmpFields{
         .width = 1,
@@ -194,27 +194,27 @@ TEST_F(BitmapFileLoaderTest, DecodesUncompressed24BitBottomUpBmpWithRowPadding)
         .bit_count = 24,
         .pixels = {expected[0], expected[1]},
     });
-    std::array<display::RgbColor, 2> destination{
-        display::RgbColor{.red = 1, .green = 2, .blue = 3},
-        display::RgbColor{.red = 4, .green = 5, .blue = 6},
+    std::array<graphics::RgbColor, 2> destination{
+        graphics::RgbColor{.red = 1, .green = 2, .blue = 3},
+        graphics::RgbColor{.red = 4, .green = 5, .blue = 6},
     };
-    const display::MutableBitmapFile view{
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 2},
         .pixels = destination,
     };
 
-    EXPECT_EQ(loader_.load(path.c_str(), view), display::BitmapLoadStatus::Ok);
+    EXPECT_EQ(loader_.load(path.c_str(), view), graphics::BitmapLoadStatus::Ok);
     expect_rgb(destination[0], 255, 0, 0);
     expect_rgb(destination[1], 0, 0, 255);
 }
 
 TEST_F(BitmapFileLoaderTest, DecodesUncompressed32BitTopDownBmpAndIgnoresAlpha)
 {
-    const std::array<display::RgbColor, 4> expected{
-        display::RgbColor{.red = 10, .green = 20, .blue = 30},
-        display::RgbColor{.red = 40, .green = 50, .blue = 60},
-        display::RgbColor{.red = 70, .green = 80, .blue = 90},
-        display::RgbColor{.red = 100, .green = 110, .blue = 120},
+    const std::array<graphics::RgbColor, 4> expected{
+        graphics::RgbColor{.red = 10, .green = 20, .blue = 30},
+        graphics::RgbColor{.red = 40, .green = 50, .blue = 60},
+        graphics::RgbColor{.red = 70, .green = 80, .blue = 90},
+        graphics::RgbColor{.red = 100, .green = 110, .blue = 120},
     };
     const std::string path = write_bmp("topdown32.bmp", BmpFields{
         .width = 2,
@@ -222,13 +222,13 @@ TEST_F(BitmapFileLoaderTest, DecodesUncompressed32BitTopDownBmpAndIgnoresAlpha)
         .bit_count = 32,
         .pixels = {expected[0], expected[1], expected[2], expected[3]},
     });
-    std::array<display::RgbColor, 4> destination{};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 4> destination{};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = destination,
     };
 
-    EXPECT_EQ(loader_.load(path.c_str(), view), display::BitmapLoadStatus::Ok);
+    EXPECT_EQ(loader_.load(path.c_str(), view), graphics::BitmapLoadStatus::Ok);
     expect_rgb(destination[0], 10, 20, 30);
     expect_rgb(destination[1], 40, 50, 60);
     expect_rgb(destination[2], 70, 80, 90);
@@ -242,19 +242,19 @@ TEST_F(BitmapFileLoaderTest, ConvertsBgrChannelsAndPreservesRowOrientation)
         .height = 2,
         .bit_count = 24,
         .pixels = {
-            display::RgbColor{.red = 255, .green = 0, .blue = 0},
-            display::RgbColor{.red = 0, .green = 255, .blue = 0},
-            display::RgbColor{.red = 0, .green = 0, .blue = 255},
-            display::RgbColor{.red = 255, .green = 255, .blue = 255},
+            graphics::RgbColor{.red = 255, .green = 0, .blue = 0},
+            graphics::RgbColor{.red = 0, .green = 255, .blue = 0},
+            graphics::RgbColor{.red = 0, .green = 0, .blue = 255},
+            graphics::RgbColor{.red = 255, .green = 255, .blue = 255},
         },
     });
-    std::array<display::RgbColor, 4> destination{};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 4> destination{};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 2, .height = 2},
         .pixels = destination,
     };
 
-    EXPECT_EQ(loader_.load(path.c_str(), view), display::BitmapLoadStatus::Ok);
+    EXPECT_EQ(loader_.load(path.c_str(), view), graphics::BitmapLoadStatus::Ok);
     expect_rgb(destination[0], 255, 0, 0);
     expect_rgb(destination[1], 0, 255, 0);
     expect_rgb(destination[2], 0, 0, 255);
@@ -263,84 +263,84 @@ TEST_F(BitmapFileLoaderTest, ConvertsBgrChannelsAndPreservesRowOrientation)
 
 TEST_F(BitmapFileLoaderTest, RejectsNullEmptyPathsAndInvalidDestinationViews)
 {
-    std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 9, .green = 8, .blue = 7}};
-    const display::MutableBitmapFile valid{
+    std::array<graphics::RgbColor, 1> destination{graphics::RgbColor{.red = 9, .green = 8, .blue = 7}};
+    const graphics::MutableBitmapFile valid{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
-    const display::MutableBitmapFile zero_width{
+    const graphics::MutableBitmapFile zero_width{
         .size = {.width = 0, .height = 1},
         .pixels = destination,
     };
     const std::string path = write_bmp("valid.bmp", BmpFields{
-        .pixels = {display::RgbColor{.red = 1, .green = 2, .blue = 3}},
+        .pixels = {graphics::RgbColor{.red = 1, .green = 2, .blue = 3}},
     });
 
-    EXPECT_EQ(loader_.load(nullptr, valid), display::BitmapLoadStatus::InvalidArgument);
-    EXPECT_EQ(loader_.load("", valid), display::BitmapLoadStatus::InvalidArgument);
-    EXPECT_EQ(loader_.load(path.c_str(), zero_width), display::BitmapLoadStatus::InvalidArgument);
+    EXPECT_EQ(loader_.load(nullptr, valid), graphics::BitmapLoadStatus::InvalidArgument);
+    EXPECT_EQ(loader_.load("", valid), graphics::BitmapLoadStatus::InvalidArgument);
+    EXPECT_EQ(loader_.load(path.c_str(), zero_width), graphics::BitmapLoadStatus::InvalidArgument);
     expect_rgb(destination[0], 9, 8, 7);
 }
 
 TEST_F(BitmapFileLoaderTest, RejectsMissingFiles)
 {
-    std::array<display::RgbColor, 1> destination{};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
     const std::string missing = directory_ + "/missing.bmp";
 
-    EXPECT_EQ(loader_.load(missing.c_str(), view), display::BitmapLoadStatus::OpenFailed);
+    EXPECT_EQ(loader_.load(missing.c_str(), view), graphics::BitmapLoadStatus::OpenFailed);
 }
 
 TEST_F(BitmapFileLoaderTest, RejectsBadSignaturesUnsupportedHeadersPlanesDepthsAndCompression)
 {
-    std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 1, .green = 2, .blue = 3}};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{graphics::RgbColor{.red = 1, .green = 2, .blue = 3}};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
 
     const std::string bad_signature = write_bmp("bad_sig.bmp", BmpFields{
         .signature = 0x4142,
-        .pixels = {display::RgbColor{.red = 9, .green = 9, .blue = 9}},
+        .pixels = {graphics::RgbColor{.red = 9, .green = 9, .blue = 9}},
     });
     const std::string bad_dib = write_bmp("bad_dib.bmp", BmpFields{
         .dib_header_size = 12,
-        .pixels = {display::RgbColor{.red = 9, .green = 9, .blue = 9}},
+        .pixels = {graphics::RgbColor{.red = 9, .green = 9, .blue = 9}},
     });
     const std::string bad_planes = write_bmp("bad_planes.bmp", BmpFields{
         .planes = 0,
-        .pixels = {display::RgbColor{.red = 9, .green = 9, .blue = 9}},
+        .pixels = {graphics::RgbColor{.red = 9, .green = 9, .blue = 9}},
     });
     const std::string bad_depth = write_bmp("bad_depth.bmp", BmpFields{
         .bit_count = 16,
-        .pixels = {display::RgbColor{.red = 9, .green = 9, .blue = 9}},
+        .pixels = {graphics::RgbColor{.red = 9, .green = 9, .blue = 9}},
     });
     const std::string compressed = write_bmp("compressed.bmp", BmpFields{
         .compression = 1,
-        .pixels = {display::RgbColor{.red = 9, .green = 9, .blue = 9}},
+        .pixels = {graphics::RgbColor{.red = 9, .green = 9, .blue = 9}},
     });
     const std::string zero_dim = write_bmp("zero.bmp", BmpFields{
         .width = 0,
         .height = 1,
-        .pixels = {display::RgbColor{.red = 9, .green = 9, .blue = 9}},
+        .pixels = {graphics::RgbColor{.red = 9, .green = 9, .blue = 9}},
     });
 
-    EXPECT_EQ(loader_.load(bad_signature.c_str(), view), display::BitmapLoadStatus::UnsupportedFormat);
-    EXPECT_EQ(loader_.load(bad_dib.c_str(), view), display::BitmapLoadStatus::UnsupportedFormat);
-    EXPECT_EQ(loader_.load(bad_planes.c_str(), view), display::BitmapLoadStatus::UnsupportedFormat);
-    EXPECT_EQ(loader_.load(bad_depth.c_str(), view), display::BitmapLoadStatus::UnsupportedFormat);
-    EXPECT_EQ(loader_.load(compressed.c_str(), view), display::BitmapLoadStatus::UnsupportedFormat);
-    EXPECT_EQ(loader_.load(zero_dim.c_str(), view), display::BitmapLoadStatus::UnsupportedFormat);
+    EXPECT_EQ(loader_.load(bad_signature.c_str(), view), graphics::BitmapLoadStatus::UnsupportedFormat);
+    EXPECT_EQ(loader_.load(bad_dib.c_str(), view), graphics::BitmapLoadStatus::UnsupportedFormat);
+    EXPECT_EQ(loader_.load(bad_planes.c_str(), view), graphics::BitmapLoadStatus::UnsupportedFormat);
+    EXPECT_EQ(loader_.load(bad_depth.c_str(), view), graphics::BitmapLoadStatus::UnsupportedFormat);
+    EXPECT_EQ(loader_.load(compressed.c_str(), view), graphics::BitmapLoadStatus::UnsupportedFormat);
+    EXPECT_EQ(loader_.load(zero_dim.c_str(), view), graphics::BitmapLoadStatus::UnsupportedFormat);
     expect_rgb(destination[0], 1, 2, 3);
 }
 
 TEST_F(BitmapFileLoaderTest, RejectsSourceDimensionsThatDifferFromDestination)
 {
-    std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 4, .green = 5, .blue = 6}};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{graphics::RgbColor{.red = 4, .green = 5, .blue = 6}};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
@@ -348,22 +348,22 @@ TEST_F(BitmapFileLoaderTest, RejectsSourceDimensionsThatDifferFromDestination)
         .width = 2,
         .height = 1,
         .pixels = {
-            display::RgbColor{.red = 9, .green = 9, .blue = 9},
-            display::RgbColor{.red = 8, .green = 8, .blue = 8},
+            graphics::RgbColor{.red = 9, .green = 9, .blue = 9},
+            graphics::RgbColor{.red = 8, .green = 8, .blue = 8},
         },
     });
 
-    EXPECT_EQ(loader_.load(path.c_str(), view), display::BitmapLoadStatus::SizeMismatch);
+    EXPECT_EQ(loader_.load(path.c_str(), view), graphics::BitmapLoadStatus::SizeMismatch);
     expect_rgb(destination[0], 4, 5, 6);
 }
 
 TEST_F(BitmapFileLoaderTest, DistinguishesTruncatedHeadersAndPixelData)
 {
-    std::array<display::RgbColor, 2> destination{
-        display::RgbColor{.red = 1, .green = 1, .blue = 1},
-        display::RgbColor{.red = 2, .green = 2, .blue = 2},
+    std::array<graphics::RgbColor, 2> destination{
+        graphics::RgbColor{.red = 1, .green = 1, .blue = 1},
+        graphics::RgbColor{.red = 2, .green = 2, .blue = 2},
     };
-    const display::MutableBitmapFile view{
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 2},
         .pixels = destination,
     };
@@ -371,8 +371,8 @@ TEST_F(BitmapFileLoaderTest, DistinguishesTruncatedHeadersAndPixelData)
         .width = 1,
         .height = 2,
         .pixels = {
-            display::RgbColor{.red = 9, .green = 9, .blue = 9},
-            display::RgbColor{.red = 8, .green = 8, .blue = 8},
+            graphics::RgbColor{.red = 9, .green = 9, .blue = 9},
+            graphics::RgbColor{.red = 8, .green = 8, .blue = 8},
         },
         .truncate_to_bytes = 20,
     });
@@ -380,32 +380,32 @@ TEST_F(BitmapFileLoaderTest, DistinguishesTruncatedHeadersAndPixelData)
         .width = 1,
         .height = 2,
         .pixels = {
-            display::RgbColor{.red = 9, .green = 9, .blue = 9},
-            display::RgbColor{.red = 8, .green = 8, .blue = 8},
+            graphics::RgbColor{.red = 9, .green = 9, .blue = 9},
+            graphics::RgbColor{.red = 8, .green = 8, .blue = 8},
         },
         .truncate_to_bytes = kFileHeaderSize + kBitmapInfoHeaderSize + 2,
     });
 
-    EXPECT_EQ(loader_.load(truncated_header.c_str(), view), display::BitmapLoadStatus::TruncatedFile);
+    EXPECT_EQ(loader_.load(truncated_header.c_str(), view), graphics::BitmapLoadStatus::TruncatedFile);
     expect_rgb(destination[0], 1, 1, 1);
     expect_rgb(destination[1], 2, 2, 2);
 
-    EXPECT_EQ(loader_.load(truncated_pixels.c_str(), view), display::BitmapLoadStatus::TruncatedFile);
+    EXPECT_EQ(loader_.load(truncated_pixels.c_str(), view), graphics::BitmapLoadStatus::TruncatedFile);
 }
 
 TEST_F(BitmapFileLoaderTest, PreservesDestinationWhenValidationFailsBeforePixelDecoding)
 {
-    std::array<display::RgbColor, 1> destination{display::RgbColor{.red = 11, .green = 22, .blue = 33}};
-    const display::MutableBitmapFile view{
+    std::array<graphics::RgbColor, 1> destination{graphics::RgbColor{.red = 11, .green = 22, .blue = 33}};
+    const graphics::MutableBitmapFile view{
         .size = {.width = 1, .height = 1},
         .pixels = destination,
     };
     const std::string path = write_bmp("gap.bmp", BmpFields{
         .extra_bytes_before_pixels = 4,
-        .pixels = {display::RgbColor{.red = 255, .green = 0, .blue = 0}},
+        .pixels = {graphics::RgbColor{.red = 255, .green = 0, .blue = 0}},
         .truncate_to_bytes = kFileHeaderSize + kBitmapInfoHeaderSize + 2,
     });
 
-    EXPECT_EQ(loader_.load(path.c_str(), view), display::BitmapLoadStatus::TruncatedFile);
+    EXPECT_EQ(loader_.load(path.c_str(), view), graphics::BitmapLoadStatus::TruncatedFile);
     expect_rgb(destination[0], 11, 22, 33);
 }

@@ -9,11 +9,11 @@ using graphics_test::expect_rgb;
 
 namespace {
 
-void expect_all_pixels(const display::LogicalFramebuffer& framebuffer, uint8_t red, uint8_t green, uint8_t blue)
+void expect_all_pixels(const graphics::LogicalFramebuffer& framebuffer, uint8_t red, uint8_t green, uint8_t blue)
 {
     const auto pixels = framebuffer.pixels();
-    ASSERT_EQ(pixels.size(), display::LogicalFramebuffer::kPixelCount);
-    for (const display::RgbColor& pixel : pixels) {
+    ASSERT_EQ(pixels.size(), graphics::LogicalFramebuffer::kPixelCount);
+    for (const graphics::RgbColor& pixel : pixels) {
         expect_rgb(pixel, red, green, blue);
     }
 }
@@ -22,31 +22,31 @@ void expect_all_pixels(const display::LogicalFramebuffer& framebuffer, uint8_t r
 
 TEST(LogicalFramebuffer, StartsWithEveryPixelBlack)
 {
-    const display::LogicalFramebuffer framebuffer;
+    const graphics::LogicalFramebuffer framebuffer;
     expect_all_pixels(framebuffer, 0, 0, 0);
 }
 
 TEST(LogicalFramebuffer, ClearFillsEveryLogicalPixel)
 {
-    display::LogicalFramebuffer framebuffer;
-    framebuffer.clear(display::RgbColor{.red = 12, .green = 34, .blue = 56});
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(graphics::RgbColor{.red = 12, .green = 34, .blue = 56});
     expect_all_pixels(framebuffer, 12, 34, 56);
 }
 
 TEST(LogicalFramebuffer, WritesAndReadsCornerAndInteriorCoordinates)
 {
-    display::LogicalFramebuffer framebuffer;
-    EXPECT_TRUE(framebuffer.set_pixel(0, 0, display::RgbColor{.red = 1, .green = 0, .blue = 0}));
-    EXPECT_TRUE(framebuffer.set_pixel(31, 0, display::RgbColor{.red = 0, .green = 1, .blue = 0}));
-    EXPECT_TRUE(framebuffer.set_pixel(0, 7, display::RgbColor{.red = 0, .green = 0, .blue = 1}));
-    EXPECT_TRUE(framebuffer.set_pixel(31, 7, display::RgbColor{.red = 1, .green = 1, .blue = 0}));
-    EXPECT_TRUE(framebuffer.set_pixel(15, 3, display::RgbColor{.red = 1, .green = 0, .blue = 1}));
+    graphics::LogicalFramebuffer framebuffer;
+    EXPECT_TRUE(framebuffer.set_pixel(0, 0, graphics::RgbColor{.red = 1, .green = 0, .blue = 0}));
+    EXPECT_TRUE(framebuffer.set_pixel(31, 0, graphics::RgbColor{.red = 0, .green = 1, .blue = 0}));
+    EXPECT_TRUE(framebuffer.set_pixel(0, 7, graphics::RgbColor{.red = 0, .green = 0, .blue = 1}));
+    EXPECT_TRUE(framebuffer.set_pixel(31, 7, graphics::RgbColor{.red = 1, .green = 1, .blue = 0}));
+    EXPECT_TRUE(framebuffer.set_pixel(15, 3, graphics::RgbColor{.red = 1, .green = 0, .blue = 1}));
 
-    const display::RgbColor* top_left = framebuffer.pixel_at(0, 0);
-    const display::RgbColor* top_right = framebuffer.pixel_at(31, 0);
-    const display::RgbColor* bottom_left = framebuffer.pixel_at(0, 7);
-    const display::RgbColor* bottom_right = framebuffer.pixel_at(31, 7);
-    const display::RgbColor* interior = framebuffer.pixel_at(15, 3);
+    const graphics::RgbColor* top_left = framebuffer.pixel_at(0, 0);
+    const graphics::RgbColor* top_right = framebuffer.pixel_at(31, 0);
+    const graphics::RgbColor* bottom_left = framebuffer.pixel_at(0, 7);
+    const graphics::RgbColor* bottom_right = framebuffer.pixel_at(31, 7);
+    const graphics::RgbColor* interior = framebuffer.pixel_at(15, 3);
     ASSERT_NE(top_left, nullptr);
     ASSERT_NE(top_right, nullptr);
     ASSERT_NE(bottom_left, nullptr);
@@ -61,34 +61,34 @@ TEST(LogicalFramebuffer, WritesAndReadsCornerAndInteriorCoordinates)
 
 TEST(LogicalFramebuffer, RejectsOutOfRangeCoordinatesWithoutChangingValidPixels)
 {
-    display::LogicalFramebuffer framebuffer;
-    ASSERT_TRUE(framebuffer.set_pixel(4, 2, display::RgbColor{.red = 9, .green = 8, .blue = 7}));
+    graphics::LogicalFramebuffer framebuffer;
+    ASSERT_TRUE(framebuffer.set_pixel(4, 2, graphics::RgbColor{.red = 9, .green = 8, .blue = 7}));
 
-    EXPECT_FALSE(framebuffer.set_pixel(-1, 0, display::RgbColor{.red = 255, .green = 0, .blue = 0}));
-    EXPECT_FALSE(framebuffer.set_pixel(0, -1, display::RgbColor{.red = 255, .green = 0, .blue = 0}));
-    EXPECT_FALSE(framebuffer.set_pixel(32, 0, display::RgbColor{.red = 255, .green = 0, .blue = 0}));
-    EXPECT_FALSE(framebuffer.set_pixel(0, 8, display::RgbColor{.red = 255, .green = 0, .blue = 0}));
+    EXPECT_FALSE(framebuffer.set_pixel(-1, 0, graphics::RgbColor{.red = 255, .green = 0, .blue = 0}));
+    EXPECT_FALSE(framebuffer.set_pixel(0, -1, graphics::RgbColor{.red = 255, .green = 0, .blue = 0}));
+    EXPECT_FALSE(framebuffer.set_pixel(32, 0, graphics::RgbColor{.red = 255, .green = 0, .blue = 0}));
+    EXPECT_FALSE(framebuffer.set_pixel(0, 8, graphics::RgbColor{.red = 255, .green = 0, .blue = 0}));
     EXPECT_EQ(framebuffer.pixel_at(-1, 0), nullptr);
     EXPECT_EQ(framebuffer.pixel_at(0, -1), nullptr);
     EXPECT_EQ(framebuffer.pixel_at(32, 0), nullptr);
     EXPECT_EQ(framebuffer.pixel_at(0, 8), nullptr);
 
-    const display::RgbColor* kept = framebuffer.pixel_at(4, 2);
+    const graphics::RgbColor* kept = framebuffer.pixel_at(4, 2);
     ASSERT_NE(kept, nullptr);
     expect_rgb(*kept, 9, 8, 7);
 }
 
 TEST(LogicalFramebuffer, ExposesPixelsInRowMajorLogicalOrder)
 {
-    display::LogicalFramebuffer framebuffer;
-    ASSERT_TRUE(framebuffer.set_pixel(0, 0, display::RgbColor{.red = 1, .green = 0, .blue = 0}));
-    ASSERT_TRUE(framebuffer.set_pixel(1, 0, display::RgbColor{.red = 2, .green = 0, .blue = 0}));
-    ASSERT_TRUE(framebuffer.set_pixel(0, 1, display::RgbColor{.red = 3, .green = 0, .blue = 0}));
+    graphics::LogicalFramebuffer framebuffer;
+    ASSERT_TRUE(framebuffer.set_pixel(0, 0, graphics::RgbColor{.red = 1, .green = 0, .blue = 0}));
+    ASSERT_TRUE(framebuffer.set_pixel(1, 0, graphics::RgbColor{.red = 2, .green = 0, .blue = 0}));
+    ASSERT_TRUE(framebuffer.set_pixel(0, 1, graphics::RgbColor{.red = 3, .green = 0, .blue = 0}));
 
     const auto pixels = framebuffer.pixels();
-    ASSERT_EQ(pixels.size(), display::LogicalFramebuffer::kPixelCount);
+    ASSERT_EQ(pixels.size(), graphics::LogicalFramebuffer::kPixelCount);
     expect_rgb(pixels[0], 1, 0, 0);
     expect_rgb(pixels[1], 2, 0, 0);
-    expect_rgb(pixels[static_cast<std::size_t>(display::LogicalFramebuffer::kWidth)], 3, 0, 0);
+    expect_rgb(pixels[static_cast<std::size_t>(graphics::LogicalFramebuffer::kWidth)], 3, 0, 0);
     expect_rgb(pixels[2], 0, 0, 0);
 }

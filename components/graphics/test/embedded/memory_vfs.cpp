@@ -6,7 +6,7 @@
 #include "esp_vfs.h"
 #include "esp_vfs_ops.h"
 
-namespace display::test {
+namespace graphics::test {
 
 esp_err_t MemoryVfs::register_fs()
 {
@@ -137,4 +137,4 @@ ssize_t MemoryVfs::read_file(void* ctx, int fd, void* destination, size_t size)
     return static_cast<ssize_t>(to_copy);
 }
 
-}  // namespace display::test
+}  // namespace graphics::test

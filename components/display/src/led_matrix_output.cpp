@@ -19,7 +19,7 @@ constexpr uint8_t kMaxColorChannelValue = 255;
 // Map red, green, and blue from the full 0-255 range into 0-brightness
 // using the same scale. Sharing the scale keeps the hue and only changes brightness,
 // so a brighter shade of a color stays brighter inside the limited range.
-[[nodiscard]] display::RgbColor scale_color_with_brightness_limit(display::RgbColor color,
+[[nodiscard]] graphics::RgbColor scale_color_with_brightness_limit(graphics::RgbColor color,
                                                               uint8_t brightness)
 {
     const auto scale = [brightness](uint8_t channel) {
@@ -27,7 +27,7 @@ constexpr uint8_t kMaxColorChannelValue = 255;
                                     kMaxColorChannelValue);
     };
 
-    return display::RgbColor{
+    return graphics::RgbColor{
         .red = scale(color.red),
         .green = scale(color.green),
         .blue = scale(color.blue),
@@ -70,7 +70,7 @@ LedMatrixOutputStatus LedMatrixOutput::initialize()
 
     led_strip_config_t strip_config{};
     strip_config.strip_gpio_num = config_.gpio_num;
-    strip_config.max_leds = static_cast<uint32_t>(display::LogicalFramebuffer::kPixelCount);
+    strip_config.max_leds = static_cast<uint32_t>(graphics::LogicalFramebuffer::kPixelCount);
     strip_config.led_model = LED_MODEL_WS2812;
     strip_config.color_component_format = grb_component_format();
     strip_config.flags.invert_out = false;
@@ -91,16 +91,16 @@ LedMatrixOutputStatus LedMatrixOutput::initialize()
     return LedMatrixOutputStatus::Ok;
 }
 
-LedMatrixOutputStatus LedMatrixOutput::present(const display::LogicalFramebuffer& framebuffer)
+LedMatrixOutputStatus LedMatrixOutput::present(const graphics::LogicalFramebuffer& framebuffer)
 {
     if (strip_ == nullptr) {
         return LedMatrixOutputStatus::NotInitialized;
     }
 
     auto* strip = static_cast<led_strip_handle_t>(strip_);
-    for (int32_t y = 0; y < display::LogicalFramebuffer::kHeight; ++y) {
-        for (int32_t x = 0; x < display::LogicalFramebuffer::kWidth; ++x) {
-            const display::RgbColor* color = framebuffer.pixel_at(x, y);
+    for (int32_t y = 0; y < graphics::LogicalFramebuffer::kHeight; ++y) {
+        for (int32_t x = 0; x < graphics::LogicalFramebuffer::kWidth; ++x) {
+            const graphics::RgbColor* color = framebuffer.pixel_at(x, y);
             if (color == nullptr) {
                 ESP_LOGE(kTag, "missing logical pixel x=%ld y=%ld", static_cast<long>(x),
                          static_cast<long>(y));
@@ -109,7 +109,7 @@ LedMatrixOutputStatus LedMatrixOutput::present(const display::LogicalFramebuffer
 
             const std::size_t index =
                 led_index_for_logical_pixel(x, y, config_.orientation, config_.serpentine);
-            const display::RgbColor scaled_color =
+            const graphics::RgbColor scaled_color =
                 scale_color_with_brightness_limit(*color, config_.brightness);
             const esp_err_t err = led_strip_set_pixel(strip, static_cast<uint32_t>(index), scaled_color.red,
                                                       scaled_color.green, scaled_color.blue);

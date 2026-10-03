@@ -7,7 +7,7 @@
 
 #include "font.hpp"
 
-namespace display {
+namespace graphics {
 
 enum class FontLoadStatus : uint8_t {
     Ok = 0,
@@ -68,4 +68,4 @@ private:
     }};
 };
 
-}  // namespace display
+}  // namespace graphics

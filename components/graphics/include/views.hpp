@@ -3,7 +3,7 @@
 #include "element_tree.hpp"
 #include "view_data.hpp"
 
-namespace display {
+namespace graphics {
 
 // Builds one bounded element tree from an immutable ViewData snapshot.
 //
@@ -20,4 +20,4 @@ public:
         ElementTreeBuilder& builder) const = 0;
 };
 
-}  // namespace display
+}  // namespace graphics

@@ -37,7 +37,7 @@ public:
     LedMatrixOutput& operator=(const LedMatrixOutput&) = delete;
 
     LedMatrixOutputStatus initialize();
-    LedMatrixOutputStatus present(const display::LogicalFramebuffer& framebuffer);
+    LedMatrixOutputStatus present(const graphics::LogicalFramebuffer& framebuffer);
 
 private:
     LedMatrixOutputConfig config_;

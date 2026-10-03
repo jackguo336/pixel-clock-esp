@@ -31,12 +31,12 @@ void reset_mocks()
     mock_led_index::reset();
 }
 
-void present_color(display::RgbColor color, const mock_led_strip::PixelWrite*& write,
+void present_color(graphics::RgbColor color, const mock_led_strip::PixelWrite*& write,
                    uint8_t brightness = kTestBrightness)
 {
     write = nullptr;
     reset_mocks();
-    display::LogicalFramebuffer framebuffer;
+    graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear();
     ASSERT_TRUE(framebuffer.set_pixel(0, 0, color));
 
@@ -50,7 +50,7 @@ void present_color(display::RgbColor color, const mock_led_strip::PixelWrite*& w
     ASSERT_NE(write, nullptr);
 }
 
-void expect_presented_color(display::RgbColor color, display::RgbColor expected,
+void expect_presented_color(graphics::RgbColor color, graphics::RgbColor expected,
                             uint8_t brightness = kTestBrightness)
 {
     const mock_led_strip::PixelWrite* write = nullptr;
@@ -61,9 +61,9 @@ void expect_presented_color(display::RgbColor color, display::RgbColor expected,
     EXPECT_EQ(write->blue, static_cast<uint32_t>(expected.blue));
 }
 
-void expect_mapped_pixel(int32_t x, int32_t y, display::RgbColor color)
+void expect_mapped_pixel(int32_t x, int32_t y, graphics::RgbColor color)
 {
-    const std::size_t call = static_cast<std::size_t>(y) * display::LogicalFramebuffer::kWidth +
+    const std::size_t call = static_cast<std::size_t>(y) * graphics::LogicalFramebuffer::kWidth +
                              static_cast<std::size_t>(x);
     const mock_led_strip::PixelWrite* write = mock_led_strip::pixel_write_at(call);
     ASSERT_NE(write, nullptr);
@@ -93,13 +93,13 @@ TEST(LedMatrixOutput, InitializesSuccessfully)
 TEST(LedMatrixOutput, PresentWritesEachFramebufferColorToItsMappedIndexAndRefreshesOnce)
 {
     reset_mocks();
-    display::LogicalFramebuffer framebuffer;
+    graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear();
-    constexpr display::RgbColor kTopLeft{.red = 1, .green = 2, .blue = 3};
-    constexpr display::RgbColor kBottomRight{.red = 4, .green = 5, .blue = 6};
+    constexpr graphics::RgbColor kTopLeft{.red = 1, .green = 2, .blue = 3};
+    constexpr graphics::RgbColor kBottomRight{.red = 4, .green = 5, .blue = 6};
     ASSERT_TRUE(framebuffer.set_pixel(0, 0, kTopLeft));
-    ASSERT_TRUE(framebuffer.set_pixel(display::LogicalFramebuffer::kWidth - 1,
-                                      display::LogicalFramebuffer::kHeight - 1, kBottomRight));
+    ASSERT_TRUE(framebuffer.set_pixel(graphics::LogicalFramebuffer::kWidth - 1,
+                                      graphics::LogicalFramebuffer::kHeight - 1, kBottomRight));
 
     led_matrix::LedMatrixOutputConfig config = firmware_config();
     config.brightness = kTestMaxColorChannelValue;
@@ -107,11 +107,11 @@ TEST(LedMatrixOutput, PresentWritesEachFramebufferColorToItsMappedIndexAndRefres
     ASSERT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
     ASSERT_EQ(output.present(framebuffer), led_matrix::LedMatrixOutputStatus::Ok);
 
-    EXPECT_EQ(mock_led_strip::set_pixel_count(), display::LogicalFramebuffer::kPixelCount);
+    EXPECT_EQ(mock_led_strip::set_pixel_count(), graphics::LogicalFramebuffer::kPixelCount);
     EXPECT_EQ(mock_led_strip::refresh_count(), 1u);
-    EXPECT_EQ(mock_led_index::call_count(), display::LogicalFramebuffer::kPixelCount);
+    EXPECT_EQ(mock_led_index::call_count(), graphics::LogicalFramebuffer::kPixelCount);
     expect_mapped_pixel(0, 0, kTopLeft);
-    expect_mapped_pixel(display::LogicalFramebuffer::kWidth - 1, display::LogicalFramebuffer::kHeight - 1,
+    expect_mapped_pixel(graphics::LogicalFramebuffer::kWidth - 1, graphics::LogicalFramebuffer::kHeight - 1,
                         kBottomRight);
 }
 
@@ -138,7 +138,7 @@ TEST(LedMatrixOutput, PresentLeavesBlackUnchanged)
 TEST(LedMatrixOutput, PresentBeforeInitializeFailsWithoutTouchingTheDriver)
 {
     reset_mocks();
-    const display::LogicalFramebuffer framebuffer;
+    const graphics::LogicalFramebuffer framebuffer;
     led_matrix::LedMatrixOutput output(firmware_config());
 
     EXPECT_EQ(output.present(framebuffer), led_matrix::LedMatrixOutputStatus::NotInitialized);
@@ -155,7 +155,7 @@ TEST(LedMatrixOutput, InitializeFailurePropagatesAndLeavesOutputUninitialized)
     {
         led_matrix::LedMatrixOutput output(firmware_config());
         EXPECT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::DriverError);
-        EXPECT_EQ(output.present(display::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::NotInitialized);
+        EXPECT_EQ(output.present(graphics::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::NotInitialized);
     }
     EXPECT_EQ(mock_led_strip::delete_count(), 0u);
     EXPECT_EQ(mock_led_index::call_count(), 0u);
@@ -168,7 +168,7 @@ TEST(LedMatrixOutput, SetPixelFailurePropagatesWithoutRefreshing)
     led_matrix::LedMatrixOutput output(firmware_config());
 
     ASSERT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
-    EXPECT_EQ(output.present(display::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::DriverError);
+    EXPECT_EQ(output.present(graphics::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::DriverError);
     EXPECT_EQ(mock_led_strip::refresh_count(), 0u);
     EXPECT_EQ(mock_led_index::call_count(), 1u);
 }
@@ -180,9 +180,9 @@ TEST(LedMatrixOutput, RefreshFailurePropagatesAfterWritingEveryPixel)
     led_matrix::LedMatrixOutput output(firmware_config());
 
     ASSERT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
-    EXPECT_EQ(output.present(display::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::DriverError);
+    EXPECT_EQ(output.present(graphics::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::DriverError);
     EXPECT_EQ(mock_led_strip::refresh_count(), 1u);
-    EXPECT_EQ(mock_led_index::call_count(), display::LogicalFramebuffer::kPixelCount);
+    EXPECT_EQ(mock_led_index::call_count(), graphics::LogicalFramebuffer::kPixelCount);
 }
 
 TEST(LedMatrixOutput, DestructionReleasesTheStripHandle)

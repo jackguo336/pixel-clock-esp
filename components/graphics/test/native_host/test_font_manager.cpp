@@ -3,17 +3,17 @@
 
 TEST(FontManager, InstanceReturnsTheSameObject)
 {
-    display::FontManager& first = display::FontManager::instance();
-    display::FontManager& second = display::FontManager::instance();
+    graphics::FontManager& first = graphics::FontManager::instance();
+    graphics::FontManager& second = graphics::FontManager::instance();
     EXPECT_EQ(&first, &second);
 }
 
 TEST(FontManager, UnknownFontIsRejected)
 {
-    display::FontManager& manager = display::FontManager::instance();
-    constexpr auto unknown = static_cast<display::FontId>(255);
-    EXPECT_EQ(manager.load(unknown), display::FontLoadStatus::UnknownFont);
+    graphics::FontManager& manager = graphics::FontManager::instance();
+    constexpr auto unknown = static_cast<graphics::FontId>(255);
+    EXPECT_EQ(manager.load(unknown), graphics::FontLoadStatus::UnknownFont);
     EXPECT_FALSE(manager.is_loaded(unknown));
     EXPECT_FALSE(manager.font(unknown).is_valid());
-    EXPECT_NE(&manager.font(display::FontId::English7x3), &manager.font(unknown));
+    EXPECT_NE(&manager.font(graphics::FontId::English7x3), &manager.font(unknown));
 }
