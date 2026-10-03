@@ -19,7 +19,8 @@ sudo apt-get install -y --no-install-recommends \
   cmake ninja-build ccache g++ \
   libffi-dev libssl-dev dfu-util \
   libusb-1.0-0 libbsd-dev pkg-config \
-  libslirp0 libpixman-1-0 libgcrypt20
+  libslirp0 libpixman-1-0 libgcrypt20 \
+  libstdc++-14-dev
 
 if ! command -v eim >/dev/null 2>&1; then
   echo "==> Adding the Espressif EIM apt repository"
@@ -34,10 +35,14 @@ fi
 if [[ ! -f "${ACTIVATE}" ]]; then
   echo "==> Installing ESP-IDF ${IDF_VERSION} for esp32c6 and esp32c3"
   # QEMU cannot emulate esp32c6; the embedded suite builds for esp32c3.
+  # Save EIM's config outside the repository. The default path is the
+  # working directory, which is /workspace when Cloud Agent install runs.
   eim --do-not-track true install \
     -i "${IDF_VERSION}" \
     -t esp32c6,esp32c3 \
-    --cleanup true
+    --cleanup true \
+    --config-file-save-path "${HOME}/.espressif/eim_config.toml" \
+    --log-file "${HOME}/.espressif/eim-install.log"
 fi
 
 if [[ ! -f "${ACTIVATE}" ]]; then
