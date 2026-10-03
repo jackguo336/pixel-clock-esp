@@ -47,7 +47,7 @@ display::Element make_container(
     return display::Element{
         .id = id,
         .position = position,
-        .paint = paint,
+        .paint = display::Paint{paint},
         .payload = display::ContainerElementPayload{
             .layout_direction = layout_direction,
             .layout_system = layout_system,
@@ -64,7 +64,7 @@ display::Element make_rectangle(
     return display::Element{
         .id = id,
         .position = position,
-        .paint = paint,
+        .paint = display::Paint{paint},
         .payload = display::FilledRectangleElementPayload{.size = size},
     };
 }
@@ -79,7 +79,7 @@ display::Element make_text(
     return display::Element{
         .id = id,
         .position = position,
-        .paint = paint,
+        .paint = display::Paint{paint},
         .payload = display::TextElementPayload{.text = text, .font = font},
     };
 }
@@ -93,7 +93,7 @@ display::Element make_bitmap(
     return display::Element{
         .id = id,
         .position = position,
-        .paint = paint,
+        .paint = display::Paint{paint},
         .payload = display::BitmapElementPayload{.bitmap = bitmap},
     };
 }
@@ -104,9 +104,10 @@ void expect_optional_index(const std::optional<display::ElementNodeIndex>& actua
     EXPECT_EQ(*actual, expected);
 }
 
-void expect_solid_paint(const display::Paint& paint, const display::SolidPaint& expected)
+void expect_solid_paint(const std::optional<display::Paint>& paint, const display::SolidPaint& expected)
 {
-    const auto* solid_paint = std::get_if<display::SolidPaint>(&paint);
+    ASSERT_TRUE(paint.has_value());
+    const auto* solid_paint = std::get_if<display::SolidPaint>(&*paint);
     ASSERT_NE(solid_paint, nullptr);
     EXPECT_EQ(solid_paint->color.red, expected.color.red);
     EXPECT_EQ(solid_paint->color.green, expected.color.green);
@@ -126,6 +127,23 @@ void expect_element(
 }
 
 }  // namespace
+
+TEST(ElementTreeBuilder, StoresUnsetPaint)
+{
+    std::array<display::ElementTreeNode, 2> storage{};
+    display::ElementTreeBuilder builder{storage};
+    const display::Element rectangle{
+        .id = kLeafId,
+        .position = kLeafPosition,
+        .payload = display::FilledRectangleElementPayload{.size = kLeafSize},
+    };
+
+    ASSERT_TRUE(builder.add_terminal(rectangle));
+
+    const display::ElementTree tree = builder.get_tree();
+    ASSERT_EQ(tree.nodes.size(), 1u);
+    EXPECT_FALSE(tree.nodes[0].element.paint.has_value());
+}
 
 TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
 {
