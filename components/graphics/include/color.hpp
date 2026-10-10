@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <variant>
 
@@ -17,11 +19,19 @@ struct SolidPaint {
     RgbColor color{};
 };
 
+inline constexpr std::size_t kMaxGradientColorStops = 10;
+
+struct GradientColorStop {
+    // Normalized to [0.0, 1.0]
+    float offset{};
+    RgbColor color{};
+};
+
 struct LinearGradientPaint {
-    Position start{};
-    Position end{};
-    RgbColor start_color{};
-    RgbColor end_color{};
+    // 0 degrees points up, 90 degrees points right
+    float angle_degrees{};
+    uint8_t color_stop_count{};
+    std::array<GradientColorStop, kMaxGradientColorStops> color_stops{};
 };
 
 using Paint = std::variant<SolidPaint, LinearGradientPaint>;

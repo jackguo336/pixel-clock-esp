@@ -5,6 +5,7 @@
 #include <span>
 #include <string_view>
 
+#include "color_sampler.hpp"
 #include "font.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
@@ -32,6 +33,12 @@ inline void expect_rgb_at(const graphics::LogicalFramebuffer& framebuffer, int32
     const graphics::RgbColor* pixel = framebuffer.pixel_at(x, y);
     ASSERT_NE(pixel, nullptr);
     expect_rgb(*pixel, red, green, blue);
+}
+
+[[nodiscard]] inline graphics::ColorSampler solid_sampler(graphics::RgbColor color)
+{
+    return graphics::ColorSampler{graphics::Paint{graphics::SolidPaint{.color = color}}, graphics::Position{},
+                                  graphics::Size{}};
 }
 
 [[nodiscard]] inline bool framebuffers_equal(const graphics::LogicalFramebuffer& lhs,
