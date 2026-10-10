@@ -9,8 +9,18 @@
 namespace display_runtime {
 namespace {
 
-constexpr graphics::RgbColor kWhite{.red = 255, .green = 255, .blue = 255};
-constexpr graphics::SolidPaint kTextPaint{.color = kWhite};
+constexpr graphics::LinearGradientPaint kTextPaint{
+    .angle_degrees = 45.0f,
+    .color_stop_count = 5,
+    .color_stops =
+        {
+            graphics::GradientColorStop{.offset = 0.0f, .color = {.red = 255, .green = 0, .blue = 0}},
+            graphics::GradientColorStop{.offset = 0.25f, .color = {.red = 255, .green = 127, .blue = 0}},
+            graphics::GradientColorStop{.offset = 0.5f, .color = {.red = 255, .green = 255, .blue = 0}},
+            graphics::GradientColorStop{.offset = 0.75f, .color = {.red = 0, .green = 255, .blue = 0}},
+            graphics::GradientColorStop{.offset = 1.0f, .color = {.red = 0, .green = 190, .blue = 211}},
+        },
+};
 constexpr std::string_view kHelloText{"HELLO"};
 
 }  // namespace
