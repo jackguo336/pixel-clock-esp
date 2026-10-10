@@ -2,14 +2,11 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <limits>
+
+#include "text_measurement.hpp"
 
 namespace graphics {
 namespace {
-
-// Blank columns left between adjacent characters when measuring and drawing a string.
-// Prevents characters from touching each other.
-constexpr int32_t kInterCharacterGapPixels = 1;
 
 [[nodiscard]] bool is_foreground_bitmap_pixel(RgbColor color)
 {
@@ -21,25 +18,8 @@ constexpr int32_t kInterCharacterGapPixels = 1;
     return x >= 0 && y >= 0 && x < LogicalFramebuffer::kWidth && y < LogicalFramebuffer::kHeight;
 }
 
-[[nodiscard]] Size measured_text_size(const Font& font, std::string_view text)
-{
-    if (!font.is_valid() || text.empty()) {
-        return {};
-    }
-
-    const uint64_t character_count = text.size();
-    const uint64_t character_width = font.config.character_size.width;
-    const uint64_t width = character_count * character_width
-        + (character_count - 1) * static_cast<uint64_t>(kInterCharacterGapPixels);
-    constexpr uint64_t kMaxExtent = std::numeric_limits<uint16_t>::max();
-    return Size{
-        .width = static_cast<uint16_t>(width > kMaxExtent ? kMaxExtent : width),
-        .height = font.config.character_size.height,
-    };
-}
-
 void draw_character(const Font& font, std::size_t character_index, int32_t origin_x, int32_t origin_y,
-                    const ColorSampler& foreground, LogicalFramebuffer& framebuffer)
+                    const ColorSampler& color_sampler, LogicalFramebuffer& framebuffer)
 {
     const int32_t character_width = static_cast<int32_t>(font.config.character_size.width);
     const int32_t character_height = static_cast<int32_t>(font.config.character_size.height);
@@ -61,7 +41,7 @@ void draw_character(const Font& font, std::size_t character_index, int32_t origi
             if (!is_inside_framebuffer(canvas_x, canvas_y)) {
                 continue;
             }
-            const RgbColor color = foreground.sample(Position{
+            const RgbColor color = color_sampler.sample(Position{
                 .x = static_cast<int16_t>(canvas_x),
                 .y = static_cast<int16_t>(canvas_y),
             });
@@ -70,7 +50,7 @@ void draw_character(const Font& font, std::size_t character_index, int32_t origi
     }
 }
 
-void draw_text(const Font& font, std::string_view text, const ColorSampler& foreground, Position canvas_origin,
+void draw_text(const Font& font, std::string_view text, const ColorSampler& color_sampler, Position origin_on_canvas,
                LogicalFramebuffer& framebuffer)
 {
     const int32_t character_width_plus_gap =
@@ -82,27 +62,20 @@ void draw_text(const Font& font, std::string_view text, const ColorSampler& fore
             continue;
         }
         const int32_t character_position_x =
-            canvas_origin.x + static_cast<int32_t>(text_index) * character_width_plus_gap;
-        draw_character(font, character_index, character_position_x, canvas_origin.y, foreground, framebuffer);
+            origin_on_canvas.x + static_cast<int32_t>(text_index) * character_width_plus_gap;
+        draw_character(font, character_index, character_position_x, origin_on_canvas.y, color_sampler, framebuffer);
     }
 }
 
 }  // namespace
 
-Size TextRasterizer::measure(const Font& font, std::string_view text) const
+void TextRasterizer::rasterize(const Font& font, std::string_view text, const ColorSampler& color_sampler,
+                               Position origin_on_canvas, LogicalFramebuffer& framebuffer) const
 {
-    return measured_text_size(font, text);
-}
-
-Size TextRasterizer::rasterize(const Font& font, std::string_view text, const ColorSampler& foreground,
-                               Position canvas_origin, LogicalFramebuffer& framebuffer) const
-{
-    const Size size = measure(font, text);
-    if (size.width == 0 || size.height == 0) {
-        return size;
+    if (!font.is_valid() || text.empty()) {
+        return;
     }
-    draw_text(font, text, foreground, canvas_origin, framebuffer);
-    return size;
+    draw_text(font, text, color_sampler, origin_on_canvas, framebuffer);
 }
 
 }  // namespace graphics

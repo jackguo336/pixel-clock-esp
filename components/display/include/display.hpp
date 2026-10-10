@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 
 #include "element_tree.hpp"
 #include "element_tree_renderer.hpp"
@@ -19,7 +20,9 @@ public:
 private:
     void refresh();
 
-    std::array<graphics::ElementTreeNode, 1> nodes_{};
+    static constexpr std::size_t kSceneNodeCapacity = 1;
+
+    std::array<graphics::ElementTreeNode, kSceneNodeCapacity> nodes_{};
     graphics::ElementTree tree_{};
     graphics::LogicalFramebuffer framebuffer_{};
     graphics::ElementTreeRenderer renderer_{};

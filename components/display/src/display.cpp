@@ -62,7 +62,7 @@ void DisplayRuntime::refresh()
         PLATFORM_LOGE(this, "failed to add text element");
         return;
     }
-    tree_ = builder.get_tree();
+    tree_ = builder.build();
 
     framebuffer_.clear();
     renderer_.render(tree_, framebuffer_);

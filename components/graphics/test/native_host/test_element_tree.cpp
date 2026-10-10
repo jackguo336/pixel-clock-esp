@@ -140,7 +140,7 @@ TEST(ElementTreeBuilder, StoresUnsetPaint)
 
     ASSERT_TRUE(builder.add_terminal(rectangle));
 
-    const graphics::ElementTree tree = builder.get_tree();
+    const graphics::ElementTree tree = builder.build();
     ASSERT_EQ(tree.nodes.size(), 1u);
     EXPECT_FALSE(tree.nodes[0].element.paint.has_value());
 }
@@ -171,7 +171,7 @@ TEST(ElementTreeBuilder, BuildsNestedContainerInDeclarationOrder)
         });
     ASSERT_TRUE(built);
 
-    const graphics::ElementTree tree = builder.get_tree();
+    const graphics::ElementTree tree = builder.build();
     ASSERT_EQ(tree.nodes.size(), 5u);
     EXPECT_LT(tree.nodes.size(), storage.size());
     EXPECT_EQ(tree.root, graphics::ElementNodeIndex{0});
@@ -224,7 +224,7 @@ TEST(ElementTreeBuilder, SingleLeafRootSpansOnlyUsedStorage)
 
     ASSERT_TRUE(builder.add_terminal(make_rectangle(kLeafId, kLeafPosition, kLeafPaint, kLeafSize)));
 
-    const graphics::ElementTree tree = builder.get_tree();
+    const graphics::ElementTree tree = builder.build();
     EXPECT_EQ(tree.root, graphics::ElementNodeIndex{0});
     EXPECT_EQ(tree.nodes.size(), 1u);
     EXPECT_LT(tree.nodes.size(), storage.size());
@@ -287,7 +287,7 @@ TEST(ElementTreeBuilder, RejectsContainerPassedToAddTerminal)
     EXPECT_FALSE(builder.add_terminal(leaf));
 }
 
-TEST(ElementTreeBuilder, GetTreeReturnsRootAndUsedNodesAfterSuccess)
+TEST(ElementTreeBuilder, BuildReturnsRootAndUsedNodesAfterSuccess)
 {
     std::array<graphics::ElementTreeNode, 6> storage{};
     graphics::ElementTreeBuilder builder{storage};
@@ -300,7 +300,7 @@ TEST(ElementTreeBuilder, GetTreeReturnsRootAndUsedNodesAfterSuccess)
                 make_text(kNestedLeafId, kNestedLeafPosition, kNestedLeafPaint, kNestedLeafText)));
         }));
 
-    const graphics::ElementTree tree = builder.get_tree();
+    const graphics::ElementTree tree = builder.build();
     EXPECT_EQ(tree.root, graphics::ElementNodeIndex{0});
     EXPECT_EQ(tree.nodes.size(), 3u);
     EXPECT_LT(tree.nodes.size(), storage.size());

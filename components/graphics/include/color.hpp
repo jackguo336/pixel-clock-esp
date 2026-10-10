@@ -22,12 +22,14 @@ struct SolidPaint {
 inline constexpr std::size_t kMaxGradientColorStops = 10;
 
 struct GradientColorStop {
-    float offset{};  // normalized [0.0, 1.0]
+    // Normalized to [0.0, 1.0]
+    float offset{};
     RgbColor color{};
 };
 
 struct LinearGradientPaint {
-    float angle_degrees{};  // CSS convention: 0 degrees up, 90 degrees right
+    // 0 degrees points up, 90 degrees points right
+    float angle_degrees{};
     uint8_t color_stop_count{};
     std::array<GradientColorStop, kMaxGradientColorStops> color_stops{};
 };

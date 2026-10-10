@@ -167,7 +167,7 @@ TEST(View, BuildReadsViewDataAndAddsScopedElements)
 
     ASSERT_TRUE(view.build(view_data, builder));
 
-    const graphics::ElementTree tree = builder.get_tree();
+    const graphics::ElementTree tree = builder.build();
     ASSERT_EQ(tree.nodes.size(), 3u);
     EXPECT_EQ(tree.root, 0);
     EXPECT_EQ(tree.nodes[0].element.id.value, kRootId.value);
@@ -196,7 +196,7 @@ TEST(View, BuildCanBeCalledInsideContainer)
 
     ASSERT_TRUE(view.build(view_data, builder));
 
-    const graphics::ElementTree tree = builder.get_tree();
+    const graphics::ElementTree tree = builder.build();
     ASSERT_EQ(tree.nodes.size(), 4u);
     EXPECT_EQ(tree.root, 0);
     EXPECT_EQ(tree.nodes[0].element.id.value, kOuterId.value);

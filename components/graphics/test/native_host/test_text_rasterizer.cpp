@@ -3,8 +3,9 @@
 #include "font.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
-#include "utils.hpp"
+#include "text_measurement.hpp"
 #include "text_rasterizer.hpp"
+#include "utils.hpp"
 
 using graphics_test::expect_rgb_at;
 using graphics_test::expect_size;
@@ -37,10 +38,8 @@ TEST(TextRasterizer, LeavesOneTransparentPixelBetweenCharacters)
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(kBackground);
     const graphics::TextRasterizer rasterizer;
-    const graphics::Size size =
-        rasterizer.rasterize(font, "AB", solid_sampler(kForeground), {.x = 2, .y = 3}, framebuffer);
+    rasterizer.rasterize(font, "AB", solid_sampler(kForeground), {.x = 2, .y = 3}, framebuffer);
 
-    expect_size(size, 3, 1);
     expect_rgb_at(framebuffer, 2, 3, 0, 200, 0);
     expect_rgb_at(framebuffer, 3, 3, 9, 9, 9);
     expect_rgb_at(framebuffer, 4, 3, 0, 200, 0);
@@ -57,9 +56,8 @@ TEST(TextRasterizer, AdvancesUnknownCharactersAsBlankCharacters)
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(kBackground);
     const graphics::TextRasterizer rasterizer;
-    const graphics::Size size = rasterizer.rasterize(font, "A?B", solid_sampler(kForeground), {}, framebuffer);
+    rasterizer.rasterize(font, "A?B", solid_sampler(kForeground), {}, framebuffer);
 
-    expect_size(size, 8, 2);
     expect_rgb_at(framebuffer, 1, 0, 0, 200, 0);
     expect_rgb_at(framebuffer, 0, 1, 0, 200, 0);
     expect_rgb_at(framebuffer, 3, 0, 9, 9, 9);
@@ -71,7 +69,7 @@ TEST(TextRasterizer, AdvancesUnknownCharactersAsBlankCharacters)
     expect_rgb_at(framebuffer, 5, 0, 9, 9, 9);
 }
 
-TEST(TextRasterizer, ReturnsZeroSizeAndDrawsNothingForEmptyTextOrInvalidFont)
+TEST(TextRasterizer, DrawsNothingForEmptyTextOrInvalidFont)
 {
     const std::array<graphics::RgbColor, 1> pixels{kBitmapMark};
     const graphics::Font font = make_font({.width = 1, .height = 1}, "A", pixels, {.width = 1, .height = 1});
@@ -82,8 +80,8 @@ TEST(TextRasterizer, ReturnsZeroSizeAndDrawsNothingForEmptyTextOrInvalidFont)
     const graphics::LogicalFramebuffer original = framebuffer;
     const graphics::TextRasterizer rasterizer;
 
-    expect_size(rasterizer.rasterize(font, "", solid_sampler(kForeground), {}, framebuffer), 0, 0);
-    expect_size(rasterizer.rasterize(invalid_font, "A", solid_sampler(kForeground), {}, framebuffer), 0, 0);
+    rasterizer.rasterize(font, "", solid_sampler(kForeground), {}, framebuffer);
+    rasterizer.rasterize(invalid_font, "A", solid_sampler(kForeground), {}, framebuffer);
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }
 
@@ -98,7 +96,7 @@ TEST(TextRasterizer, ClipsEachCanvasEdge)
     {
         graphics::LogicalFramebuffer framebuffer;
         framebuffer.clear(kBackground);
-        expect_size(rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = -1, .y = 0}, framebuffer), 2, 2);
+        rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = -1, .y = 0}, framebuffer);
         expect_rgb_at(framebuffer, 0, 0, 9, 9, 9);
         expect_rgb_at(framebuffer, 0, 1, 0, 200, 0);
         expect_rgb_at(framebuffer, 1, 0, 9, 9, 9);
@@ -106,7 +104,7 @@ TEST(TextRasterizer, ClipsEachCanvasEdge)
     {
         graphics::LogicalFramebuffer framebuffer;
         framebuffer.clear(kBackground);
-        expect_size(rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = 0, .y = -1}, framebuffer), 2, 2);
+        rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = 0, .y = -1}, framebuffer);
         expect_rgb_at(framebuffer, 0, 0, 9, 9, 9);
         expect_rgb_at(framebuffer, 1, 0, 0, 200, 0);
         expect_rgb_at(framebuffer, 0, 1, 9, 9, 9);
@@ -114,7 +112,7 @@ TEST(TextRasterizer, ClipsEachCanvasEdge)
     {
         graphics::LogicalFramebuffer framebuffer;
         framebuffer.clear(kBackground);
-        expect_size(rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = 31, .y = 0}, framebuffer), 2, 2);
+        rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = 31, .y = 0}, framebuffer);
         expect_rgb_at(framebuffer, 31, 0, 0, 200, 0);
         expect_rgb_at(framebuffer, 31, 1, 9, 9, 9);
         expect_rgb_at(framebuffer, 30, 0, 9, 9, 9);
@@ -122,30 +120,11 @@ TEST(TextRasterizer, ClipsEachCanvasEdge)
     {
         graphics::LogicalFramebuffer framebuffer;
         framebuffer.clear(kBackground);
-        expect_size(rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = 0, .y = 7}, framebuffer), 2, 2);
+        rasterizer.rasterize(font, "Q", solid_sampler(kForeground), {.x = 0, .y = 7}, framebuffer);
         expect_rgb_at(framebuffer, 0, 7, 0, 200, 0);
         expect_rgb_at(framebuffer, 1, 7, 9, 9, 9);
         expect_rgb_at(framebuffer, 0, 6, 9, 9, 9);
     }
-}
-
-TEST(TextRasterizer, MeasureReportsSizeWithoutDrawing)
-{
-    const std::array<graphics::RgbColor, 3> pixels{
-        kBitmapMark,
-        graphics::RgbColor{.red = 0, .green = 0, .blue = 0},
-        kBitmapMark,
-    };
-    const graphics::Font font =
-        make_font({.width = 1, .height = 1}, "AB", pixels, {.width = 1, .height = 3}, kBitmapPath);
-    graphics::LogicalFramebuffer framebuffer;
-    framebuffer.clear(kBackground);
-    const graphics::LogicalFramebuffer original = framebuffer;
-    const graphics::TextRasterizer rasterizer;
-
-    expect_size(rasterizer.measure(font, "AB"), 3, 1);
-    expect_size(rasterizer.measure(font, ""), 0, 0);
-    EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }
 
 namespace {
@@ -181,10 +160,9 @@ TEST(TextRasterizer, SamplesGradientAtEachOpaqueGlyphPixel)
     framebuffer.clear(kBackground);
     const graphics::TextRasterizer rasterizer;
     const graphics::Position origin{.x = 4, .y = 1};
-    const graphics::Size measured = rasterizer.measure(font, "Q");
+    const graphics::Size measured = graphics::measure_text(font, "Q");
     expect_size(measured, 2, 2);
-    expect_size(rasterizer.rasterize(font, "Q", red_blue_sampler(90.0f, origin, measured), origin, framebuffer), 2,
-                2);
+    rasterizer.rasterize(font, "Q", red_blue_sampler(90.0f, origin, measured), origin, framebuffer);
 
     expect_rgb_at(framebuffer, 4, 1, 255, 0, 0);
     expect_rgb_at(framebuffer, 5, 1, 128, 0, 128);
@@ -212,9 +190,8 @@ TEST(TextRasterizer, GradientLeavesGapsAndClipsUsingCanvasPosition)
         graphics::LogicalFramebuffer framebuffer;
         framebuffer.clear(kBackground);
         const graphics::Position origin{};
-        const graphics::Size measured = rasterizer.measure(font, "AB");
-        expect_size(rasterizer.rasterize(font, "AB", red_blue_sampler(90.0f, origin, measured), origin, framebuffer),
-                    3, 1);
+        const graphics::Size measured = graphics::measure_text(font, "AB");
+        rasterizer.rasterize(font, "AB", red_blue_sampler(90.0f, origin, measured), origin, framebuffer);
         expect_rgb_at(framebuffer, 0, 0, 255, 0, 0);
         expect_rgb_at(framebuffer, 1, 0, 9, 9, 9);
         expect_rgb_at(framebuffer, 2, 0, 85, 0, 170);
@@ -227,9 +204,8 @@ TEST(TextRasterizer, GradientLeavesGapsAndClipsUsingCanvasPosition)
         graphics::LogicalFramebuffer framebuffer;
         framebuffer.clear(kBackground);
         const graphics::Position origin{.x = -1, .y = 0};
-        const graphics::Size measured = rasterizer.measure(wide, "Q");
-        expect_size(rasterizer.rasterize(wide, "Q", red_blue_sampler(90.0f, origin, measured), origin, framebuffer),
-                    2, 1);
+        const graphics::Size measured = graphics::measure_text(wide, "Q");
+        rasterizer.rasterize(wide, "Q", red_blue_sampler(90.0f, origin, measured), origin, framebuffer);
         expect_rgb_at(framebuffer, 0, 0, 128, 0, 128);
         expect_rgb_at(framebuffer, 1, 0, 9, 9, 9);
     }

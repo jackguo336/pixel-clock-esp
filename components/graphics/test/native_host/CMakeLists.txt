@@ -10,6 +10,8 @@ add_executable(graphics
     test_bitmap_file_loader.cpp
     test_bitmap_rasterizer.cpp
     test_text_rasterizer.cpp
+    test_text_measurement.cpp
+    test_element_layout.cpp
     test_rectangle_rasterizer.cpp
     test_color_sampler.cpp
     test_font.cpp
@@ -23,9 +25,12 @@ add_executable(graphics
     "${GRAPHICS_ROOT}/src/bitmap_rasterizer.cpp"
     "${GRAPHICS_ROOT}/src/font.cpp"
     "${GRAPHICS_ROOT}/src/font_manager.cpp"
+    "${GRAPHICS_ROOT}/src/text_measurement.cpp"
     "${GRAPHICS_ROOT}/src/text_rasterizer.cpp"
     "${GRAPHICS_ROOT}/src/rectangle_rasterizer.cpp"
     "${GRAPHICS_ROOT}/src/color_sampler.cpp"
+    "${GRAPHICS_ROOT}/src/element_layout.cpp"
+    "${GRAPHICS_ROOT}/src/element_tree.cpp"
     "${GRAPHICS_ROOT}/src/element_tree_renderer.cpp"
 )
 

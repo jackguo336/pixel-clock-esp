@@ -6,8 +6,8 @@
 namespace graphics {
 
 // Samples a paint across the defining element's pixel bounds. Solid paint is
-// constant. A linear gradient runs along the CSS angle so the stops cover that
-// whole rectangle, then clamps outside the first and last stop.
+// constant. A linear gradient runs along a defined angle and stops that cover the 
+// whole rectangle.
 class ColorSampler final {
 public:
     ColorSampler(Paint paint, Position paint_origin, Size paint_size);

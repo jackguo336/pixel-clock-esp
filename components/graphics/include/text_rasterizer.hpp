@@ -11,10 +11,8 @@ namespace graphics {
 
 class TextRasterizer final {
 public:
-    [[nodiscard]] Size measure(const Font& font, std::string_view text) const;
-
-    [[nodiscard]] Size rasterize(const Font& font, std::string_view text, const ColorSampler& foreground,
-                                 Position canvas_origin, LogicalFramebuffer& framebuffer) const;
+    void rasterize(const Font& font, std::string_view text, const ColorSampler& color_sampler, Position origin_on_canvas,
+                   LogicalFramebuffer& framebuffer) const;
 };
 
 }  // namespace graphics
