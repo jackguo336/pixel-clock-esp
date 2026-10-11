@@ -14,6 +14,10 @@ struct LanePlacement {
 /**
  * Map a logical pixel onto the physical LED strip.
  *
+ * Screen flip happens before this wiring. `led_index_for_logical_pixel` mirrors
+ * x to width - 1 - x when flip_horizontal is set, and y to height - 1 - y when
+ * flip_vertical is set, then calls this function with those coordinates.
+ *
  * A lane is one straight run of the strip. Horizontal wiring uses one lane per row;
  * vertical wiring uses one lane per column. `along` is the offset within that run.
  * The strip index is `lane * lane_length + along`. Serpentine wiring reverses every
@@ -77,9 +81,13 @@ struct LanePlacement {
 }  // namespace
 
 std::size_t led_index_for_logical_pixel(int32_t x, int32_t y, LedMatrixOrientation orientation,
-                                        bool serpentine)
+                                        bool serpentine, bool flip_horizontal, bool flip_vertical)
 {
-    const LanePlacement placement = place_on_lane(x, y, orientation, serpentine);
+    const int32_t width = graphics::LogicalFramebuffer::kWidth;
+    const int32_t height = graphics::LogicalFramebuffer::kHeight;
+    const int32_t panel_x = flip_horizontal ? (width - 1 - x) : x;
+    const int32_t panel_y = flip_vertical ? (height - 1 - y) : y;
+    const LanePlacement placement = place_on_lane(panel_x, panel_y, orientation, serpentine);
     return static_cast<std::size_t>(placement.lane) * static_cast<std::size_t>(placement.lane_length) +
            static_cast<std::size_t>(placement.along);
 }

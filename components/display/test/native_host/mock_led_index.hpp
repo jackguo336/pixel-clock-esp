@@ -12,12 +12,15 @@ struct Call {
     int32_t y{0};
     led_matrix::LedMatrixOrientation orientation{led_matrix::LedMatrixOrientation::Horizontal};
     bool serpentine{false};
+    bool flip_horizontal{false};
+    bool flip_vertical{false};
 };
 
 void reset();
 std::size_t call_count();
 const Call* call_at(std::size_t index);
 std::size_t index_for_call(std::size_t call_index);
-std::size_t record(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation, bool serpentine);
+std::size_t record(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation, bool serpentine,
+                   bool flip_horizontal, bool flip_vertical);
 
 }  // namespace mock_led_index

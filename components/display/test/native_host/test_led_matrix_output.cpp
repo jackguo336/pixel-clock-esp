@@ -73,6 +73,8 @@ void expect_mapped_pixel(int32_t x, int32_t y, graphics::RgbColor color)
     EXPECT_EQ(index_call->y, y);
     EXPECT_EQ(index_call->orientation, led_matrix::LedMatrixOrientation::Horizontal);
     EXPECT_TRUE(index_call->serpentine);
+    EXPECT_FALSE(index_call->flip_horizontal);
+    EXPECT_FALSE(index_call->flip_vertical);
     EXPECT_EQ(write->index, mock_led_index::index_for_call(call));
     EXPECT_EQ(write->red, static_cast<uint32_t>(color.red));
     EXPECT_EQ(write->green, static_cast<uint32_t>(color.green));
@@ -88,6 +90,26 @@ TEST(LedMatrixOutput, InitializesSuccessfully)
 
     EXPECT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
     EXPECT_EQ(mock_led_index::call_count(), 0u);
+}
+
+TEST(LedMatrixOutput, PresentForwardsConfiguredFlips)
+{
+    reset_mocks();
+    led_matrix::LedMatrixOutputConfig config = firmware_config();
+    config.flip_horizontal = true;
+    config.flip_vertical = true;
+    led_matrix::LedMatrixOutput output(config);
+
+    ASSERT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
+    ASSERT_EQ(output.present(graphics::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::Ok);
+
+    ASSERT_EQ(mock_led_index::call_count(), graphics::LogicalFramebuffer::kPixelCount);
+    for (std::size_t call_index = 0; call_index < mock_led_index::call_count(); ++call_index) {
+        const mock_led_index::Call* call = mock_led_index::call_at(call_index);
+        ASSERT_NE(call, nullptr);
+        EXPECT_TRUE(call->flip_horizontal);
+        EXPECT_TRUE(call->flip_vertical);
+    }
 }
 
 TEST(LedMatrixOutput, PresentWritesEachFramebufferColorToItsMappedIndexAndRefreshesOnce)

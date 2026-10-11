@@ -11,9 +11,38 @@
 namespace {
 
 void expect_index(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation, bool serpentine,
-                  std::size_t expected)
+                  bool flip_horizontal, bool flip_vertical, std::size_t expected)
 {
-    EXPECT_EQ(led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine), expected);
+    EXPECT_EQ(led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine, flip_horizontal,
+                                                      flip_vertical),
+              expected);
+}
+
+std::size_t map_pixel(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation, bool serpentine,
+                      bool flip_horizontal, bool flip_vertical)
+{
+    return led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine, flip_horizontal,
+                                                   flip_vertical);
+}
+
+template <typename Check>
+void for_each_wiring_and_pixel(Check check)
+{
+    constexpr std::array<led_matrix::LedMatrixOrientation, 4> kOrientations{
+        led_matrix::LedMatrixOrientation::Horizontal,
+        led_matrix::LedMatrixOrientation::HorizontalReversed,
+        led_matrix::LedMatrixOrientation::Vertical,
+        led_matrix::LedMatrixOrientation::VerticalReversed,
+    };
+    for (const led_matrix::LedMatrixOrientation orientation : kOrientations) {
+        for (const bool serpentine : {false, true}) {
+            for (int32_t y = 0; y < graphics::LogicalFramebuffer::kHeight; ++y) {
+                for (int32_t x = 0; x < graphics::LogicalFramebuffer::kWidth; ++x) {
+                    check(x, y, orientation, serpentine);
+                }
+            }
+        }
+    }
 }
 
 std::string orientation_name(led_matrix::LedMatrixOrientation orientation)
@@ -31,12 +60,19 @@ std::string orientation_name(led_matrix::LedMatrixOrientation orientation)
     return "Unknown";
 }
 
-using Wiring = std::tuple<led_matrix::LedMatrixOrientation, bool>;
+using Wiring = std::tuple<led_matrix::LedMatrixOrientation, bool, bool, bool>;
 
 std::string wiring_test_name(const testing::TestParamInfo<Wiring>& info)
 {
-    const auto [orientation, serpentine] = info.param;
-    return orientation_name(orientation) + (serpentine ? "_Serpentine" : "_Straight");
+    const auto [orientation, serpentine, flip_horizontal, flip_vertical] = info.param;
+    std::string name = orientation_name(orientation) + (serpentine ? "_Serpentine" : "_Straight");
+    if (flip_horizontal) {
+        name += "_FlipHorizontal";
+    }
+    if (flip_vertical) {
+        name += "_FlipVertical";
+    }
+    return name;
 }
 
 class LedMatrixMapWiring : public testing::TestWithParam<Wiring> {};
@@ -47,75 +83,122 @@ TEST(LedMatrixMap, HorizontalRunsLeftToRight)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::Horizontal;
     // Row 0 runs left-to-right: top-left is 0, top-right is width - 1.
-    expect_index(0, 0, orientation, false, 0);
-    expect_index(31, 0, orientation, false, 31);
+    expect_index(0, 0, orientation, false, false, false, 0);
+    expect_index(31, 0, orientation, false, false, false, 31);
     // A later row continues at row * width + column (3 * 32 + 15).
-    expect_index(15, 3, orientation, false, 111);
+    expect_index(15, 3, orientation, false, false, false, 111);
 }
 
 TEST(LedMatrixMap, HorizontalReversedRunsRightToLeft)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::HorizontalReversed;
     // Row 0 starts at the right edge, so top-right is 0 and top-left is width - 1.
-    expect_index(31, 0, orientation, false, 0);
-    expect_index(0, 0, orientation, false, 31);
+    expect_index(31, 0, orientation, false, false, false, 0);
+    expect_index(0, 0, orientation, false, false, false, 31);
     // A later row is counted from the right (3 * 32 + (31 - 15)).
-    expect_index(15, 3, orientation, false, 112);
+    expect_index(15, 3, orientation, false, false, false, 112);
 }
 
 TEST(LedMatrixMap, VerticalRunsTopToBottom)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::Vertical;
     // Column 0 runs top-to-bottom: the top is 0, the bottom is height - 1.
-    expect_index(0, 0, orientation, false, 0);
-    expect_index(0, 7, orientation, false, 7);
+    expect_index(0, 0, orientation, false, false, false, 0);
+    expect_index(0, 7, orientation, false, false, false, 7);
     // A later column continues at column * height + row (15 * 8 + 3).
-    expect_index(15, 3, orientation, false, 123);
+    expect_index(15, 3, orientation, false, false, false, 123);
 }
 
 TEST(LedMatrixMap, VerticalReversedRunsBottomToTop)
 {
     constexpr auto orientation = led_matrix::LedMatrixOrientation::VerticalReversed;
     // Column 0 starts at the bottom, so the bottom is 0 and the top is height - 1.
-    expect_index(0, 7, orientation, false, 0);
-    expect_index(0, 0, orientation, false, 7);
+    expect_index(0, 7, orientation, false, false, false, 0);
+    expect_index(0, 0, orientation, false, false, false, 7);
     // A later column is counted from the bottom (15 * 8 + (7 - 3)).
-    expect_index(15, 3, orientation, false, 124);
+    expect_index(15, 3, orientation, false, false, false, 124);
 }
 
 TEST(LedMatrixMap, SerpentineReversesOddLanes)
 {
     // First odd row runs right-to-left: left edge is 32 + 31, right edge is 32.
-    expect_index(0, 1, led_matrix::LedMatrixOrientation::Horizontal, true, 63);
-    expect_index(31, 1, led_matrix::LedMatrixOrientation::Horizontal, true, 32);
+    expect_index(0, 1, led_matrix::LedMatrixOrientation::Horizontal, true, false, false, 63);
+    expect_index(31, 1, led_matrix::LedMatrixOrientation::Horizontal, true, false, false, 32);
     // Later odd row is counted from the right (3 * 32 + (31 - 15)).
-    expect_index(15, 3, led_matrix::LedMatrixOrientation::Horizontal, true, 112);
+    expect_index(15, 3, led_matrix::LedMatrixOrientation::Horizontal, true, false, false, 112);
 
     // Reversed wiring flips that odd row back to left-to-right.
-    expect_index(0, 1, led_matrix::LedMatrixOrientation::HorizontalReversed, true, 32);
-    expect_index(31, 1, led_matrix::LedMatrixOrientation::HorizontalReversed, true, 63);
-    expect_index(15, 3, led_matrix::LedMatrixOrientation::HorizontalReversed, true, 111);
+    expect_index(0, 1, led_matrix::LedMatrixOrientation::HorizontalReversed, true, false, false, 32);
+    expect_index(31, 1, led_matrix::LedMatrixOrientation::HorizontalReversed, true, false, false, 63);
+    expect_index(15, 3, led_matrix::LedMatrixOrientation::HorizontalReversed, true, false, false, 111);
 
     // First odd column runs bottom-to-top: top is 8 + 7, bottom is 8.
-    expect_index(1, 0, led_matrix::LedMatrixOrientation::Vertical, true, 15);
-    expect_index(1, 7, led_matrix::LedMatrixOrientation::Vertical, true, 8);
+    expect_index(1, 0, led_matrix::LedMatrixOrientation::Vertical, true, false, false, 15);
+    expect_index(1, 7, led_matrix::LedMatrixOrientation::Vertical, true, false, false, 8);
     // Later odd column is counted from the bottom (15 * 8 + (7 - 3)).
-    expect_index(15, 3, led_matrix::LedMatrixOrientation::Vertical, true, 124);
+    expect_index(15, 3, led_matrix::LedMatrixOrientation::Vertical, true, false, false, 124);
 
     // Reversed wiring flips that odd column back to top-to-bottom.
-    expect_index(1, 0, led_matrix::LedMatrixOrientation::VerticalReversed, true, 8);
-    expect_index(1, 7, led_matrix::LedMatrixOrientation::VerticalReversed, true, 15);
-    expect_index(15, 3, led_matrix::LedMatrixOrientation::VerticalReversed, true, 123);
+    expect_index(1, 0, led_matrix::LedMatrixOrientation::VerticalReversed, true, false, false, 8);
+    expect_index(1, 7, led_matrix::LedMatrixOrientation::VerticalReversed, true, false, false, 15);
+    expect_index(15, 3, led_matrix::LedMatrixOrientation::VerticalReversed, true, false, false, 123);
+}
+
+TEST(LedMatrixMap, HorizontalFlipMirrorsColumns)
+{
+    constexpr int32_t width = graphics::LogicalFramebuffer::kWidth;
+    for_each_wiring_and_pixel([&](int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation,
+                                  bool serpentine) {
+        const std::size_t flipped = map_pixel(x, y, orientation, serpentine, true, false);
+        const std::size_t mirrored = map_pixel(width - 1 - x, y, orientation, serpentine, false, false);
+        EXPECT_EQ(flipped, mirrored) << "x=" << x << " y=" << y;
+    });
+}
+
+TEST(LedMatrixMap, VerticalFlipMirrorsRows)
+{
+    constexpr int32_t height = graphics::LogicalFramebuffer::kHeight;
+    for_each_wiring_and_pixel([&](int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation,
+                                  bool serpentine) {
+        const std::size_t flipped = map_pixel(x, y, orientation, serpentine, false, true);
+        const std::size_t mirrored = map_pixel(x, height - 1 - y, orientation, serpentine, false, false);
+        EXPECT_EQ(flipped, mirrored) << "x=" << x << " y=" << y;
+    });
+}
+
+TEST(LedMatrixMap, BothFlipsRotate180Degrees)
+{
+    constexpr int32_t width = graphics::LogicalFramebuffer::kWidth;
+    constexpr int32_t height = graphics::LogicalFramebuffer::kHeight;
+    for_each_wiring_and_pixel([&](int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation,
+                                  bool serpentine) {
+        const std::size_t flipped = map_pixel(x, y, orientation, serpentine, true, true);
+        const std::size_t rotated =
+            map_pixel(width - 1 - x, height - 1 - y, orientation, serpentine, false, false);
+        EXPECT_EQ(flipped, rotated) << "x=" << x << " y=" << y;
+    });
+}
+
+TEST(LedMatrixMap, VerticalSerpentineFlipsPinTheTopLeftPixel)
+{
+    constexpr auto orientation = led_matrix::LedMatrixOrientation::Vertical;
+    // Horizontal flip lands on the last column. That column is an odd serpentine
+    // lane, counted from the bottom: 31 * 8 + 7.
+    expect_index(0, 0, orientation, true, true, false, 255);
+    // Vertical flip lands on the bottom of column 0.
+    expect_index(0, 0, orientation, true, false, true, 7);
+    // Both flips rotate 180 degrees onto the bottom of the last column: 31 * 8.
+    expect_index(0, 0, orientation, true, true, true, 248);
 }
 
 TEST_P(LedMatrixMapWiring, UsesEachLedExactlyOnce)
 {
-    const auto [orientation, serpentine] = GetParam();
+    const auto [orientation, serpentine, flip_horizontal, flip_vertical] = GetParam();
     std::array<int, graphics::LogicalFramebuffer::kPixelCount> seen{};
     for (int32_t y = 0; y < graphics::LogicalFramebuffer::kHeight; ++y) {
         for (int32_t x = 0; x < graphics::LogicalFramebuffer::kWidth; ++x) {
-            const std::size_t index =
-                led_matrix::led_index_for_logical_pixel(x, y, orientation, serpentine);
+            const std::size_t index = led_matrix::led_index_for_logical_pixel(
+                x, y, orientation, serpentine, flip_horizontal, flip_vertical);
             ASSERT_LT(index, graphics::LogicalFramebuffer::kPixelCount);
             seen[index] += 1;
         }
@@ -130,5 +213,5 @@ INSTANTIATE_TEST_SUITE_P(LedMatrixMap, LedMatrixMapWiring,
                                                           led_matrix::LedMatrixOrientation::HorizontalReversed,
                                                           led_matrix::LedMatrixOrientation::Vertical,
                                                           led_matrix::LedMatrixOrientation::VerticalReversed),
-                                          testing::Bool()),
+                                          testing::Bool(), testing::Bool(), testing::Bool()),
                          wiring_test_name);
