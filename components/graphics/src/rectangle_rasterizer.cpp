@@ -5,7 +5,7 @@
 
 namespace graphics {
 
-void RectangleRasterizer::rasterize(Size size, RgbColor color, Position canvas_origin,
+void RectangleRasterizer::rasterize(Size size, const ColorSampler& color_sampler, Position origin_on_canvas,
                                      LogicalFramebuffer& framebuffer) const
 {
     if (size.width == 0 || size.height == 0) {
@@ -13,8 +13,8 @@ void RectangleRasterizer::rasterize(Size size, RgbColor color, Position canvas_o
     }
 
     // Only draw pixels inside the framebuffer boundary that will be visible.
-    const int32_t rectangle_left = canvas_origin.x;
-    const int32_t rectangle_top = canvas_origin.y;
+    const int32_t rectangle_left = origin_on_canvas.x;
+    const int32_t rectangle_top = origin_on_canvas.y;
     const int32_t rectangle_right = rectangle_left + static_cast<int32_t>(size.width);
     const int32_t rectangle_bottom = rectangle_top + static_cast<int32_t>(size.height);
 
@@ -25,6 +25,10 @@ void RectangleRasterizer::rasterize(Size size, RgbColor color, Position canvas_o
 
     for (int32_t y = visible_top; y < visible_bottom; ++y) {
         for (int32_t x = visible_left; x < visible_right; ++x) {
+            const RgbColor color = color_sampler.sample(Position{
+                .x = static_cast<int16_t>(x),
+                .y = static_cast<int16_t>(y),
+            });
             static_cast<void>(framebuffer.set_pixel(x, y, color));
         }
     }

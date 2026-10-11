@@ -8,7 +8,7 @@ namespace graphics {
 
 class BitmapRasterizer final {
 public:
-    void rasterize(BitmapFile bitmap, Position canvas_origin, LogicalFramebuffer& framebuffer) const;
+    void rasterize(BitmapFile bitmap, Position origin_on_canvas, LogicalFramebuffer& framebuffer) const;
 };
 
 }  // namespace graphics

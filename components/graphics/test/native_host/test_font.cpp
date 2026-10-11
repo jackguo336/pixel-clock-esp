@@ -3,14 +3,16 @@
 #include "font.hpp"
 #include "gtest/gtest.h"
 #include "logical_framebuffer.hpp"
-#include "utils.hpp"
+#include "text_measurement.hpp"
 #include "text_rasterizer.hpp"
+#include "utils.hpp"
 
 using graphics_test::expect_size;
 using graphics_test::framebuffers_equal;
 using graphics_test::kBitmapPath;
 using graphics_test::make_font;
 using graphics_test::make_lookup_font;
+using graphics_test::solid_sampler;
 
 namespace {
 
@@ -92,8 +94,11 @@ TEST(Font, RejectsEmptyAndMismatchedBitmaps)
     framebuffer.clear(kBackground);
     const graphics::LogicalFramebuffer original = framebuffer;
     const graphics::TextRasterizer rasterizer;
-    expect_size(rasterizer.rasterize(empty_font, "A", kForeground, {}, framebuffer), 0, 0);
-    expect_size(rasterizer.rasterize(missing_separator, "AB", kForeground, {}, framebuffer), 0, 0);
-    expect_size(rasterizer.rasterize(wider_than_one_character, "A", kForeground, {}, framebuffer), 0, 0);
+    expect_size(graphics::measure_text(empty_font, "A"), 0, 0);
+    expect_size(graphics::measure_text(missing_separator, "AB"), 0, 0);
+    expect_size(graphics::measure_text(wider_than_one_character, "A"), 0, 0);
+    rasterizer.rasterize(empty_font, "A", solid_sampler(kForeground), {}, framebuffer);
+    rasterizer.rasterize(missing_separator, "AB", solid_sampler(kForeground), {}, framebuffer);
+    rasterizer.rasterize(wider_than_one_character, "A", solid_sampler(kForeground), {}, framebuffer);
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }

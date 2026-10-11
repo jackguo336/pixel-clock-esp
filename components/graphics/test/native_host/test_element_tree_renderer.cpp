@@ -112,13 +112,16 @@ graphics::Element make_rectangle(graphics::ElementId id, graphics::Size size,
     };
 }
 
-[[nodiscard]] graphics::LinearGradientPaint make_gradient()
+[[nodiscard]] graphics::LinearGradientPaint red_blue_gradient(float angle_degrees)
 {
     return graphics::LinearGradientPaint{
-        .start = {.x = 1, .y = 2},
-        .end = {.x = 5, .y = 3},
-        .start_color = {.red = 255, .green = 0, .blue = 0},
-        .end_color = {.red = 0, .green = 0, .blue = 255},
+        .angle_degrees = angle_degrees,
+        .color_stop_count = 2,
+        .color_stops =
+            {
+                graphics::GradientColorStop{.offset = 0.0f, .color = {.red = 255, .green = 0, .blue = 0}},
+                graphics::GradientColorStop{.offset = 1.0f, .color = {.red = 0, .green = 0, .blue = 255}},
+            },
     };
 }
 
@@ -142,8 +145,8 @@ TEST(ElementTreeRenderer, RendersBitmapRootAtItsOwnPosition)
     ASSERT_TRUE(builder.add_terminal(make_bitmap({.value = 1}, {.x = 3, .y = 2}, &bitmap)));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 3, 2, 255, 0, 0);
     expect_rgb_at(framebuffer, 4, 2, 0, 255, 0);
@@ -174,8 +177,8 @@ TEST(ElementTreeRenderer, ChildElementPositionsAreRelativeToTheirContainerOrigin
         }));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 9, 4, 9, 8, 7);
     expect_rgb_at(framebuffer, 2, 1, 0, 0, 0);
@@ -225,8 +228,8 @@ TEST(ElementTreeRenderer, LaterBitmapOverwritesEarlierBitmapsInDeclarationOrder)
         }));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 4, 3, 255, 255, 255);
     expect_rgb_at(framebuffer, 5, 3, 0, 255, 255);
@@ -244,8 +247,8 @@ TEST(ElementTreeRenderer, LeavesFramebufferUnchangedForEmptyContainer)
     framebuffer.clear(graphics::RgbColor{.red = 12, .green = 34, .blue = 56});
     const graphics::LogicalFramebuffer original = framebuffer;
 
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }
@@ -270,8 +273,8 @@ TEST(ElementTreeRenderer, SkipsNullBitmapAndFontlessText)
 
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(graphics::RgbColor{.red = 40, .green = 50, .blue = 60});
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 0, 0, 40, 50, 60);
     expect_rgb_at(framebuffer, 1, 0, 40, 50, 60);
@@ -292,8 +295,8 @@ TEST(ElementTreeRenderer, DoesNotClearUnrelatedFramebufferPixels)
 
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(graphics::RgbColor{.red = 10, .green = 20, .blue = 30});
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 7, 1, 200, 10, 20);
     expect_rgb_at(framebuffer, 0, 0, 10, 20, 30);
@@ -331,8 +334,8 @@ TEST(ElementTreeRenderer, StacksLeftToRightFromContainerOriginIgnoringChildDefin
         }));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 1, 2, 255, 0, 0);
     expect_rgb_at(framebuffer, 2, 2, 0, 255, 0);
@@ -370,8 +373,8 @@ TEST(ElementTreeRenderer, StacksTopToBottomFromContainerOrigin)
         }));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 2, 1, 255, 0, 0);
     expect_rgb_at(framebuffer, 2, 2, 0, 255, 0);
@@ -412,8 +415,8 @@ TEST(ElementTreeRenderer, StackedParentAdvancesPastPreviousContainerSize)
         }));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 0, 1, 255, 0, 0);
     expect_rgb_at(framebuffer, 1, 1, 0, 255, 0);
@@ -460,8 +463,8 @@ TEST(ElementTreeRenderer, StackedContainerSizeUsesTheTallerChild)
         }));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 0, 0, 255, 0, 0);
     expect_rgb_at(framebuffer, 1, 0, 0, 255, 0);
@@ -470,19 +473,14 @@ TEST(ElementTreeRenderer, StackedContainerSizeUsesTheTallerChild)
     expect_rgb_at(framebuffer, 0, 2, 255, 255, 255);
 }
 
-TEST(ElementTreeRenderer, StackedLayoutAdvancesPastGradientRectangleWithoutPainting)
+TEST(ElementTreeRenderer, StackedLayoutPaintsGradientRectangleThenAdvances)
 {
     const std::array<graphics::RgbColor, 1> pixels{graphics::RgbColor{.red = 9, .green = 8, .blue = 7}};
     const graphics::BitmapFile bitmap{
         .size = {.width = 1, .height = 1},
         .pixels = pixels,
     };
-    const graphics::LinearGradientPaint gradient{
-        .start = {},
-        .end = {.x = 2, .y = 0},
-        .start_color = {.red = 255, .green = 0, .blue = 0},
-        .end_color = {.red = 0, .green = 0, .blue = 255},
-    };
+    const graphics::LinearGradientPaint gradient = red_blue_gradient(90.0f);
 
     std::array<graphics::ElementTreeNode, 3> storage{};
     graphics::ElementTreeBuilder builder{storage};
@@ -496,12 +494,43 @@ TEST(ElementTreeRenderer, StackedLayoutAdvancesPastGradientRectangleWithoutPaint
 
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(graphics::RgbColor{.red = 40, .green = 50, .blue = 60});
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
-    expect_rgb_at(framebuffer, 0, 0, 40, 50, 60);
-    expect_rgb_at(framebuffer, 1, 0, 40, 50, 60);
+    expect_rgb_at(framebuffer, 0, 0, 255, 0, 0);
+    expect_rgb_at(framebuffer, 1, 0, 128, 0, 128);
     expect_rgb_at(framebuffer, 2, 0, 9, 8, 7);
+    expect_rgb_at(framebuffer, 3, 0, 40, 50, 60);
+}
+
+TEST(ElementTreeRenderer, StackedLayoutPaintsGradientTextThenAdvances)
+{
+    const graphics::Font font = make_marker_font();
+    const std::array<graphics::RgbColor, 1> pixels{graphics::RgbColor{.red = 9, .green = 8, .blue = 7}};
+    const graphics::BitmapFile bitmap{
+        .size = {.width = 1, .height = 1},
+        .pixels = pixels,
+    };
+
+    std::array<graphics::ElementTreeNode, 3> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, graphics::StackDirection::LeftToRight, graphics::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(
+                make_text({.value = 2}, "A", &font, graphics::Paint{red_blue_gradient(0.0f)})));
+            EXPECT_TRUE(children.add_terminal(make_bitmap({.value = 3}, &bitmap)));
+        }));
+
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(graphics::RgbColor{.red = 40, .green = 50, .blue = 60});
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
+
+    // A one-pixel box at 0 degrees ends on the top edge, so the glyph gets the last stop.
+    expect_rgb_at(framebuffer, 0, 0, 0, 0, 255);
+    expect_rgb_at(framebuffer, 1, 0, 9, 8, 7);
+    expect_rgb_at(framebuffer, 2, 0, 40, 50, 60);
 }
 
 TEST(ElementTreeRenderer, RendersSolidRectangleRelativeToItsContainer)
@@ -519,8 +548,8 @@ TEST(ElementTreeRenderer, RendersSolidRectangleRelativeToItsContainer)
 
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear();
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 5, 3, 0, 180, 20);
     expect_rgb_at(framebuffer, 6, 3, 0, 180, 20);
@@ -552,8 +581,8 @@ TEST(ElementTreeRenderer, StackedLayoutGivesNullFontTextNoSize)
         }));
 
     graphics::LogicalFramebuffer framebuffer;
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 4, 2, 1, 2, 3);
     expect_rgb_at(framebuffer, 5, 2, 0, 0, 0);
@@ -586,8 +615,8 @@ TEST(ElementTreeRenderer, RendersSolidTextRelativeToItsContainer)
 
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 5, 3, 0, 180, 20);
     expect_rgb_at(framebuffer, 2, 1, 4, 5, 6);
@@ -617,8 +646,8 @@ TEST(ElementTreeRenderer, InheritsSolidPaintForRectangleAndText)
 
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 3, 1, 0, 180, 20);
     expect_rgb_at(framebuffer, 4, 1, 0, 180, 20);
@@ -649,8 +678,8 @@ TEST(ElementTreeRenderer, ExplicitPaintOverridesInheritedPaint)
 
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
-    const graphics::ElementTreeRenderer renderer;
-    renderer.render(builder.get_tree(), framebuffer);
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
 
     expect_rgb_at(framebuffer, 0, 1, 200, 10, 0);
     expect_rgb_at(framebuffer, 2, 1, 10, 20, 30);
@@ -664,20 +693,20 @@ TEST(ElementTreeRenderer, DoesNotDrawTerminalWithNoPaintedAncestor)
     const graphics::Font font = make_marker_font();
     graphics::LogicalFramebuffer framebuffer;
     framebuffer.clear(graphics::RgbColor{.red = 40, .green = 50, .blue = 60});
-    const graphics::ElementTreeRenderer renderer;
+    graphics::ElementTreeRenderer renderer;
 
     {
         std::array<graphics::ElementTreeNode, 1> storage{};
         graphics::ElementTreeBuilder builder{storage};
         ASSERT_TRUE(builder.add_terminal(
             make_rectangle({.value = 1}, {.x = 0, .y = 0}, {.width = 2, .height = 1})));
-        renderer.render(builder.get_tree(), framebuffer);
+        renderer.render(builder.build(), framebuffer);
     }
     {
         std::array<graphics::ElementTreeNode, 1> storage{};
         graphics::ElementTreeBuilder builder{storage};
         ASSERT_TRUE(builder.add_terminal(make_text({.value = 1}, {.x = 0, .y = 2}, "A", &font)));
-        renderer.render(builder.get_tree(), framebuffer);
+        renderer.render(builder.build(), framebuffer);
     }
     {
         std::array<graphics::ElementTreeNode, 3> storage{};
@@ -689,7 +718,7 @@ TEST(ElementTreeRenderer, DoesNotDrawTerminalWithNoPaintedAncestor)
                     make_rectangle({.value = 2}, {.x = 0, .y = 0}, {.width = 1, .height = 1})));
                 EXPECT_TRUE(children.add_terminal(make_text({.value = 3}, {.x = 0, .y = 2}, "A", &font)));
             }));
-        renderer.render(builder.get_tree(), framebuffer);
+        renderer.render(builder.build(), framebuffer);
     }
 
     expect_rgb_at(framebuffer, 0, 0, 40, 50, 60);
@@ -697,4 +726,109 @@ TEST(ElementTreeRenderer, DoesNotDrawTerminalWithNoPaintedAncestor)
     expect_rgb_at(framebuffer, 0, 2, 40, 50, 60);
     expect_rgb_at(framebuffer, 4, 0, 40, 50, 60);
     expect_rgb_at(framebuffer, 4, 2, 40, 50, 60);
+}
+
+TEST(ElementTreeRenderer, InheritedGradientSpansDefiningContainerBounds)
+{
+    const graphics::Font font = make_marker_font();
+
+    std::array<graphics::ElementTreeNode, 5> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 1, .y = 0}, graphics::StackDirection::LeftToRight),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_container(
+                make_container({.value = 2}, {.x = 2, .y = 1}, graphics::StackDirection::LeftToRight,
+                               graphics::LayoutSystem::Stacked, graphics::Paint{red_blue_gradient(90.0f)}),
+                [&](auto& nested) {
+                    EXPECT_TRUE(nested.add_terminal(
+                        make_rectangle({.value = 3}, {.width = 2, .height = 1})));
+                    EXPECT_TRUE(nested.add_container(
+                        make_container({.value = 4}, graphics::StackDirection::LeftToRight,
+                                       graphics::LayoutSystem::Stacked),
+                        [&](auto& text_container) {
+                            EXPECT_TRUE(text_container.add_terminal(make_text({.value = 5}, "A", &font)));
+                        }));
+                }));
+        }));
+
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
+
+    // Defining container origin is (3, 1) and its stacked contents are 3 pixels wide.
+    expect_rgb_at(framebuffer, 3, 1, 255, 0, 0);
+    expect_rgb_at(framebuffer, 4, 1, 170, 0, 85);
+    expect_rgb_at(framebuffer, 5, 1, 85, 0, 170);
+    expect_rgb_at(framebuffer, 1, 0, 4, 5, 6);
+    expect_rgb_at(framebuffer, 2, 1, 4, 5, 6);
+    expect_rgb_at(framebuffer, 6, 1, 4, 5, 6);
+}
+
+TEST(ElementTreeRenderer, ExplicitChildPaintRestartsOrReplacesInheritedGradient)
+{
+    const graphics::SolidPaint solid_override{.color = {.red = 0, .green = 180, .blue = 20}};
+
+    std::array<graphics::ElementTreeNode, 4> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 1, .y = 2}, graphics::StackDirection::LeftToRight,
+                       graphics::LayoutSystem::Stacked, graphics::Paint{red_blue_gradient(90.0f)}),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(make_rectangle({.value = 2}, {.width = 2, .height = 1})));
+            EXPECT_TRUE(children.add_terminal(make_rectangle(
+                {.value = 3}, {.width = 2, .height = 1}, graphics::Paint{red_blue_gradient(90.0f)})));
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 4}, {.width = 1, .height = 1}, graphics::Paint{solid_override})));
+        }));
+
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
+
+    // Parent bounds are 5 pixels wide starting at x = 1. The middle rectangle starts its own gradient.
+    expect_rgb_at(framebuffer, 1, 2, 255, 0, 0);
+    expect_rgb_at(framebuffer, 2, 2, 204, 0, 51);
+    expect_rgb_at(framebuffer, 3, 2, 255, 0, 0);
+    expect_rgb_at(framebuffer, 4, 2, 128, 0, 128);
+    expect_rgb_at(framebuffer, 5, 2, 0, 180, 20);
+    expect_rgb_at(framebuffer, 0, 2, 4, 5, 6);
+    expect_rgb_at(framebuffer, 6, 2, 4, 5, 6);
+    expect_rgb_at(framebuffer, 1, 1, 4, 5, 6);
+}
+
+TEST(ElementTreeRenderer, ExplicitGradientTextUsesMeasuredTextBounds)
+{
+    const std::array<graphics::RgbColor, 2> glyph{
+        graphics::RgbColor{.red = 255, .green = 255, .blue = 255},
+        graphics::RgbColor{.red = 255, .green = 255, .blue = 255},
+    };
+    const graphics::Font font = graphics_test::make_font({.width = 2, .height = 1}, "A", glyph,
+                                                         {.width = 2, .height = 1});
+    ASSERT_TRUE(font.is_valid());
+    const graphics::SolidPaint sibling{.color = {.red = 1, .green = 2, .blue = 3}};
+
+    std::array<graphics::ElementTreeNode, 3> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 2, .y = 1}, graphics::StackDirection::LeftToRight),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(
+                make_text({.value = 2}, {.x = 1, .y = 0}, "A", &font, graphics::Paint{red_blue_gradient(90.0f)})));
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 3}, {.x = 6, .y = 0}, {.width = 1, .height = 1}, graphics::Paint{sibling})));
+        }));
+
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
+
+    expect_rgb_at(framebuffer, 3, 1, 255, 0, 0);
+    expect_rgb_at(framebuffer, 4, 1, 128, 0, 128);
+    expect_rgb_at(framebuffer, 8, 1, 1, 2, 3);
+    expect_rgb_at(framebuffer, 2, 1, 4, 5, 6);
+    expect_rgb_at(framebuffer, 5, 1, 4, 5, 6);
 }
