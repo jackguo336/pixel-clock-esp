@@ -46,10 +46,21 @@ struct ScreenDirection {
     return {.x = std::sin(radians), .y = -std::cos(radians)};
 }
 
+// The line a linear gradient travels across the painted rectangle. The
+// gradient crosses the center of the rectangle and can be at an angle.
+// The color at a point is determined by projecting the point onto the gradient
+// axis to determine its offset from the start of the gradient line.
 struct GradientAxis {
+    // Unit vector representing the gradient angle in screen space (x increases right, 
+    // y increases down). The angle follows CSS convention:
+    // 0° points up and turns clockwise, so 0° is (0, -1) and 90° is (1, 0).
     double direction_x{0};
     double direction_y{0};
+    // The gradient line starts at the smallest scalar projection of a corner point onto the
+    // gradient axis. This is the furthest back point on the line that can display a color.
     double minimum_projection{0};
+    // The length of the gradient line from the start to the end. The end is the largest
+    // scalar projection of a corner point onto the gradient axis.
     double projection_span{0};
 };
 
@@ -163,11 +174,13 @@ RgbColor ColorSampler::sample(Position canvas_position) const
         return {};
     }
 
-    const double projected = static_cast<double>(canvas_position.x) * direction_x_
-        + static_cast<double>(canvas_position.y) * direction_y_;
-    const double offset =
-        projection_span_ > 0.0 ? (projected - minimum_projection_) / projection_span_ : 0.0;
-    return sample_stops(*gradient, offset);
+    const double projected_distance_along_axis = 
+        static_cast<double>(canvas_position.x) * direction_x_
+            + static_cast<double>(canvas_position.y) * direction_y_;
+    const double offset_along_axis =
+        projection_span_ > 0.0 ? 
+            (projected_distance_along_axis - minimum_projection_) / projection_span_ : 0.0;
+    return sample_stops(*gradient, offset_along_axis);
 }
 
 }  // namespace graphics
