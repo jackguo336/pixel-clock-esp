@@ -8,6 +8,7 @@
 
 using graphics_test::expect_rgb_at;
 using graphics_test::framebuffers_equal;
+using graphics_test::red_blue_sampler;
 using graphics_test::solid_sampler;
 
 TEST(RectangleRasterizer, FillsRectangleAtRequestedOrigin)
@@ -117,23 +118,6 @@ TEST(RectangleRasterizer, LeavesFramebufferUnchangedWhenEmptyOrFullyOffCanvas)
     EXPECT_TRUE(framebuffers_equal(original, framebuffer));
 }
 
-namespace {
-
-[[nodiscard]] graphics::ColorSampler red_blue_sampler(float angle_degrees, graphics::Position origin,
-                                                       graphics::Size size)
-{
-    const graphics::LinearGradientPaint gradient{
-        .angle_degrees = angle_degrees,
-        .color_stop_count = 2,
-        .color_stops =
-            {
-                graphics::GradientColorStop{.offset = 0.0f, .color = {.red = 255, .green = 0, .blue = 0}},
-                graphics::GradientColorStop{.offset = 1.0f, .color = {.red = 0, .green = 0, .blue = 255}},
-            },
-    };
-    return graphics::ColorSampler{graphics::Paint{gradient}, origin, size};
-}
-
 TEST(RectangleRasterizer, SamplesGradientAtEachFilledPixel)
 {
     graphics::LogicalFramebuffer framebuffer;
@@ -179,5 +163,3 @@ TEST(RectangleRasterizer, GradientClipUsesCanvasPositionInsideThePaintBounds)
     expect_rgb_at(framebuffer, 1, 0, 85, 0, 170);
     expect_rgb_at(framebuffer, 2, 0, 4, 5, 6);
 }
-
-}  // namespace

@@ -41,6 +41,21 @@ inline void expect_rgb_at(const graphics::LogicalFramebuffer& framebuffer, int32
                                   graphics::Size{}};
 }
 
+[[nodiscard]] inline graphics::ColorSampler red_blue_sampler(float angle_degrees, graphics::Position origin,
+                                                             graphics::Size size)
+{
+    const graphics::LinearGradientPaint gradient{
+        .angle_degrees = angle_degrees,
+        .color_stop_count = 2,
+        .color_stops =
+            {
+                graphics::GradientColorStop{.offset = 0.0f, .color = {.red = 255, .green = 0, .blue = 0}},
+                graphics::GradientColorStop{.offset = 1.0f, .color = {.red = 0, .green = 0, .blue = 255}},
+            },
+    };
+    return graphics::ColorSampler{graphics::Paint{gradient}, origin, size};
+}
+
 [[nodiscard]] inline bool framebuffers_equal(const graphics::LogicalFramebuffer& lhs,
                                              const graphics::LogicalFramebuffer& rhs)
 {

@@ -13,6 +13,7 @@ using graphics_test::framebuffers_equal;
 using graphics_test::kBitmapPath;
 using graphics_test::make_font;
 using graphics_test::make_lookup_font;
+using graphics_test::red_blue_sampler;
 using graphics_test::solid_sampler;
 
 namespace {
@@ -127,23 +128,6 @@ TEST(TextRasterizer, ClipsEachCanvasEdge)
     }
 }
 
-namespace {
-
-[[nodiscard]] graphics::ColorSampler red_blue_sampler(float angle_degrees, graphics::Position origin,
-                                                       graphics::Size size)
-{
-    const graphics::LinearGradientPaint gradient{
-        .angle_degrees = angle_degrees,
-        .color_stop_count = 2,
-        .color_stops =
-            {
-                graphics::GradientColorStop{.offset = 0.0f, .color = {.red = 255, .green = 0, .blue = 0}},
-                graphics::GradientColorStop{.offset = 1.0f, .color = {.red = 0, .green = 0, .blue = 255}},
-            },
-    };
-    return graphics::ColorSampler{graphics::Paint{gradient}, origin, size};
-}
-
 TEST(TextRasterizer, SamplesGradientAtEachOpaqueGlyphPixel)
 {
     const std::array<graphics::RgbColor, 4> pixels{
@@ -174,7 +158,7 @@ TEST(TextRasterizer, SamplesGradientAtEachOpaqueGlyphPixel)
     expect_rgb_at(framebuffer, 5, 3, 9, 9, 9);
 }
 
-TEST(TextRasterizer, GradientLeavesGapsAndClipsUsingCanvasPosition)
+TEST(TextRasterizer, GradientLeavesTransparentGapBetweenCharacters)
 {
     const std::array<graphics::RgbColor, 3> pixels{
         kBitmapMark,
@@ -184,31 +168,33 @@ TEST(TextRasterizer, GradientLeavesGapsAndClipsUsingCanvasPosition)
     const graphics::Font font =
         make_font({.width = 1, .height = 1}, "AB", pixels, {.width = 1, .height = 3}, kBitmapPath);
     ASSERT_TRUE(font.is_valid());
-    const graphics::TextRasterizer rasterizer;
 
-    {
-        graphics::LogicalFramebuffer framebuffer;
-        framebuffer.clear(kBackground);
-        const graphics::Position origin{};
-        const graphics::Size measured = graphics::measure_text(font, "AB");
-        rasterizer.rasterize(font, "AB", red_blue_sampler(90.0f, origin, measured), origin, framebuffer);
-        expect_rgb_at(framebuffer, 0, 0, 255, 0, 0);
-        expect_rgb_at(framebuffer, 1, 0, 9, 9, 9);
-        expect_rgb_at(framebuffer, 2, 0, 85, 0, 170);
-    }
-    {
-        const std::array<graphics::RgbColor, 2> wide_pixels{kBitmapMark, kBitmapMark};
-        const graphics::Font wide =
-            make_font({.width = 2, .height = 1}, "Q", wide_pixels, {.width = 2, .height = 1}, kBitmapPath);
-        ASSERT_TRUE(wide.is_valid());
-        graphics::LogicalFramebuffer framebuffer;
-        framebuffer.clear(kBackground);
-        const graphics::Position origin{.x = -1, .y = 0};
-        const graphics::Size measured = graphics::measure_text(wide, "Q");
-        rasterizer.rasterize(wide, "Q", red_blue_sampler(90.0f, origin, measured), origin, framebuffer);
-        expect_rgb_at(framebuffer, 0, 0, 128, 0, 128);
-        expect_rgb_at(framebuffer, 1, 0, 9, 9, 9);
-    }
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(kBackground);
+    const graphics::Position origin{};
+    const graphics::Size measured = graphics::measure_text(font, "AB");
+    const graphics::TextRasterizer rasterizer;
+    rasterizer.rasterize(font, "AB", red_blue_sampler(90.0f, origin, measured), origin, framebuffer);
+
+    expect_rgb_at(framebuffer, 0, 0, 255, 0, 0);
+    expect_rgb_at(framebuffer, 1, 0, 9, 9, 9);
+    expect_rgb_at(framebuffer, 2, 0, 85, 0, 170);
 }
 
-}  // namespace
+TEST(TextRasterizer, GradientClipUsesCanvasPositionInsideThePaintBounds)
+{
+    const std::array<graphics::RgbColor, 2> pixels{kBitmapMark, kBitmapMark};
+    const graphics::Font font =
+        make_font({.width = 2, .height = 1}, "Q", pixels, {.width = 2, .height = 1}, kBitmapPath);
+    ASSERT_TRUE(font.is_valid());
+
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(kBackground);
+    const graphics::Position origin{.x = -1, .y = 0};
+    const graphics::Size measured = graphics::measure_text(font, "Q");
+    const graphics::TextRasterizer rasterizer;
+    rasterizer.rasterize(font, "Q", red_blue_sampler(90.0f, origin, measured), origin, framebuffer);
+
+    expect_rgb_at(framebuffer, 0, 0, 128, 0, 128);
+    expect_rgb_at(framebuffer, 1, 0, 9, 9, 9);
+}
