@@ -3,5 +3,5 @@ idf_component_register(SRCS "src/led_matrix_map.cpp"
                             "src/display.cpp"
                        INCLUDE_DIRS "include"
                        PRIV_INCLUDE_DIRS "src"
-                       REQUIRES graphics platform
+                       REQUIRES graphics platform views
                        PRIV_REQUIRES led_strip log)

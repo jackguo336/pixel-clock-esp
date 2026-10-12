@@ -12,6 +12,7 @@ Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 - `main/` — composition root (`app_main`)
 - `components/platform/` — component interface, mailbox, runtime, scheduler, logging
 - `components/graphics/` — framebuffer, element tree, and bitmap rendering
+- `components/views/` — stateless views that build an element tree from `ViewData`
 - `components/display/` — LED matrix output; loads the test bitmap and presents it
 - `components/<name>/test/native_host/` — GoogleTest cases owned by that component
 - `components/<name>/test/embedded/` — Unity cases and mocks owned by that component

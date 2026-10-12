@@ -33,6 +33,7 @@ enable_testing()
 set(NATIVE_HOST_TEST_COMPONENTS
     platform
     graphics
+    views
     file_system
     display
 )

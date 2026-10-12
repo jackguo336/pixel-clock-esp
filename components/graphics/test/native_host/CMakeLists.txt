@@ -18,8 +18,6 @@ add_executable(graphics
     test_font_manager.cpp
     test_element_tree.cpp
     test_element_tree_renderer.cpp
-    test_views.cpp
-    test_carousel_view.cpp
     "${GRAPHICS_ROOT}/src/bitmap_file.cpp"
     "${GRAPHICS_ROOT}/src/logical_framebuffer.cpp"
     "${GRAPHICS_ROOT}/src/bitmap_file_loader.cpp"
@@ -33,7 +31,6 @@ add_executable(graphics
     "${GRAPHICS_ROOT}/src/element_layout.cpp"
     "${GRAPHICS_ROOT}/src/element_tree.cpp"
     "${GRAPHICS_ROOT}/src/element_tree_renderer.cpp"
-    "${GRAPHICS_ROOT}/src/carousel_view.cpp"
 )
 
 target_include_directories(graphics

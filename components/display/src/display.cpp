@@ -3,11 +3,11 @@
 #include <chrono>
 #include <string_view>
 
-#include "carousel_view.hpp"
 #include "elements.hpp"
 #include "font_manager.hpp"
 #include "platform/log.hpp"
 #include "platform/runtime.hpp"
+#include "views/carousel_view.hpp"
 
 namespace display_runtime {
 namespace {
@@ -66,12 +66,12 @@ void DisplayRuntime::on_event(const platform::Event& event)
 
 void DisplayRuntime::refresh()
 {
-    const graphics::ViewData view_data{
+    const views::ViewData view_data{
         .timestamp = std::chrono::microseconds{platform::Runtime::instance().now()},
     };
     const graphics::Font* const font =
         &graphics::FontManager::instance().font(graphics::FontId::English7x3);
-    const graphics::CarouselView carousel{kCarouselTexts, font, kCarouselSlotSize};
+    const views::CarouselView carousel{kCarouselTexts, font, kCarouselSlotSize};
 
     graphics::ElementTreeBuilder builder(nodes_);
     const graphics::Element root{

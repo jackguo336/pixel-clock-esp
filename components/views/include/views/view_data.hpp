@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cstdint>
 
-namespace graphics {
+namespace views {
 
 // Immutable, value-like snapshot of inputs for view building. Bounded and
 // strongly typed: no service references or untyped property bags.
@@ -13,4 +13,4 @@ struct ViewData {
     std::chrono::microseconds timestamp{0};
 };
 
-}  // namespace graphics
+}  // namespace views

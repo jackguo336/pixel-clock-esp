@@ -11,6 +11,5 @@ idf_component_register(SRCS "src/bitmap_file.cpp"
                             "src/element_layout.cpp"
                             "src/element_tree.cpp"
                             "src/element_tree_renderer.cpp"
-                            "src/carousel_view.cpp"
                        INCLUDE_DIRS "include"
                        PRIV_REQUIRES vfs file_system)

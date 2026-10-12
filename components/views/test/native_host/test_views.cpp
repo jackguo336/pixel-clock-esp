@@ -6,8 +6,8 @@
 
 #include "element_tree.hpp"
 #include "elements.hpp"
-#include "view_data.hpp"
-#include "views.hpp"
+#include "views/view.hpp"
+#include "views/view_data.hpp"
 #include "gtest/gtest.h"
 
 namespace {
@@ -74,10 +74,10 @@ graphics::Element make_label()
     };
 }
 
-class RevisionTreeView final : public graphics::View {
+class RevisionTreeView final : public views::View {
 public:
     [[nodiscard]] bool build(
-        const graphics::ViewData& view_data,
+        const views::ViewData& view_data,
         graphics::ElementTreeBuilder& builder) const override
     {
         return builder.add_container(make_root_container(), [&](auto& children) {
@@ -91,10 +91,10 @@ public:
     }
 };
 
-class HostedRevisionTreeView final : public graphics::View {
+class HostedRevisionTreeView final : public views::View {
 public:
     [[nodiscard]] bool build(
-        const graphics::ViewData& view_data,
+        const views::ViewData& view_data,
         graphics::ElementTreeBuilder& builder) const override
     {
         return builder.add_container(make_outer_container(), [&](auto& children) {
@@ -108,10 +108,10 @@ private:
     RevisionTreeView nested_{};
 };
 
-class TwoRootView final : public graphics::View {
+class TwoRootView final : public views::View {
 public:
     [[nodiscard]] bool build(
-        const graphics::ViewData&,
+        const views::ViewData&,
         graphics::ElementTreeBuilder& builder) const override
     {
         if (!builder.add_terminal(make_revision_box(kViewRevision))) {
@@ -124,20 +124,20 @@ public:
     }
 };
 
-class NonContainerView final : public graphics::View {
+class NonContainerView final : public views::View {
 public:
     [[nodiscard]] bool build(
-        const graphics::ViewData&,
+        const views::ViewData&,
         graphics::ElementTreeBuilder& builder) const override
     {
         return builder.add_container(make_label(), [](auto&) {});
     }
 };
 
-class OversizedTreeView final : public graphics::View {
+class OversizedTreeView final : public views::View {
 public:
     [[nodiscard]] bool build(
-        const graphics::ViewData& view_data,
+        const views::ViewData& view_data,
         graphics::ElementTreeBuilder& builder) const override
     {
         return builder.add_container(make_root_container(), [&](auto& children) {
@@ -155,13 +155,13 @@ public:
 
 TEST(View, IsAbstract)
 {
-    static_assert(std::is_abstract_v<graphics::View>);
+    static_assert(std::is_abstract_v<views::View>);
 }
 
 TEST(View, BuildReadsViewDataAndAddsScopedElements)
 {
     const RevisionTreeView view;
-    const graphics::ViewData view_data{.revision = kViewRevision};
+    const views::ViewData view_data{.revision = kViewRevision};
     std::array<graphics::ElementTreeNode, 8> storage{};
     graphics::ElementTreeBuilder builder{storage};
 
@@ -190,7 +190,7 @@ TEST(View, BuildReadsViewDataAndAddsScopedElements)
 TEST(View, BuildCanBeCalledInsideContainer)
 {
     const HostedRevisionTreeView view;
-    const graphics::ViewData view_data{.revision = kViewRevision};
+    const views::ViewData view_data{.revision = kViewRevision};
     std::array<graphics::ElementTreeNode, 8> storage{};
     graphics::ElementTreeBuilder builder{storage};
 
@@ -221,7 +221,7 @@ TEST(View, BuildCanBeCalledInsideContainer)
 
 TEST(View, BuildPropagatesBuilderFailures)
 {
-    const graphics::ViewData view_data{.revision = kViewRevision};
+    const views::ViewData view_data{.revision = kViewRevision};
 
     {
         const TwoRootView view;

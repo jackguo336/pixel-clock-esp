@@ -1,24 +1,25 @@
-#include "carousel_view.hpp"
+#include "views/carousel_view.hpp"
 
 #include "elements.hpp"
 
-namespace graphics {
+namespace views {
 namespace {
 
 // One glyph, top-aligned in a fixed slot. The slot height is the scroll pitch,
 // so a shorter glyph leaves an empty row instead of letting the next glyph peek.
-bool add_letter_slot(ElementTreeBuilder& builder, std::string_view text, const Font* font, Size slot_size)
+bool add_letter_slot(graphics::ElementTreeBuilder& builder, std::string_view text, const graphics::Font* font,
+                     graphics::Size slot_size)
 {
-    const Element slot{
-        .payload = ContainerElementPayload{
-            .layout_direction = StackDirection::TopToBottom,
-            .layout_system = LayoutSystem::Stacked,
+    const graphics::Element slot{
+        .payload = graphics::ContainerElementPayload{
+            .layout_direction = graphics::StackDirection::TopToBottom,
+            .layout_system = graphics::LayoutSystem::Stacked,
             .fixed_size = slot_size,
         },
     };
-    return builder.add_container(slot, [&](ElementTreeBuilder& slot_children) {
-        const Element letter{
-            .payload = TextElementPayload{
+    return builder.add_container(slot, [&](graphics::ElementTreeBuilder& slot_children) {
+        const graphics::Element letter{
+            .payload = graphics::TextElementPayload{
                 .text = text,
                 .font = font,
             },
@@ -31,34 +32,35 @@ bool add_letter_slot(ElementTreeBuilder& builder, std::string_view text, const F
 
 }  // namespace
 
-CarouselView::CarouselView(std::span<const std::string_view> texts, const Font* font, Size slot_size)
+CarouselView::CarouselView(std::span<const std::string_view> texts, const graphics::Font* font,
+                           graphics::Size slot_size)
     : texts_{texts}
     , font_{font}
     , slot_size_{slot_size}
 {
 }
 
-bool CarouselView::build(const ViewData& view_data, ElementTreeBuilder& builder) const
+bool CarouselView::build(const ViewData& view_data, graphics::ElementTreeBuilder& builder) const
 {
     const int16_t offset = scroll_offset(view_data.timestamp);
 
     // ChildDefinedPositions honors the strip's y. A stacked viewport would ignore it.
-    const Element viewport{
-        .payload = ContainerElementPayload{
-            .layout_direction = StackDirection::TopToBottom,
-            .layout_system = LayoutSystem::ChildDefinedPositions,
+    const graphics::Element viewport{
+        .payload = graphics::ContainerElementPayload{
+            .layout_direction = graphics::StackDirection::TopToBottom,
+            .layout_system = graphics::LayoutSystem::ChildDefinedPositions,
             .fixed_size = slot_size_,
         },
     };
-    return builder.add_container(viewport, [&](ElementTreeBuilder& viewport_children) {
-        const Element strip{
+    return builder.add_container(viewport, [&](graphics::ElementTreeBuilder& viewport_children) {
+        const graphics::Element strip{
             .position = {.x = 0, .y = static_cast<int16_t>(-static_cast<int32_t>(offset))},
-            .payload = ContainerElementPayload{
-                .layout_direction = StackDirection::TopToBottom,
-                .layout_system = LayoutSystem::Stacked,
+            .payload = graphics::ContainerElementPayload{
+                .layout_direction = graphics::StackDirection::TopToBottom,
+                .layout_system = graphics::LayoutSystem::Stacked,
             },
         };
-        if (!viewport_children.add_container(strip, [&](ElementTreeBuilder& strip_children) {
+        if (!viewport_children.add_container(strip, [&](graphics::ElementTreeBuilder& strip_children) {
                 for (const std::string_view text : texts_) {
                     if (!add_letter_slot(strip_children, text, font_, slot_size_)) {
                         return;
@@ -100,4 +102,4 @@ int16_t CarouselView::scroll_offset(std::chrono::microseconds timestamp) const
     return static_cast<int16_t>(completed_transition_count * slot_height_pixels + pixels_scrolled_in_transition);
 }
 
-}  // namespace graphics
+}  // namespace views
