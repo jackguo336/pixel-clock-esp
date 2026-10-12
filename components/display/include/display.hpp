@@ -20,7 +20,8 @@ public:
 private:
     void refresh();
 
-    static constexpr std::size_t kSceneNodeCapacity = 1;
+    // Root, HELLO, a 1px spacer, and a 4-letter carousel with its loop copy: 15 nodes.
+    static constexpr std::size_t kSceneNodeCapacity = 16;
 
     std::array<graphics::ElementTreeNode, kSceneNodeCapacity> nodes_{};
     graphics::ElementTree tree_{};

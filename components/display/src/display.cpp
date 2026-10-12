@@ -1,10 +1,13 @@
 #include "display.hpp"
 
+#include <chrono>
 #include <string_view>
 
+#include "carousel_view.hpp"
 #include "elements.hpp"
 #include "font_manager.hpp"
 #include "platform/log.hpp"
+#include "platform/runtime.hpp"
 
 namespace display_runtime {
 namespace {
@@ -22,6 +25,11 @@ constexpr graphics::LinearGradientPaint kTextPaint{
         },
 };
 constexpr std::string_view kHelloText{"HELLO"};
+constexpr const std::string_view kCarouselTexts[]{"A", "B", "C", "D"};
+// One column between HELLO and the carousel. Height 0 lets the row height come from the letters.
+constexpr graphics::Size kSpacerSize{.width = 1, .height = 0};
+// 3x7 glyphs sit in an 8px-tall slot so the next letter does not peek into the panel at rest.
+constexpr graphics::Size kCarouselSlotSize{.width = 3, .height = 8};
 
 }  // namespace
 
@@ -58,18 +66,47 @@ void DisplayRuntime::on_event(const platform::Event& event)
 
 void DisplayRuntime::refresh()
 {
+    const graphics::ViewData view_data{
+        .timestamp = std::chrono::microseconds{platform::Runtime::instance().now()},
+    };
+    const graphics::Font* const font =
+        &graphics::FontManager::instance().font(graphics::FontId::English7x3);
+    const graphics::CarouselView carousel{kCarouselTexts, font, kCarouselSlotSize};
+
     graphics::ElementTreeBuilder builder(nodes_);
-    const graphics::Element text_element{
-        .id = {},
-        .position = {.x = 0, .y = 0},
+    const graphics::Element root{
         .paint = graphics::Paint{kTextPaint},
-        .payload = graphics::TextElementPayload{
-            .text = kHelloText,
-            .font = &graphics::FontManager::instance().font(graphics::FontId::English7x3),
+        .payload = graphics::ContainerElementPayload{
+            .layout_direction = graphics::StackDirection::LeftToRight,
+            .layout_system = graphics::LayoutSystem::Stacked,
         },
     };
-    if (!builder.add_terminal(text_element)) {
-        PLATFORM_LOGE(this, "failed to add text element");
+    const bool scene_built = builder.add_container(root, [&](auto& children) {
+        const graphics::Element hello{
+            .payload = graphics::TextElementPayload{
+                .text = kHelloText,
+                .font = font,
+            },
+        };
+        if (!children.add_terminal(hello)) {
+            return;
+        }
+
+        const graphics::Element spacer{
+            .payload = graphics::ContainerElementPayload{
+                .fixed_size = kSpacerSize,
+            },
+        };
+        if (!children.add_container(spacer, [](auto&) {})) {
+            return;
+        }
+
+        if (!carousel.build(view_data, children)) {
+            return;
+        }
+    });
+    if (!scene_built) {
+        PLATFORM_LOGE(this, "failed to build scene");
         return;
     }
     tree_ = builder.build();
