@@ -10,7 +10,7 @@
 namespace {
 
 constexpr char kTag[] = "main";
-constexpr int kRefreshesPerSecond = 15;
+constexpr int kRefreshesPerSecond = 30;
 constexpr auto kRefreshPeriod =
     std::chrono::microseconds{1'000'000 / kRefreshesPerSecond};
 constexpr uint16_t kRefreshCoalesceKey = 1;

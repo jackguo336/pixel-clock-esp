@@ -16,7 +16,7 @@ namespace graphics {
 class CarouselView final : public View {
 public:
     static constexpr std::chrono::milliseconds kPauseDuration{2000};
-    static constexpr std::chrono::milliseconds kStepDuration{250};
+    static constexpr std::chrono::milliseconds kStepDuration{50};
 
     // texts and font must outlive any tree built from this view.
     CarouselView(std::span<const std::string_view> texts, const Font* font, Size slot_size);
