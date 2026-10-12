@@ -26,7 +26,12 @@ private:
     graphics::ElementTree tree_{};
     graphics::LogicalFramebuffer framebuffer_{};
     graphics::ElementTreeRenderer renderer_{};
-    led_matrix::LedMatrixOutput output_{led_matrix::LedMatrixOutputConfig{}};
+    led_matrix::LedMatrixOutput output_{
+        led_matrix::LedMatrixOutputConfig{
+            .flip_horizontal = true,
+            .flip_vertical = true,
+        }
+    };
     bool scene_ready_{false};
 };
 

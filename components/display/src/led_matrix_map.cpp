@@ -77,9 +77,13 @@ struct LanePlacement {
 }  // namespace
 
 std::size_t led_index_for_logical_pixel(int32_t x, int32_t y, LedMatrixOrientation orientation,
-                                        bool serpentine)
+                                        bool serpentine, bool flip_horizontal, bool flip_vertical)
 {
-    const LanePlacement placement = place_on_lane(x, y, orientation, serpentine);
+    const int32_t width = graphics::LogicalFramebuffer::kWidth;
+    const int32_t height = graphics::LogicalFramebuffer::kHeight;
+    const int32_t panel_x = flip_horizontal ? (width - 1 - x) : x;
+    const int32_t panel_y = flip_vertical ? (height - 1 - y) : y;
+    const LanePlacement placement = place_on_lane(panel_x, panel_y, orientation, serpentine);
     return static_cast<std::size_t>(placement.lane) * static_cast<std::size_t>(placement.lane_length) +
            static_cast<std::size_t>(placement.along);
 }

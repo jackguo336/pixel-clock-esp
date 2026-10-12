@@ -17,6 +17,8 @@ struct LedMatrixOutputConfig {
     int gpio_num{3};
     LedMatrixOrientation orientation{LedMatrixOrientation::Vertical};
     bool serpentine{true};
+    bool flip_horizontal{false};
+    bool flip_vertical{false};
     // WARNING: 256 WS2812Bs at full brightness can draw tens of amps. Consider power
     // supply current limits before increasing this value. Maximum value of a color
     // channel, from 0 to 255.

@@ -73,6 +73,8 @@ void expect_mapped_pixel(int32_t x, int32_t y, graphics::RgbColor color)
     EXPECT_EQ(index_call->y, y);
     EXPECT_EQ(index_call->orientation, led_matrix::LedMatrixOrientation::Horizontal);
     EXPECT_TRUE(index_call->serpentine);
+    EXPECT_FALSE(index_call->flip_horizontal);
+    EXPECT_FALSE(index_call->flip_vertical);
     EXPECT_EQ(write->index, mock_led_index::index_for_call(call));
     EXPECT_EQ(write->red, static_cast<uint32_t>(color.red));
     EXPECT_EQ(write->green, static_cast<uint32_t>(color.green));

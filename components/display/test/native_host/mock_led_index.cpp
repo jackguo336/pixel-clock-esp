@@ -39,7 +39,8 @@ std::size_t index_for_call(std::size_t call_index)
     return 1000 + call_index;
 }
 
-std::size_t record(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation, bool serpentine)
+std::size_t record(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orientation, bool serpentine,
+                   bool flip_horizontal, bool flip_vertical)
 {
     const std::size_t call_index = g_call_count;
     if (call_index < kCallCapacity) {
@@ -48,6 +49,8 @@ std::size_t record(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orient
             .y = y,
             .orientation = orientation,
             .serpentine = serpentine,
+            .flip_horizontal = flip_horizontal,
+            .flip_vertical = flip_vertical,
         };
     }
     ++g_call_count;
@@ -58,9 +61,10 @@ std::size_t record(int32_t x, int32_t y, led_matrix::LedMatrixOrientation orient
 
 namespace led_matrix {
 
-std::size_t led_index_for_logical_pixel(int32_t x, int32_t y, LedMatrixOrientation orientation, bool serpentine)
+std::size_t led_index_for_logical_pixel(int32_t x, int32_t y, LedMatrixOrientation orientation,
+                                        bool serpentine, bool flip_horizontal, bool flip_vertical)
 {
-    return mock_led_index::record(x, y, orientation, serpentine);
+    return mock_led_index::record(x, y, orientation, serpentine, flip_horizontal, flip_vertical);
 }
 
 }  // namespace led_matrix

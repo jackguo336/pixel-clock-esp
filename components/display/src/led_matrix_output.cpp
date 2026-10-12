@@ -107,8 +107,9 @@ LedMatrixOutputStatus LedMatrixOutput::present(const graphics::LogicalFramebuffe
                 return LedMatrixOutputStatus::DriverError;
             }
 
-            const std::size_t index =
-                led_index_for_logical_pixel(x, y, config_.orientation, config_.serpentine);
+            const std::size_t index = led_index_for_logical_pixel(
+                x, y, config_.orientation, config_.serpentine, config_.flip_horizontal,
+                config_.flip_vertical);
             const graphics::RgbColor scaled_color =
                 scale_color_with_brightness_limit(*color, config_.brightness);
             const esp_err_t err = led_strip_set_pixel(strip, static_cast<uint32_t>(index), scaled_color.red,
