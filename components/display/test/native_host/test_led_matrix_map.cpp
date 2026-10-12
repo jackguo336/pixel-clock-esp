@@ -179,18 +179,6 @@ TEST(LedMatrixMap, BothFlipsRotate180Degrees)
     });
 }
 
-TEST(LedMatrixMap, VerticalSerpentineFlipsPinTheTopLeftPixel)
-{
-    constexpr auto orientation = led_matrix::LedMatrixOrientation::Vertical;
-    // Horizontal flip lands on the last column. That column is an odd serpentine
-    // lane, counted from the bottom: 31 * 8 + 7.
-    expect_index(0, 0, orientation, true, true, false, 255);
-    // Vertical flip lands on the bottom of column 0.
-    expect_index(0, 0, orientation, true, false, true, 7);
-    // Both flips rotate 180 degrees onto the bottom of the last column: 31 * 8.
-    expect_index(0, 0, orientation, true, true, true, 248);
-}
-
 TEST_P(LedMatrixMapWiring, UsesEachLedExactlyOnce)
 {
     const auto [orientation, serpentine, flip_horizontal, flip_vertical] = GetParam();

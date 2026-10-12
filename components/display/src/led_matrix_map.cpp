@@ -14,10 +14,6 @@ struct LanePlacement {
 /**
  * Map a logical pixel onto the physical LED strip.
  *
- * Screen flip happens before this wiring. `led_index_for_logical_pixel` mirrors
- * x to width - 1 - x when flip_horizontal is set, and y to height - 1 - y when
- * flip_vertical is set, then calls this function with those coordinates.
- *
  * A lane is one straight run of the strip. Horizontal wiring uses one lane per row;
  * vertical wiring uses one lane per column. `along` is the offset within that run.
  * The strip index is `lane * lane_length + along`. Serpentine wiring reverses every

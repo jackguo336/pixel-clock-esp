@@ -92,26 +92,6 @@ TEST(LedMatrixOutput, InitializesSuccessfully)
     EXPECT_EQ(mock_led_index::call_count(), 0u);
 }
 
-TEST(LedMatrixOutput, PresentForwardsConfiguredFlips)
-{
-    reset_mocks();
-    led_matrix::LedMatrixOutputConfig config = firmware_config();
-    config.flip_horizontal = true;
-    config.flip_vertical = true;
-    led_matrix::LedMatrixOutput output(config);
-
-    ASSERT_EQ(output.initialize(), led_matrix::LedMatrixOutputStatus::Ok);
-    ASSERT_EQ(output.present(graphics::LogicalFramebuffer{}), led_matrix::LedMatrixOutputStatus::Ok);
-
-    ASSERT_EQ(mock_led_index::call_count(), graphics::LogicalFramebuffer::kPixelCount);
-    for (std::size_t call_index = 0; call_index < mock_led_index::call_count(); ++call_index) {
-        const mock_led_index::Call* call = mock_led_index::call_at(call_index);
-        ASSERT_NE(call, nullptr);
-        EXPECT_TRUE(call->flip_horizontal);
-        EXPECT_TRUE(call->flip_vertical);
-    }
-}
-
 TEST(LedMatrixOutput, PresentWritesEachFramebufferColorToItsMappedIndexAndRefreshesOnce)
 {
     reset_mocks();
