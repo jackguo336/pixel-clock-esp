@@ -13,13 +13,13 @@ namespace views {
 
 // Vertically scrolls a strip of text slots. The offset is a pure function of
 // ViewData::timestamp, so the view holds no playback state.
-class TextCarouselView final : public View {
+class LetterCarouselView final : public View {
 public:
     static constexpr std::chrono::milliseconds kPauseDuration{2000};
     static constexpr std::chrono::milliseconds kStepDuration{50};
 
     // texts and font must outlive any tree built from this view.
-    TextCarouselView(std::span<const std::string_view> texts, const graphics::Font* font, graphics::Size slot_size);
+    LetterCarouselView(std::span<const std::string_view> texts, const graphics::Font* font, graphics::Size slot_size);
 
     [[nodiscard]] bool build(const ViewData& view_data,
                              graphics::ElementTreeBuilder& builder) const override;

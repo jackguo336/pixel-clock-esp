@@ -6,8 +6,8 @@ set(GRAPHICS_ROOT "${VIEWS_ROOT}/../graphics")
 
 add_executable(views
     test_views.cpp
-    test_text_carousel_view.cpp
-    "${VIEWS_ROOT}/src/text_carousel_view.cpp"
+    test_letter_carousel_view.cpp
+    "${VIEWS_ROOT}/src/letter_carousel_view.cpp"
     "${GRAPHICS_ROOT}/src/bitmap_file.cpp"
     "${GRAPHICS_ROOT}/src/font.cpp"
     "${GRAPHICS_ROOT}/src/text_measurement.cpp"
