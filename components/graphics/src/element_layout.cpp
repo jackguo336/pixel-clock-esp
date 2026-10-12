@@ -108,7 +108,8 @@ Size layout_node(std::span<ElementTreeNode> nodes, ElementNodeIndex index, Posit
 
         Size operator()(const ContainerElementPayload& payload) const
         {
-            return layout_children(nodes, node.first_child, origin_on_canvas, payload);
+            const Size content_size = layout_children(nodes, node.first_child, origin_on_canvas, payload);
+            return payload.fixed_size.value_or(content_size);
         }
 
         Size operator()(const BitmapElementPayload& payload) const

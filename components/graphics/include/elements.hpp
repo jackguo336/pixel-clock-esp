@@ -44,6 +44,9 @@ enum class LayoutSystem : uint8_t {
 struct ContainerElementPayload {
     StackDirection layout_direction{};
     LayoutSystem layout_system{};
+    // A size that does not expand to accommodate children.
+    // Children outside bounds are still drawn.
+    std::optional<Size> fixed_size{};
     // Container children are defined in the ElementTree.
 };
 

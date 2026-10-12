@@ -1,4 +1,5 @@
 #include <array>
+#include <optional>
 #include <string_view>
 
 #include "bitmap_file.hpp"
@@ -22,9 +23,10 @@ void expect_layout(graphics::ElementLayout layout, int16_t x, int16_t y, uint16_
     EXPECT_EQ(layout.size.height, height);
 }
 
-graphics::Element make_container(graphics::ElementId id, graphics::Position position,
-                                 graphics::StackDirection layout_direction,
-                                 graphics::LayoutSystem layout_system = graphics::LayoutSystem::ChildDefinedPositions)
+graphics::Element make_container(
+    graphics::ElementId id, graphics::Position position, graphics::StackDirection layout_direction,
+    graphics::LayoutSystem layout_system = graphics::LayoutSystem::ChildDefinedPositions,
+    std::optional<graphics::Size> fixed_size = std::nullopt)
 {
     return graphics::Element{
         .id = id,
@@ -32,6 +34,7 @@ graphics::Element make_container(graphics::ElementId id, graphics::Position posi
         .payload = graphics::ContainerElementPayload{
             .layout_direction = layout_direction,
             .layout_system = layout_system,
+            .fixed_size = fixed_size,
         },
     };
 }
@@ -253,4 +256,137 @@ TEST(ElementLayout, ReusingNodeStorageReplacesPreviousLayouts)
         ASSERT_EQ(tree.nodes.size(), 1u);
         expect_layout(tree.nodes[0].layout, 1, 0, 0, 0);
     }
+}
+
+TEST(ElementLayout, FixedSizeLargerThanContent)
+{
+    std::array<graphics::ElementTreeNode, 2> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 4, .y = 5}, graphics::StackDirection::LeftToRight,
+                       graphics::LayoutSystem::ChildDefinedPositions, graphics::Size{.width = 10, .height = 6}),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 2}, {.x = 1, .y = 2}, {.width = 2, .height = 2})));
+        }));
+
+    const graphics::ElementTree tree = builder.build();
+
+    expect_layout(tree.nodes[0].layout, 4, 5, 10, 6);
+    expect_layout(tree.nodes[1].layout, 5, 7, 2, 2);
+}
+
+TEST(ElementLayout, FixedSizeSmallerThanContent)
+{
+    std::array<graphics::ElementTreeNode, 2> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 1, .y = 2}, graphics::StackDirection::LeftToRight,
+                       graphics::LayoutSystem::ChildDefinedPositions, graphics::Size{.width = 2, .height = 2}),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 2}, {.x = 3, .y = 1}, {.width = 5, .height = 4})));
+        }));
+
+    const graphics::ElementTree tree = builder.build();
+
+    expect_layout(tree.nodes[0].layout, 1, 2, 2, 2);
+    expect_layout(tree.nodes[1].layout, 4, 3, 5, 4);
+}
+
+TEST(ElementLayout, EmptyContainerKeepsItsFixedSize)
+{
+    std::array<graphics::ElementTreeNode, 1> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 4, .y = 5}, graphics::StackDirection::TopToBottom,
+                       graphics::LayoutSystem::ChildDefinedPositions, graphics::Size{.width = 7, .height = 3}),
+        [](auto&) {}));
+
+    const graphics::ElementTree tree = builder.build();
+
+    expect_layout(tree.nodes[0].layout, 4, 5, 7, 3);
+}
+
+TEST(ElementLayout, StackingParentAdvancesByFixedSize)
+{
+    std::array<graphics::ElementTreeNode, 4> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 1, .y = 2}, graphics::StackDirection::LeftToRight,
+                       graphics::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_container(
+                make_container({.value = 2}, {.x = 9, .y = 9}, graphics::StackDirection::LeftToRight,
+                               graphics::LayoutSystem::ChildDefinedPositions,
+                               graphics::Size{.width = 4, .height = 3}),
+                [&](auto& nested) {
+                    EXPECT_TRUE(nested.add_terminal(
+                        make_rectangle({.value = 3}, {.x = 0, .y = 0}, {.width = 1, .height = 1})));
+                }));
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 4}, {.x = 8, .y = 8}, {.width = 2, .height = 1})));
+        }));
+
+    const graphics::ElementTree tree = builder.build();
+
+    expect_layout(tree.nodes[1].layout, 1, 2, 4, 3);
+    expect_layout(tree.nodes[2].layout, 1, 2, 1, 1);
+    expect_layout(tree.nodes[3].layout, 5, 2, 2, 1);
+    expect_layout(tree.nodes[0].layout, 1, 2, 6, 3);
+}
+
+TEST(ElementLayout, StackingParentStopsAtFixedSizeWhenChildrenOverflow)
+{
+    std::array<graphics::ElementTreeNode, 4> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 1, .y = 2}, graphics::StackDirection::LeftToRight,
+                       graphics::LayoutSystem::Stacked),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_container(
+                make_container({.value = 2}, {.x = 9, .y = 9}, graphics::StackDirection::LeftToRight,
+                               graphics::LayoutSystem::ChildDefinedPositions,
+                               graphics::Size{.width = 2, .height = 2}),
+                [&](auto& nested) {
+                    EXPECT_TRUE(nested.add_terminal(
+                        make_rectangle({.value = 3}, {.x = 1, .y = 0}, {.width = 5, .height = 4})));
+                }));
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 4}, {.x = 8, .y = 8}, {.width = 1, .height = 1})));
+        }));
+
+    const graphics::ElementTree tree = builder.build();
+
+    expect_layout(tree.nodes[1].layout, 1, 2, 2, 2);
+    expect_layout(tree.nodes[2].layout, 2, 2, 5, 4);
+    expect_layout(tree.nodes[3].layout, 3, 2, 1, 1);
+    expect_layout(tree.nodes[0].layout, 1, 2, 3, 2);
+}
+
+TEST(ElementLayout, NestedChildrenKeepLayoutUnderFixedSize)
+{
+    std::array<graphics::ElementTreeNode, 4> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 2, .y = 3}, graphics::StackDirection::LeftToRight,
+                       graphics::LayoutSystem::ChildDefinedPositions, graphics::Size{.width = 10, .height = 6}),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_container(
+                make_container({.value = 2}, {.x = 1, .y = 1}, graphics::StackDirection::LeftToRight,
+                               graphics::LayoutSystem::Stacked),
+                [&](auto& nested) {
+                    EXPECT_TRUE(nested.add_terminal(
+                        make_rectangle({.value = 3}, {.x = 5, .y = 5}, {.width = 2, .height = 2})));
+                    EXPECT_TRUE(nested.add_terminal(
+                        make_rectangle({.value = 4}, {.x = 6, .y = 6}, {.width = 1, .height = 3})));
+                }));
+        }));
+
+    const graphics::ElementTree tree = builder.build();
+
+    expect_layout(tree.nodes[0].layout, 2, 3, 10, 6);
+    expect_layout(tree.nodes[1].layout, 3, 4, 3, 3);
+    expect_layout(tree.nodes[2].layout, 3, 4, 2, 2);
+    expect_layout(tree.nodes[3].layout, 5, 4, 1, 3);
 }
