@@ -7,7 +7,11 @@ add_executable(companion_protocol
     test_frame.cpp
     test_messages.cpp
     "${COMPANION_PROTOCOL_ROOT}/src/frame.cpp"
-    "${COMPANION_PROTOCOL_ROOT}/src/messages.cpp"
+    "${COMPANION_PROTOCOL_ROOT}/src/get_device_info.cpp"
+    "${COMPANION_PROTOCOL_ROOT}/src/set_wifi_credentials.cpp"
+    "${COMPANION_PROTOCOL_ROOT}/src/ack.cpp"
+    "${COMPANION_PROTOCOL_ROOT}/src/device_info.cpp"
+    "${COMPANION_PROTOCOL_ROOT}/src/error.cpp"
 )
 
 target_include_directories(companion_protocol
