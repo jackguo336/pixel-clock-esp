@@ -8,7 +8,7 @@
 
 #include "element_tree.hpp"
 #include "elements.hpp"
-#include "views/carousel_view.hpp"
+#include "views/text_carousel_view.hpp"
 #include "gtest/gtest.h"
 
 namespace {
@@ -31,12 +31,12 @@ const graphics::TextElementPayload* text_payload(const graphics::Element& elemen
     return std::get_if<graphics::TextElementPayload>(&element.payload);
 }
 
-views::CarouselView make_carousel(const graphics::Font* font)
+views::TextCarouselView make_carousel(const graphics::Font* font)
 {
-    return views::CarouselView{kTexts, font, kSlotSize};
+    return views::TextCarouselView{kTexts, font, kSlotSize};
 }
 
-bool build_at(const views::CarouselView& view, std::chrono::microseconds timestamp,
+bool build_at(const views::TextCarouselView& view, std::chrono::microseconds timestamp,
               std::span<graphics::ElementTreeNode> storage, graphics::ElementTree& tree)
 {
     graphics::ElementTreeBuilder builder{storage};
@@ -50,10 +50,10 @@ bool build_at(const views::CarouselView& view, std::chrono::microseconds timesta
 
 }  // namespace
 
-TEST(CarouselView, BuildsViewportStripAndLoopingSlots)
+TEST(TextCarouselView, BuildsViewportStripAndLoopingSlots)
 {
     const graphics::Font font{};
-    const views::CarouselView view = make_carousel(&font);
+    const views::TextCarouselView view = make_carousel(&font);
     std::array<graphics::ElementTreeNode, kCarouselNodeCount> storage{};
     graphics::ElementTree tree{};
 
@@ -110,20 +110,20 @@ TEST(CarouselView, BuildsViewportStripAndLoopingSlots)
     }
 }
 
-TEST(CarouselView, HoldsTheFirstLetterDuringTheInitialPause)
+TEST(TextCarouselView, HoldsTheFirstLetterDuringTheInitialPause)
 {
-    const views::CarouselView view = make_carousel(nullptr);
-    const auto pause = views::CarouselView::kPauseDuration;
+    const views::TextCarouselView view = make_carousel(nullptr);
+    const auto pause = views::TextCarouselView::kPauseDuration;
 
     EXPECT_EQ(view.scroll_offset(std::chrono::milliseconds{0}), 0);
     EXPECT_EQ(view.scroll_offset(pause - std::chrono::milliseconds{1}), 0);
 }
 
-TEST(CarouselView, StepsOnePixelEveryStepDuration)
+TEST(TextCarouselView, StepsOnePixelEveryStepDuration)
 {
-    const views::CarouselView view = make_carousel(nullptr);
-    const auto pause = views::CarouselView::kPauseDuration;
-    const auto step = views::CarouselView::kStepDuration;
+    const views::TextCarouselView view = make_carousel(nullptr);
+    const auto pause = views::TextCarouselView::kPauseDuration;
+    const auto step = views::TextCarouselView::kStepDuration;
 
     EXPECT_EQ(view.scroll_offset(pause), 1);
     EXPECT_EQ(view.scroll_offset(pause + step), 2);
@@ -131,11 +131,11 @@ TEST(CarouselView, StepsOnePixelEveryStepDuration)
     EXPECT_EQ(view.scroll_offset(pause + 6 * step), 7);
 }
 
-TEST(CarouselView, RestsOnTheNextLetterForThePause)
+TEST(TextCarouselView, RestsOnTheNextLetterForThePause)
 {
-    const views::CarouselView view = make_carousel(nullptr);
-    const auto pause = views::CarouselView::kPauseDuration;
-    const auto transition = pause + (kSlotSize.height - 1) * views::CarouselView::kStepDuration;
+    const views::TextCarouselView view = make_carousel(nullptr);
+    const auto pause = views::TextCarouselView::kPauseDuration;
+    const auto transition = pause + (kSlotSize.height - 1) * views::TextCarouselView::kStepDuration;
 
     EXPECT_EQ(view.scroll_offset(transition), static_cast<int16_t>(kSlotSize.height));
     EXPECT_EQ(view.scroll_offset(transition + pause - std::chrono::milliseconds{1}),
@@ -143,11 +143,11 @@ TEST(CarouselView, RestsOnTheNextLetterForThePause)
     EXPECT_EQ(view.scroll_offset(transition + pause), static_cast<int16_t>(kSlotSize.height + 1));
 }
 
-TEST(CarouselView, WrapsFromTheLoopCopyBackToTheFirstLetter)
+TEST(TextCarouselView, WrapsFromTheLoopCopyBackToTheFirstLetter)
 {
-    const views::CarouselView view = make_carousel(nullptr);
-    const auto transition = views::CarouselView::kPauseDuration
-        + (kSlotSize.height - 1) * views::CarouselView::kStepDuration;
+    const views::TextCarouselView view = make_carousel(nullptr);
+    const auto transition = views::TextCarouselView::kPauseDuration
+        + (kSlotSize.height - 1) * views::TextCarouselView::kStepDuration;
     const auto loop = kTextCount * transition;
     const auto last_offset = static_cast<int16_t>(kTextCount * kSlotSize.height - 1);
 
@@ -156,10 +156,10 @@ TEST(CarouselView, WrapsFromTheLoopCopyBackToTheFirstLetter)
     EXPECT_EQ(view.scroll_offset(loop + transition), static_cast<int16_t>(kSlotSize.height));
 }
 
-TEST(CarouselView, LayoutFollowsTheScrollOffset)
+TEST(TextCarouselView, LayoutFollowsTheScrollOffset)
 {
-    const auto kTimestamp = views::CarouselView::kPauseDuration + views::CarouselView::kStepDuration;
-    const views::CarouselView view = make_carousel(nullptr);
+    const auto kTimestamp = views::TextCarouselView::kPauseDuration + views::TextCarouselView::kStepDuration;
+    const views::TextCarouselView view = make_carousel(nullptr);
     const int16_t offset = view.scroll_offset(kTimestamp);
     ASSERT_EQ(offset, 2);
 
@@ -177,9 +177,9 @@ TEST(CarouselView, LayoutFollowsTheScrollOffset)
     }
 }
 
-TEST(CarouselView, PlacesViewportAfterAOnePixelSpacer)
+TEST(TextCarouselView, PlacesViewportAfterAOnePixelSpacer)
 {
-    const views::CarouselView view = make_carousel(nullptr);
+    const views::TextCarouselView view = make_carousel(nullptr);
     const views::ViewData view_data{};
     std::array<graphics::ElementTreeNode, 16> storage{};
     graphics::ElementTreeBuilder builder{storage};
@@ -224,10 +224,10 @@ TEST(CarouselView, PlacesViewportAfterAOnePixelSpacer)
     EXPECT_EQ(tree.nodes[3].layout.origin_on_canvas.y, 0);
 }
 
-TEST(CarouselView, EmptyTextListBuildsWithZeroOffset)
+TEST(TextCarouselView, EmptyTextListBuildsWithZeroOffset)
 {
     const graphics::Font font{};
-    const views::CarouselView view{std::span<const std::string_view>{}, &font, kSlotSize};
+    const views::TextCarouselView view{std::span<const std::string_view>{}, &font, kSlotSize};
 
     EXPECT_EQ(view.scroll_offset(std::chrono::milliseconds{0}), 0);
     EXPECT_EQ(view.scroll_offset(std::chrono::milliseconds{15000}), 0);
@@ -242,9 +242,9 @@ TEST(CarouselView, EmptyTextListBuildsWithZeroOffset)
     EXPECT_EQ(text_payload(tree.nodes[1].element), nullptr);
 }
 
-TEST(CarouselView, BuildFailsWhenNodeStorageIsExhausted)
+TEST(TextCarouselView, BuildFailsWhenNodeStorageIsExhausted)
 {
-    const views::CarouselView view = make_carousel(nullptr);
+    const views::TextCarouselView view = make_carousel(nullptr);
     std::array<graphics::ElementTreeNode, kCarouselNodeCount - 1> storage{};
     graphics::ElementTreeBuilder builder{storage};
     const views::ViewData view_data{};

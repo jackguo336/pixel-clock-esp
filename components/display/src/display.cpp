@@ -7,7 +7,7 @@
 #include "font_manager.hpp"
 #include "platform/log.hpp"
 #include "platform/runtime.hpp"
-#include "views/carousel_view.hpp"
+#include "views/text_carousel_view.hpp"
 
 namespace display_runtime {
 namespace {
@@ -71,7 +71,7 @@ void DisplayRuntime::refresh()
     };
     const graphics::Font* const font =
         &graphics::FontManager::instance().font(graphics::FontId::English7x3);
-    const views::CarouselView carousel{kCarouselTexts, font, kCarouselSlotSize};
+    const views::TextCarouselView carousel{kCarouselTexts, font, kCarouselSlotSize};
 
     graphics::ElementTreeBuilder builder(nodes_);
     const graphics::Element root{

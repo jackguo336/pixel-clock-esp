@@ -1,4 +1,4 @@
-#include "views/carousel_view.hpp"
+#include "views/text_carousel_view.hpp"
 
 #include "elements.hpp"
 
@@ -32,15 +32,15 @@ bool add_letter_slot(graphics::ElementTreeBuilder& builder, std::string_view tex
 
 }  // namespace
 
-CarouselView::CarouselView(std::span<const std::string_view> texts, const graphics::Font* font,
-                           graphics::Size slot_size)
+TextCarouselView::TextCarouselView(std::span<const std::string_view> texts, const graphics::Font* font,
+                                   graphics::Size slot_size)
     : texts_{texts}
     , font_{font}
     , slot_size_{slot_size}
 {
 }
 
-bool CarouselView::build(const ViewData& view_data, graphics::ElementTreeBuilder& builder) const
+bool TextCarouselView::build(const ViewData& view_data, graphics::ElementTreeBuilder& builder) const
 {
     const int16_t offset = scroll_offset(view_data.timestamp);
 
@@ -76,7 +76,7 @@ bool CarouselView::build(const ViewData& view_data, graphics::ElementTreeBuilder
     });
 }
 
-int16_t CarouselView::scroll_offset(std::chrono::microseconds timestamp) const
+int16_t TextCarouselView::scroll_offset(std::chrono::microseconds timestamp) const
 {
     const int32_t slot_height_pixels = slot_size_.height;
     const int32_t transition_count = static_cast<int32_t>(texts_.size());
