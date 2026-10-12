@@ -21,7 +21,8 @@ graphics::Element make_container(
     graphics::Position position,
     graphics::StackDirection layout_direction,
     graphics::LayoutSystem layout_system = graphics::LayoutSystem::ChildDefinedPositions,
-    std::optional<graphics::Paint> paint = std::nullopt)
+    std::optional<graphics::Paint> paint = std::nullopt,
+    std::optional<graphics::Size> fixed_size = std::nullopt)
 {
     return graphics::Element{
         .id = id,
@@ -30,6 +31,7 @@ graphics::Element make_container(
         .payload = graphics::ContainerElementPayload{
             .layout_direction = layout_direction,
             .layout_system = layout_system,
+            .fixed_size = fixed_size,
         },
     };
 }
@@ -38,9 +40,10 @@ graphics::Element make_container(
     graphics::ElementId id,
     graphics::StackDirection layout_direction,
     graphics::LayoutSystem layout_system = graphics::LayoutSystem::ChildDefinedPositions,
-    std::optional<graphics::Paint> paint = std::nullopt)
+    std::optional<graphics::Paint> paint = std::nullopt,
+    std::optional<graphics::Size> fixed_size = std::nullopt)
 {
-    return make_container(id, {}, layout_direction, layout_system, paint);
+    return make_container(id, {}, layout_direction, layout_system, paint, fixed_size);
 }
 
 graphics::Element make_bitmap(graphics::ElementId id, graphics::Position position,
@@ -831,4 +834,56 @@ TEST(ElementTreeRenderer, ExplicitGradientTextUsesMeasuredTextBounds)
     expect_rgb_at(framebuffer, 8, 1, 1, 2, 3);
     expect_rgb_at(framebuffer, 2, 1, 4, 5, 6);
     expect_rgb_at(framebuffer, 5, 1, 4, 5, 6);
+}
+
+TEST(ElementTreeRenderer, FixedSizeGradientSpansTheFixedBounds)
+{
+    std::array<graphics::ElementTreeNode, 3> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, graphics::StackDirection::LeftToRight, graphics::LayoutSystem::Stacked,
+                       graphics::Paint{red_blue_gradient(90.0f)}, graphics::Size{.width = 4, .height = 1}),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(make_rectangle({.value = 2}, {.width = 1, .height = 1})));
+            EXPECT_TRUE(children.add_terminal(make_rectangle({.value = 3}, {.width = 1, .height = 1})));
+        }));
+
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
+
+    // Fixed width is 4. The first 1px child is the start of that gradient. The next pixel
+    // is a quarter of the way across, not the midpoint a 2px content box would paint.
+    expect_rgb_at(framebuffer, 0, 0, 255, 0, 0);
+    expect_rgb_at(framebuffer, 1, 0, 191, 0, 64);
+    expect_rgb_at(framebuffer, 2, 0, 4, 5, 6);
+}
+
+TEST(ElementTreeRenderer, FixedSizeDoesNotClipOverflowingChildren)
+{
+    const graphics::SolidPaint paint{.color = {.red = 200, .green = 10, .blue = 30}};
+
+    std::array<graphics::ElementTreeNode, 2> storage{};
+    graphics::ElementTreeBuilder builder{storage};
+    ASSERT_TRUE(builder.add_container(
+        make_container({.value = 1}, {.x = 2, .y = 1}, graphics::StackDirection::LeftToRight,
+                       graphics::LayoutSystem::ChildDefinedPositions, std::nullopt,
+                       graphics::Size{.width = 1, .height = 1}),
+        [&](auto& children) {
+            EXPECT_TRUE(children.add_terminal(
+                make_rectangle({.value = 2}, {.width = 3, .height = 1}, graphics::Paint{paint})));
+        }));
+
+    graphics::LogicalFramebuffer framebuffer;
+    framebuffer.clear(graphics::RgbColor{.red = 4, .green = 5, .blue = 6});
+    graphics::ElementTreeRenderer renderer;
+    renderer.render(builder.build(), framebuffer);
+
+    expect_rgb_at(framebuffer, 2, 1, 200, 10, 30);
+    expect_rgb_at(framebuffer, 3, 1, 200, 10, 30);
+    expect_rgb_at(framebuffer, 4, 1, 200, 10, 30);
+    expect_rgb_at(framebuffer, 5, 1, 4, 5, 6);
+    expect_rgb_at(framebuffer, 2, 0, 4, 5, 6);
+    expect_rgb_at(framebuffer, 2, 2, 4, 5, 6);
 }
