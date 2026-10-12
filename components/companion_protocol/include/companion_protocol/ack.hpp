@@ -8,6 +8,11 @@
 
 namespace companion_protocol {
 
+inline constexpr std::size_t kAckBodyBytes = 1;
+inline constexpr std::size_t kAckFrameBytes = kHeaderBytes + kAckBodyBytes;
+
+static_assert(kAckFrameBytes <= kMaxFrameBytes);
+
 struct Ack {
     Status status{Status::Ok};
 };

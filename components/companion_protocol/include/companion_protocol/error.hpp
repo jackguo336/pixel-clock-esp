@@ -8,6 +8,13 @@
 
 namespace companion_protocol {
 
+inline constexpr std::size_t kErrorCodeBytes = 1;
+inline constexpr std::size_t kFailedMessageTypeBytes = 1;
+inline constexpr std::size_t kErrorBodyBytes = kErrorCodeBytes + kFailedMessageTypeBytes;
+inline constexpr std::size_t kErrorFrameBytes = kHeaderBytes + kErrorBodyBytes;
+
+static_assert(kErrorFrameBytes <= kMaxFrameBytes);
+
 struct Error {
     Status code{};
     MessageType failed_message_type{};

@@ -9,6 +9,14 @@
 
 namespace companion_protocol {
 
+inline constexpr std::size_t kSsidLengthPrefixBytes = 1;
+inline constexpr std::size_t kPassphraseLengthPrefixBytes = 1;
+inline constexpr std::size_t kSetWifiCredentialsMaxFrameBytes =
+    kHeaderBytes + kSsidLengthPrefixBytes + kMaxSsidBytes + kPassphraseLengthPrefixBytes + kMaxPassphraseBytes;
+
+static_assert(kSetWifiCredentialsMaxFrameBytes == kLargestV1FrameBytes);
+static_assert(kSetWifiCredentialsMaxFrameBytes <= kMaxFrameBytes);
+
 struct SetWifiCredentials {
     BoundedBytes<kMaxSsidBytes> ssid;
     BoundedBytes<kMaxPassphraseBytes> passphrase;

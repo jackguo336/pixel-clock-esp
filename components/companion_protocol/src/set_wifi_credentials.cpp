@@ -6,26 +6,18 @@
 #include "write_frame_header.hpp"
 
 namespace companion_protocol {
-namespace {
-
-// Header + ssid_length + 32 SSID bytes + passphrase_length + 64 passphrase bytes.
-constexpr std::size_t kSetWifiCredentialsMaxFrameBytes = kHeaderBytes + 1 + kMaxSsidBytes + 1 + kMaxPassphraseBytes;
-
-static_assert(kSetWifiCredentialsMaxFrameBytes == 105);
-static_assert(kSetWifiCredentialsMaxFrameBytes <= kMaxFrameBytes);
-
-}  // namespace
 
 std::size_t encode_set_wifi_credentials(uint16_t request_id, const SetWifiCredentials& credentials,
                                         std::span<uint8_t> out)
 {
     const std::size_t ssid_size = credentials.ssid.size();
     const std::size_t passphrase_size = credentials.passphrase.size();
-    if (ssid_size < 1 || ssid_size > kMaxSsidBytes || passphrase_size > kMaxPassphraseBytes) {
+    if (ssid_size < kMinSsidBytes || ssid_size > kMaxSsidBytes || passphrase_size > kMaxPassphraseBytes) {
         return 0;
     }
 
-    const std::size_t body_length = 2 + ssid_size + passphrase_size;
+    const std::size_t body_length =
+        kSsidLengthPrefixBytes + ssid_size + kPassphraseLengthPrefixBytes + passphrase_size;
     const std::size_t frame_length = kHeaderBytes + body_length;
     if (out.size() < frame_length) {
         return 0;
@@ -48,7 +40,7 @@ Status decode_set_wifi_credentials(std::span<const uint8_t> body, SetWifiCredent
     if (!reader.read_u8(ssid_length)) {
         return Status::MalformedBody;
     }
-    if (ssid_length < 1 || ssid_length > kMaxSsidBytes) {
+    if (ssid_length < kMinSsidBytes || ssid_length > kMaxSsidBytes) {
         return Status::InvalidField;
     }
 

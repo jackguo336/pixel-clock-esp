@@ -4,13 +4,6 @@
 #include "write_frame_header.hpp"
 
 namespace companion_protocol {
-namespace {
-
-constexpr std::size_t kAckFrameBytes = kHeaderBytes + 1;
-
-static_assert(kAckFrameBytes <= kMaxFrameBytes);
-
-}  // namespace
 
 std::size_t encode_ack(uint16_t request_id, const Ack& ack, std::span<uint8_t> out)
 {
@@ -18,7 +11,7 @@ std::size_t encode_ack(uint16_t request_id, const Ack& ack, std::span<uint8_t> o
         return 0;
     }
     ByteWriter writer(out);
-    if (!write_frame_header(writer, MessageType::Ack, request_id, 1)
+    if (!write_frame_header(writer, MessageType::Ack, request_id, static_cast<uint16_t>(kAckBodyBytes))
         || !writer.write_u8(static_cast<uint8_t>(ack.status)) || writer.written() != kAckFrameBytes) {
         return 0;
     }

@@ -3,6 +3,7 @@
 // Private to companion_protocol sources. Encoders and decoders touch wire
 // bytes only through these cursors.
 
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -16,7 +17,7 @@ public:
 
     [[nodiscard]] bool write_u8(uint8_t value)
     {
-        if (failed_ || remaining() < 1) {
+        if (failed_ || remaining() < sizeof(uint8_t)) {
             failed_ = true;
             return false;
         }
@@ -27,12 +28,12 @@ public:
 
     [[nodiscard]] bool write_u16(uint16_t value)
     {
-        if (failed_ || remaining() < 2) {
+        if (failed_ || remaining() < sizeof(uint16_t)) {
             failed_ = true;
             return false;
         }
-        const uint8_t low = static_cast<uint8_t>(value & 0xFFu);
-        const uint8_t high = static_cast<uint8_t>((value >> 8) & 0xFFu);
+        const uint8_t low = static_cast<uint8_t>(value);
+        const uint8_t high = static_cast<uint8_t>(value >> CHAR_BIT);
         return write_u8(low) && write_u8(high);
     }
 
@@ -76,7 +77,7 @@ public:
 
     [[nodiscard]] bool read_u8(uint8_t& value)
     {
-        if (remaining() < 1) {
+        if (remaining() < sizeof(uint8_t)) {
             return false;
         }
         value = buffer_[offset_];
@@ -86,7 +87,7 @@ public:
 
     [[nodiscard]] bool read_u16(uint16_t& value)
     {
-        if (remaining() < 2) {
+        if (remaining() < sizeof(uint16_t)) {
             return false;
         }
         uint8_t low = 0;
@@ -94,7 +95,7 @@ public:
         if (!read_u8(low) || !read_u8(high)) {
             return false;
         }
-        value = static_cast<uint16_t>(static_cast<uint16_t>(low) | (static_cast<uint16_t>(high) << 8));
+        value = static_cast<uint16_t>(static_cast<uint16_t>(low) | (static_cast<uint16_t>(high) << CHAR_BIT));
         return true;
     }
 

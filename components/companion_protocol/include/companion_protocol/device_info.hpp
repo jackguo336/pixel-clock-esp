@@ -9,6 +9,13 @@
 
 namespace companion_protocol {
 
+inline constexpr std::size_t kProtocolVersionFieldBytes = 1;
+inline constexpr std::size_t kFirmwareVersionLengthPrefixBytes = 1;
+inline constexpr std::size_t kDeviceInfoMaxFrameBytes =
+    kHeaderBytes + kProtocolVersionFieldBytes + kFirmwareVersionLengthPrefixBytes + kMaxFirmwareVersionBytes;
+
+static_assert(kDeviceInfoMaxFrameBytes <= kMaxFrameBytes);
+
 struct DeviceInfo {
     uint8_t protocol_version{kProtocolVersion};
     BoundedBytes<kMaxFirmwareVersionBytes> firmware_version;

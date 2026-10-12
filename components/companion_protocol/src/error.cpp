@@ -4,13 +4,6 @@
 #include "write_frame_header.hpp"
 
 namespace companion_protocol {
-namespace {
-
-constexpr std::size_t kErrorFrameBytes = kHeaderBytes + 2;
-
-static_assert(kErrorFrameBytes <= kMaxFrameBytes);
-
-}  // namespace
 
 std::size_t encode_error(uint16_t request_id, const Error& error, std::span<uint8_t> out)
 {
@@ -18,7 +11,7 @@ std::size_t encode_error(uint16_t request_id, const Error& error, std::span<uint
         return 0;
     }
     ByteWriter writer(out);
-    if (!write_frame_header(writer, MessageType::Error, request_id, 2)
+    if (!write_frame_header(writer, MessageType::Error, request_id, static_cast<uint16_t>(kErrorBodyBytes))
         || !writer.write_u8(static_cast<uint8_t>(error.code))
         || !writer.write_u8(static_cast<uint8_t>(error.failed_message_type)) || writer.written() != kErrorFrameBytes) {
         return 0;

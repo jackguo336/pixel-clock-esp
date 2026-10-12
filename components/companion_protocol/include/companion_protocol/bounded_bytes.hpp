@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <span>
 #include <string_view>
 
@@ -14,7 +15,7 @@ namespace companion_protocol {
 template <std::size_t Capacity>
 class BoundedBytes {
 public:
-    static_assert(Capacity <= 255, "length is stored in a uint8_t");
+    static_assert(Capacity <= std::numeric_limits<uint8_t>::max(), "length is stored in a uint8_t");
 
     [[nodiscard]] bool assign(std::span<const uint8_t> bytes)
     {

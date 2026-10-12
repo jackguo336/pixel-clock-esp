@@ -7,11 +7,21 @@
 namespace companion_protocol {
 
 inline constexpr uint8_t kProtocolVersion = 1;
+inline constexpr uint8_t kFlagsNone = 0;
 inline constexpr std::size_t kHeaderBytes = 7;
 inline constexpr std::size_t kMaxFrameBytes = 128;
+inline constexpr std::size_t kMinSsidBytes = 1;
 inline constexpr std::size_t kMaxSsidBytes = 32;
 inline constexpr std::size_t kMaxPassphraseBytes = 64;
 inline constexpr std::size_t kMaxFirmwareVersionBytes = 32;
+// SetWifiCredentials at its maximum field sizes. PROTOCOL.md documents this frame.
+inline constexpr std::size_t kLargestV1FrameBytes = 105;
+
+inline constexpr std::size_t kVersionOffset = 0;
+inline constexpr std::size_t kMessageTypeOffset = 1;
+inline constexpr std::size_t kFlagsOffset = 2;
+inline constexpr std::size_t kRequestIdOffset = 3;
+inline constexpr std::size_t kBodyLengthOffset = 5;
 
 enum class MessageType : uint8_t {
     GetDeviceInfo = 0x01,
@@ -49,7 +59,7 @@ struct Frame {
     std::span<const uint8_t> body{};
 };
 
-// Reads the 7-byte header only. A later reassembler can call this on a partial frame.
+// Reads the fixed header only. A later reassembler can call this on a partial frame.
 [[nodiscard]] Status decode_header(std::span<const uint8_t> bytes, FrameHeader& header);
 
 // Validates the header, total length, and known message type.

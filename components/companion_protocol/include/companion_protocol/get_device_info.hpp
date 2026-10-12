@@ -8,6 +8,10 @@
 
 namespace companion_protocol {
 
+inline constexpr std::size_t kGetDeviceInfoFrameBytes = kHeaderBytes;
+
+static_assert(kGetDeviceInfoFrameBytes <= kMaxFrameBytes);
+
 // Writes a GetDeviceInfo frame. Returns the frame length, or 0 if `out` is too small.
 [[nodiscard]] std::size_t encode_get_device_info(uint16_t request_id, std::span<uint8_t> out);
 

@@ -67,7 +67,7 @@ Status decode_frame(std::span<const uint8_t> bytes, Frame& frame)
     if (header.version != kProtocolVersion) {
         return Status::UnsupportedVersion;
     }
-    if (header.flags != 0) {
+    if (header.flags != kFlagsNone) {
         return Status::UnsupportedFlags;
     }
 

@@ -6,13 +6,6 @@
 #include "write_frame_header.hpp"
 
 namespace companion_protocol {
-namespace {
-
-constexpr std::size_t kDeviceInfoMaxFrameBytes = kHeaderBytes + 1 + 1 + kMaxFirmwareVersionBytes;
-
-static_assert(kDeviceInfoMaxFrameBytes <= kMaxFrameBytes);
-
-}  // namespace
 
 std::size_t encode_device_info(uint16_t request_id, const DeviceInfo& info, std::span<uint8_t> out)
 {
@@ -21,7 +14,7 @@ std::size_t encode_device_info(uint16_t request_id, const DeviceInfo& info, std:
         return 0;
     }
 
-    const std::size_t body_length = 2 + version_size;
+    const std::size_t body_length = kProtocolVersionFieldBytes + kFirmwareVersionLengthPrefixBytes + version_size;
     const std::size_t frame_length = kHeaderBytes + body_length;
     if (out.size() < frame_length) {
         return 0;
