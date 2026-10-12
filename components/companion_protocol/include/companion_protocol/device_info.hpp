@@ -9,6 +9,7 @@
 
 namespace companion_protocol {
 
+inline constexpr std::size_t kMaxFirmwareVersionBytes = 32;
 inline constexpr std::size_t kProtocolVersionFieldBytes = 1;
 inline constexpr std::size_t kFirmwareVersionLengthPrefixBytes = 1;
 inline constexpr std::size_t kDeviceInfoMaxFrameBytes =

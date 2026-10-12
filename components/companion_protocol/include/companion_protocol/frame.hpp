@@ -10,12 +10,6 @@ inline constexpr uint8_t kProtocolVersion = 1;
 inline constexpr uint8_t kFlagsNone = 0;
 inline constexpr std::size_t kHeaderBytes = 7;
 inline constexpr std::size_t kMaxFrameBytes = 128;
-inline constexpr std::size_t kMinSsidBytes = 1;
-inline constexpr std::size_t kMaxSsidBytes = 32;
-inline constexpr std::size_t kMaxPassphraseBytes = 64;
-inline constexpr std::size_t kMaxFirmwareVersionBytes = 32;
-// SetWifiCredentials at its maximum field sizes. PROTOCOL.md documents this frame.
-inline constexpr std::size_t kLargestV1FrameBytes = 105;
 
 inline constexpr std::size_t kVersionOffset = 0;
 inline constexpr std::size_t kMessageTypeOffset = 1;

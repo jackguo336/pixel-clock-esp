@@ -9,10 +9,15 @@
 
 namespace companion_protocol {
 
+inline constexpr std::size_t kMinSsidBytes = 1;
+inline constexpr std::size_t kMaxSsidBytes = 32;
+inline constexpr std::size_t kMaxPassphraseBytes = 64;
 inline constexpr std::size_t kSsidLengthPrefixBytes = 1;
 inline constexpr std::size_t kPassphraseLengthPrefixBytes = 1;
 inline constexpr std::size_t kSetWifiCredentialsMaxFrameBytes =
     kHeaderBytes + kSsidLengthPrefixBytes + kMaxSsidBytes + kPassphraseLengthPrefixBytes + kMaxPassphraseBytes;
+// PROTOCOL.md documents this SetWifiCredentials frame as the largest v1 frame.
+inline constexpr std::size_t kLargestV1FrameBytes = 105;
 
 static_assert(kSetWifiCredentialsMaxFrameBytes == kLargestV1FrameBytes);
 static_assert(kSetWifiCredentialsMaxFrameBytes <= kMaxFrameBytes);
