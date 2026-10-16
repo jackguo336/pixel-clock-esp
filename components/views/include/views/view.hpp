@@ -1,9 +1,9 @@
 #pragma once
 
 #include "element_tree.hpp"
-#include "view_data.hpp"
+#include "views/view_data.hpp"
 
-namespace graphics {
+namespace views {
 
 // Builds one bounded element tree from an immutable ViewData snapshot.
 //
@@ -17,7 +17,7 @@ public:
 
     [[nodiscard]] virtual bool build(
         const ViewData& view_data,
-        ElementTreeBuilder& builder) const = 0;
+        graphics::ElementTreeBuilder& builder) const = 0;
 };
 
-}  // namespace graphics
+}  // namespace views

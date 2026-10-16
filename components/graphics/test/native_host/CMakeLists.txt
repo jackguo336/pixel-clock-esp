@@ -18,7 +18,6 @@ add_executable(graphics
     test_font_manager.cpp
     test_element_tree.cpp
     test_element_tree_renderer.cpp
-    test_views.cpp
     "${GRAPHICS_ROOT}/src/bitmap_file.cpp"
     "${GRAPHICS_ROOT}/src/logical_framebuffer.cpp"
     "${GRAPHICS_ROOT}/src/bitmap_file_loader.cpp"
