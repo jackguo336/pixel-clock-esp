@@ -42,7 +42,7 @@ LetterCarouselView::LetterCarouselView(std::span<const std::string_view> texts, 
 
 bool LetterCarouselView::build(const ViewData& view_data, graphics::ElementTreeBuilder& builder) const
 {
-    const int16_t offset = scroll_offset(view_data.timestamp);
+    const int16_t offset = automatic_scroll_offset(view_data.timestamp);
 
     // ChildDefinedPositions honors the scrolling text slots' y. A stacked viewport would ignore it.
     const graphics::Element viewport{
@@ -78,7 +78,7 @@ bool LetterCarouselView::build(const ViewData& view_data, graphics::ElementTreeB
     });
 }
 
-int16_t LetterCarouselView::scroll_offset(std::chrono::microseconds timestamp) const
+int16_t LetterCarouselView::automatic_scroll_offset(std::chrono::microseconds timestamp) const
 {
     const int32_t slot_height_pixels = slot_size_.height;
     const int32_t transition_count = static_cast<int32_t>(texts_.size());

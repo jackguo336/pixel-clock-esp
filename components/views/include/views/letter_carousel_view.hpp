@@ -24,10 +24,10 @@ public:
     [[nodiscard]] bool build(const ViewData& view_data,
                              graphics::ElementTreeBuilder& builder) const override;
 
-    // Pixels the strip is shifted up at the given time, in [0, texts.size() * slot_size.height).
-    [[nodiscard]] int16_t scroll_offset(std::chrono::microseconds timestamp) const;
-
 private:
+    // Pixels the strip is shifted up at the given time, in [0, texts.size() * slot_size.height).
+    [[nodiscard]] int16_t automatic_scroll_offset(std::chrono::microseconds timestamp) const;
+
     std::span<const std::string_view> texts_;
     const graphics::Font* font_;
     graphics::Size slot_size_;
