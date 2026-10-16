@@ -26,7 +26,7 @@ public:
 
 private:
     // Pixels the strip is shifted up at the given time, in [0, texts.size() * slot_size.height).
-    [[nodiscard]] int16_t automatic_scroll_offset(std::chrono::microseconds timestamp) const;
+    [[nodiscard]] int16_t timed_scroll_offset(std::chrono::microseconds timestamp) const;
 
     std::span<const std::string_view> texts_;
     const graphics::Font* font_;
