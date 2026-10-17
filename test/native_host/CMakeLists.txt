@@ -36,6 +36,7 @@ set(NATIVE_HOST_TEST_COMPONENTS
     views
     file_system
     display
+    companion_protocol
 )
 
 foreach(component IN LISTS NATIVE_HOST_TEST_COMPONENTS)
