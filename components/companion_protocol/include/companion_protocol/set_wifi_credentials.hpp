@@ -13,6 +13,7 @@ namespace companion_protocol {
 inline constexpr std::size_t kMinSsidBytes = 1;
 inline constexpr std::size_t kMaxSsidBytes = 32;
 inline constexpr std::size_t kMaxPassphraseBytes = 64;
+// The size of the SSID and passphrase fields stored in a single byte before the fields themselves.
 inline constexpr std::size_t kSsidLengthPrefixBytes = 1;
 inline constexpr std::size_t kPassphraseLengthPrefixBytes = 1;
 

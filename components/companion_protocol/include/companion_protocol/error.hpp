@@ -9,16 +9,13 @@
 
 namespace companion_protocol {
 
-inline constexpr std::size_t kErrorCodeBytes = 1;
-inline constexpr std::size_t kFailedMessageTypeBytes = 1;
-inline constexpr std::size_t kErrorBodyBytes = kErrorCodeBytes + kFailedMessageTypeBytes;
+inline constexpr std::size_t kErrorBodyBytes = 1;
 
 // Keep PROTOCOL.md in sync with this message.
 struct Error {
     static constexpr MessageType kMessageType = MessageType::Error;
 
     Status code{};
-    MessageType failed_message_type{};
 
     [[nodiscard]] std::optional<std::size_t> encoded_body_size() const;
 

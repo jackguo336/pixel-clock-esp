@@ -12,6 +12,7 @@ namespace companion_protocol {
 
 inline constexpr std::size_t kMaxFirmwareVersionBytes = 32;
 inline constexpr std::size_t kProtocolVersionFieldBytes = 1;
+// The size of the version field stored in a single byte before the version field itself.
 inline constexpr std::size_t kFirmwareVersionLengthPrefixBytes = 1;
 
 // Keep PROTOCOL.md in sync with this message.

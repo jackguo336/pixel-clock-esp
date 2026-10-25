@@ -95,10 +95,7 @@ TEST(MessageEncoder, RejectsShortBuffer)
     expect_one_byte_short_writes_nothing(
         [](std::span<uint8_t> out) { return encode_message(make_message(kExampleRequestId, Ack{}), out); });
 
-    const Error error{
-        .code = Status::InvalidField,
-        .failed_message_type = MessageType::GetDeviceInfo,
-    };
+    const Error error{.code = Status::InvalidField};
     expect_one_byte_short_writes_nothing(
         [&](std::span<uint8_t> out) { return encode_message(make_message(0, error), out); });
 }

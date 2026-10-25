@@ -18,20 +18,17 @@ bool Error::encode(std::span<uint8_t> out) const
     }
 
     ByteWriter writer(out);
-    return writer.write_u8(static_cast<uint8_t>(code)) && writer.write_u8(static_cast<uint8_t>(failed_message_type))
-        && writer.written() == *body_size;
+    return writer.write_u8(static_cast<uint8_t>(code)) && writer.written() == *body_size;
 }
 
 Status Error::decode(std::span<const uint8_t> bytes)
 {
     ByteReader reader(bytes);
     uint8_t code_byte = 0;
-    uint8_t failed_message_type_byte = 0;
-    if (!reader.read_u8(code_byte) || !reader.read_u8(failed_message_type_byte) || !reader.empty()) {
+    if (!reader.read_u8(code_byte) || !reader.empty()) {
         return Status::MalformedBody;
     }
     code = static_cast<Status>(code_byte);
-    failed_message_type = static_cast<MessageType>(failed_message_type_byte);
     return Status::Ok;
 }
 

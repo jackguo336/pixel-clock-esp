@@ -102,9 +102,8 @@ Response when the device rejects a request before the handler runs, and when a h
 | Offset in body | Type | Field |
 | --- | --- | --- |
 | 0 | `u8` | `code` |
-| 1 | `u8` | `failed_message_type` |
 
-`code` uses the status table. `failed_message_type` is the request's message type. The reply header already echoes `request_id`, so the body does not copy it. When the header could not be read, `request_id` is `0` and `failed_message_type` is still set from whatever type byte was available, or `0` when even that byte was not present.
+`code` uses the status table. The reply header echoes `request_id`. When the header could not be read, `request_id` is `0`.
 
 ## Status codes
 
@@ -201,10 +200,10 @@ Bytes are hexadecimal. Multi-byte fields are little-endian.
 | `05` | firmware_version_length 5 |
 | `31 2E 30 2E 30` | firmware_version `1.0.0` |
 
-### Error `InvalidField` for `SetWifiCredentials`, `request_id` `0`
+### Error `InvalidField`, `request_id` `0`
 
 ```text
-01 FF 00 00 00 02 00 08 02
+01 FF 00 00 00 01 00 08
 ```
 
 | Bytes | Field |
@@ -213,6 +212,5 @@ Bytes are hexadecimal. Multi-byte fields are little-endian.
 | `FF` | Error |
 | `00` | flags |
 | `00 00` | request_id `0` (the request id was not available) |
-| `02 00` | body_length 2 |
+| `01 00` | body_length 1 |
 | `08` | code `InvalidField` |
-| `02` | failed_message_type `SetWifiCredentials` |
