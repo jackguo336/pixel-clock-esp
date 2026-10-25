@@ -13,11 +13,11 @@ The device is the Bluetooth peripheral. The companion is the central. One connec
 | Outbound characteristic (device notifies a reply) | **TBD (stage 4)** |
 | MTU chunking and reassembly | **TBD (stage 5)** |
 
-A frame may be larger than a single ATT payload. How frames are split and reassembled is **TBD (stage 5)**. The framing rules below describe a whole frame, after reassembly.
+A message may be larger than a single ATT payload. How messages are split and reassembled is **TBD (stage 5)**. The layout rules below describe a whole message, after reassembly.
 
-## Framing
+## Message layout
 
-Multi-byte integers are little-endian. A frame is a 7-byte header followed by the body. The largest frame is 128 bytes (`kMaxFrameBytes`).
+Multi-byte integers are little-endian. A message is a 7-byte header followed by the body. The largest message is 128 bytes (`kMaxMessageBytes`).
 
 | Offset | Type | Field | Rule |
 | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ Multi-byte integers are little-endian. A frame is a 7-byte header followed by th
 | 5 | `u16` | `body_length` | number of bytes that follow the header |
 | 7 | bytes | `body` | exactly `body_length` bytes |
 
-`body_length` must equal the number of bytes received after the header. A frame shorter than 7 bytes, or longer than 128 bytes, is rejected.
+`body_length` must equal the number of bytes received after the header. A message shorter than 7 bytes, or longer than 128 bytes, is rejected.
 
 ## Request ids
 
@@ -61,7 +61,7 @@ Request. The body is:
 | 1 + `ssid_length` | `u8` | `passphrase_length` | `0`..`64` |
 | 2 + `ssid_length` | bytes | `passphrase` | `passphrase_length` bytes |
 
-The body length is exactly `2 + ssid_length + passphrase_length`. The largest body is 98 bytes, so the largest frame is 7 + 98 = 105 bytes.
+The body length is exactly `2 + ssid_length + passphrase_length`. The largest body is 98 bytes, so the largest message is 7 + 98 = 105 bytes.
 
 Reply: `Ack`.
 
@@ -81,7 +81,7 @@ Response. The body is one byte:
 | --- | --- | --- |
 | 0 | `u8` | `status` |
 
-`status` uses the status table below. `Ok` (`0x00`) means the request was applied. `StorageFailed` (`0x20`) is a handler outcome, not a framing error.
+`status` uses the status table below. `Ok` (`0x00`) means the request was applied. `StorageFailed` (`0x20`) is a handler outcome, not a layout error.
 
 ### DeviceInfo (`0x81`)
 
@@ -113,8 +113,8 @@ One table covers decoder results, `Ack.status`, and `Error.code`.
 | Code | Name | Meaning |
 | --- | --- | --- |
 | `0x00` | `Ok` | Success. On `Ack`, the request was applied |
-| `0x01` | `FrameTooShort` | Fewer than 7 header bytes |
-| `0x02` | `FrameTooLong` | More than 128 bytes |
+| `0x01` | `MessageTooShort` | Fewer than 7 header bytes |
+| `0x02` | `MessageTooLong` | More than 128 bytes |
 | `0x03` | `UnsupportedVersion` | `version` is not `1` |
 | `0x04` | `UnsupportedFlags` | `flags` is not `0` |
 | `0x05` | `BodyLengthMismatch` | `body_length` is not the number of bytes that follow the header |
@@ -123,7 +123,7 @@ One table covers decoder results, `Ack.status`, and `Error.code`.
 | `0x08` | `InvalidField` | A field is outside its range, or a passphrase fails the WPA rule above |
 | `0x20` | `StorageFailed` | The handler could not persist the request. Carried on `Ack` |
 
-Framing and validation failures use `Error`. A `SetWifiCredentials` request that was understood uses `Ack`, including `StorageFailed`.
+Layout and validation failures use `Error`. A `SetWifiCredentials` request that was understood uses `Ack`, including `StorageFailed`.
 
 ## Version handling
 

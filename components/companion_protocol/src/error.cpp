@@ -1,34 +1,37 @@
 #include "companion_protocol/error.hpp"
 
-#include "byte_cursor.hpp"
-#include "write_frame_header.hpp"
+#include "byte_reader.hpp"
+#include "byte_writer.hpp"
 
 namespace companion_protocol {
 
-std::size_t encode_error(uint16_t request_id, const Error& error, std::span<uint8_t> out)
+std::optional<std::size_t> Error::encoded_body_size() const
 {
-    if (out.size() < kErrorFrameBytes) {
-        return 0;
-    }
-    ByteWriter writer(out);
-    if (!write_frame_header(writer, MessageType::Error, request_id, static_cast<uint16_t>(kErrorBodyBytes))
-        || !writer.write_u8(static_cast<uint8_t>(error.code))
-        || !writer.write_u8(static_cast<uint8_t>(error.failed_message_type)) || writer.written() != kErrorFrameBytes) {
-        return 0;
-    }
-    return kErrorFrameBytes;
+    return kErrorBodyBytes;
 }
 
-Status decode_error(std::span<const uint8_t> body, Error& error)
+bool Error::encode(std::span<uint8_t> out) const
 {
-    ByteReader reader(body);
-    uint8_t code = 0;
-    uint8_t failed_message_type = 0;
-    if (!reader.read_u8(code) || !reader.read_u8(failed_message_type) || !reader.empty()) {
+    const std::optional<std::size_t> body_size = encoded_body_size();
+    if (!body_size.has_value() || out.size() < *body_size) {
+        return false;
+    }
+
+    ByteWriter writer(out);
+    return writer.write_u8(static_cast<uint8_t>(code)) && writer.write_u8(static_cast<uint8_t>(failed_message_type))
+        && writer.written() == *body_size;
+}
+
+Status Error::decode(std::span<const uint8_t> bytes)
+{
+    ByteReader reader(bytes);
+    uint8_t code_byte = 0;
+    uint8_t failed_message_type_byte = 0;
+    if (!reader.read_u8(code_byte) || !reader.read_u8(failed_message_type_byte) || !reader.empty()) {
         return Status::MalformedBody;
     }
-    error.code = static_cast<Status>(code);
-    error.failed_message_type = static_cast<MessageType>(failed_message_type);
+    code = static_cast<Status>(code_byte);
+    failed_message_type = static_cast<MessageType>(failed_message_type_byte);
     return Status::Ok;
 }
 

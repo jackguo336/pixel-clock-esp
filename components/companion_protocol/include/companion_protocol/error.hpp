@@ -2,28 +2,29 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 
-#include "companion_protocol/frame.hpp"
+#include "companion_protocol/message_header.hpp"
 
 namespace companion_protocol {
 
 inline constexpr std::size_t kErrorCodeBytes = 1;
 inline constexpr std::size_t kFailedMessageTypeBytes = 1;
 inline constexpr std::size_t kErrorBodyBytes = kErrorCodeBytes + kFailedMessageTypeBytes;
-inline constexpr std::size_t kErrorFrameBytes = kHeaderBytes + kErrorBodyBytes;
 
-static_assert(kErrorFrameBytes <= kMaxFrameBytes);
-
+// Keep PROTOCOL.md in sync with this message.
 struct Error {
+    static constexpr MessageType kMessageType = MessageType::Error;
+
     Status code{};
     MessageType failed_message_type{};
+
+    [[nodiscard]] std::optional<std::size_t> encoded_body_size() const;
+
+    [[nodiscard]] bool encode(std::span<uint8_t> out) const;
+
+    [[nodiscard]] Status decode(std::span<const uint8_t> bytes);
 };
-
-// Writes an Error frame. Returns the frame length, or 0 if `out` is too small.
-[[nodiscard]] std::size_t encode_error(uint16_t request_id, const Error& error, std::span<uint8_t> out);
-
-// Copies the code and failed message type. `error` is left unchanged when the body is not two bytes.
-[[nodiscard]] Status decode_error(std::span<const uint8_t> body, Error& error);
 
 }  // namespace companion_protocol

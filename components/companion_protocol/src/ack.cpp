@@ -1,31 +1,34 @@
 #include "companion_protocol/ack.hpp"
 
-#include "byte_cursor.hpp"
-#include "write_frame_header.hpp"
+#include "byte_reader.hpp"
+#include "byte_writer.hpp"
 
 namespace companion_protocol {
 
-std::size_t encode_ack(uint16_t request_id, const Ack& ack, std::span<uint8_t> out)
+std::optional<std::size_t> Ack::encoded_body_size() const
 {
-    if (out.size() < kAckFrameBytes) {
-        return 0;
-    }
-    ByteWriter writer(out);
-    if (!write_frame_header(writer, MessageType::Ack, request_id, static_cast<uint16_t>(kAckBodyBytes))
-        || !writer.write_u8(static_cast<uint8_t>(ack.status)) || writer.written() != kAckFrameBytes) {
-        return 0;
-    }
-    return kAckFrameBytes;
+    return kAckBodyBytes;
 }
 
-Status decode_ack(std::span<const uint8_t> body, Ack& ack)
+bool Ack::encode(std::span<uint8_t> out) const
 {
-    ByteReader reader(body);
-    uint8_t status = 0;
-    if (!reader.read_u8(status) || !reader.empty()) {
+    const std::optional<std::size_t> body_size = encoded_body_size();
+    if (!body_size.has_value() || out.size() < *body_size) {
+        return false;
+    }
+
+    ByteWriter writer(out);
+    return writer.write_u8(static_cast<uint8_t>(status)) && writer.written() == *body_size;
+}
+
+Status Ack::decode(std::span<const uint8_t> bytes)
+{
+    ByteReader reader(bytes);
+    uint8_t status_byte = 0;
+    if (!reader.read_u8(status_byte) || !reader.empty()) {
         return Status::MalformedBody;
     }
-    ack.status = static_cast<Status>(status);
+    status = static_cast<Status>(status_byte);
     return Status::Ok;
 }
 

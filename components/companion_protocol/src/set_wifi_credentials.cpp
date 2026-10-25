@@ -2,40 +2,37 @@
 
 #include <array>
 
-#include "byte_cursor.hpp"
-#include "write_frame_header.hpp"
+#include "byte_reader.hpp"
+#include "byte_writer.hpp"
 
 namespace companion_protocol {
 
-std::size_t encode_set_wifi_credentials(uint16_t request_id, const SetWifiCredentials& credentials,
-                                        std::span<uint8_t> out)
+std::optional<std::size_t> SetWifiCredentials::encoded_body_size() const
 {
-    const std::size_t ssid_size = credentials.ssid.size();
-    const std::size_t passphrase_size = credentials.passphrase.size();
+    const std::size_t ssid_size = ssid.size();
+    const std::size_t passphrase_size = passphrase.size();
     if (ssid_size < kMinSsidBytes || ssid_size > kMaxSsidBytes || passphrase_size > kMaxPassphraseBytes) {
-        return 0;
+        return std::nullopt;
     }
+    return kSsidLengthPrefixBytes + ssid_size + kPassphraseLengthPrefixBytes + passphrase_size;
+}
 
-    const std::size_t body_length =
-        kSsidLengthPrefixBytes + ssid_size + kPassphraseLengthPrefixBytes + passphrase_size;
-    const std::size_t frame_length = kHeaderBytes + body_length;
-    if (out.size() < frame_length) {
-        return 0;
+bool SetWifiCredentials::encode(std::span<uint8_t> out) const
+{
+    const std::optional<std::size_t> body_size = encoded_body_size();
+    if (!body_size.has_value() || out.size() < *body_size) {
+        return false;
     }
 
     ByteWriter writer(out);
-    if (!write_frame_header(writer, MessageType::SetWifiCredentials, request_id, static_cast<uint16_t>(body_length))
-        || !writer.write_u8(static_cast<uint8_t>(ssid_size)) || !writer.write_bytes(credentials.ssid.view())
-        || !writer.write_u8(static_cast<uint8_t>(passphrase_size)) || !writer.write_bytes(credentials.passphrase.view())
-        || writer.written() != frame_length) {
-        return 0;
-    }
-    return frame_length;
+    return writer.write_u8(static_cast<uint8_t>(ssid.size())) && writer.write_bytes(ssid.view())
+        && writer.write_u8(static_cast<uint8_t>(passphrase.size())) && writer.write_bytes(passphrase.view())
+        && writer.written() == *body_size;
 }
 
-Status decode_set_wifi_credentials(std::span<const uint8_t> body, SetWifiCredentials& credentials)
+Status SetWifiCredentials::decode(std::span<const uint8_t> bytes)
 {
-    ByteReader reader(body);
+    ByteReader reader(bytes);
     uint8_t ssid_length = 0;
     if (!reader.read_u8(ssid_length)) {
         return Status::MalformedBody;
@@ -67,7 +64,7 @@ Status decode_set_wifi_credentials(std::span<const uint8_t> body, SetWifiCredent
         || !decoded.passphrase.assign(std::span<const uint8_t>(passphrase_bytes.data(), passphrase_length))) {
         return Status::InvalidField;
     }
-    credentials = decoded;
+    *this = decoded;
     return Status::Ok;
 }
 

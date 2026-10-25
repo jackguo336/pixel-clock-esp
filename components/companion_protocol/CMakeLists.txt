@@ -1,4 +1,5 @@
-idf_component_register(SRCS "src/frame.cpp"
+idf_component_register(SRCS "src/message_encoder.cpp"
+                            "src/message_decoder.cpp"
                             "src/get_device_info.cpp"
                             "src/set_wifi_credentials.cpp"
                             "src/ack.cpp"

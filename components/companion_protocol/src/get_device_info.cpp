@@ -1,27 +1,21 @@
 #include "companion_protocol/get_device_info.hpp"
 
-#include "byte_cursor.hpp"
-#include "write_frame_header.hpp"
-
 namespace companion_protocol {
 
-std::size_t encode_get_device_info(uint16_t request_id, std::span<uint8_t> out)
+std::optional<std::size_t> GetDeviceInfo::encoded_body_size() const
 {
-    if (out.size() < kGetDeviceInfoFrameBytes) {
-        return 0;
-    }
-    ByteWriter writer(out);
-    if (!write_frame_header(writer, MessageType::GetDeviceInfo, request_id, 0)
-        || writer.written() != kGetDeviceInfoFrameBytes) {
-        return 0;
-    }
-    return kGetDeviceInfoFrameBytes;
+    return 0;
 }
 
-Status decode_get_device_info(std::span<const uint8_t> body)
+bool GetDeviceInfo::encode(std::span<uint8_t> out) const
 {
-    ByteReader reader(body);
-    if (!reader.empty()) {
+    const std::optional<std::size_t> body_size = encoded_body_size();
+    return body_size.has_value() && out.size() >= *body_size;
+}
+
+Status GetDeviceInfo::decode(std::span<const uint8_t> bytes)
+{
+    if (!bytes.empty()) {
         return Status::MalformedBody;
     }
     return Status::Ok;

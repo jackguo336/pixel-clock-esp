@@ -4,9 +4,16 @@
 set(COMPANION_PROTOCOL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 add_executable(companion_protocol
-    test_frame.cpp
-    test_messages.cpp
-    "${COMPANION_PROTOCOL_ROOT}/src/frame.cpp"
+    test_message_encoder.cpp
+    test_message_decoder.cpp
+    test_get_device_info.cpp
+    test_set_wifi_credentials.cpp
+    test_ack.cpp
+    test_device_info.cpp
+    test_error.cpp
+    test_bounded_bytes.cpp
+    "${COMPANION_PROTOCOL_ROOT}/src/message_encoder.cpp"
+    "${COMPANION_PROTOCOL_ROOT}/src/message_decoder.cpp"
     "${COMPANION_PROTOCOL_ROOT}/src/get_device_info.cpp"
     "${COMPANION_PROTOCOL_ROOT}/src/set_wifi_credentials.cpp"
     "${COMPANION_PROTOCOL_ROOT}/src/ack.cpp"

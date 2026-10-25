@@ -2,30 +2,31 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 
 #include "companion_protocol/bounded_bytes.hpp"
-#include "companion_protocol/frame.hpp"
+#include "companion_protocol/message_header.hpp"
 
 namespace companion_protocol {
 
 inline constexpr std::size_t kMaxFirmwareVersionBytes = 32;
 inline constexpr std::size_t kProtocolVersionFieldBytes = 1;
 inline constexpr std::size_t kFirmwareVersionLengthPrefixBytes = 1;
-inline constexpr std::size_t kDeviceInfoMaxFrameBytes =
-    kHeaderBytes + kProtocolVersionFieldBytes + kFirmwareVersionLengthPrefixBytes + kMaxFirmwareVersionBytes;
 
-static_assert(kDeviceInfoMaxFrameBytes <= kMaxFrameBytes);
-
+// Keep PROTOCOL.md in sync with this message.
 struct DeviceInfo {
+    static constexpr MessageType kMessageType = MessageType::DeviceInfo;
+
     uint8_t protocol_version{kProtocolVersion};
     BoundedBytes<kMaxFirmwareVersionBytes> firmware_version;
+
+    // nullopt when the firmware version is longer than kMaxFirmwareVersionBytes.
+    [[nodiscard]] std::optional<std::size_t> encoded_body_size() const;
+
+    [[nodiscard]] bool encode(std::span<uint8_t> out) const;
+
+    [[nodiscard]] Status decode(std::span<const uint8_t> bytes);
 };
-
-// Writes a DeviceInfo frame. Returns the frame length, or 0 if `out` is too small.
-[[nodiscard]] std::size_t encode_device_info(uint16_t request_id, const DeviceInfo& info, std::span<uint8_t> out);
-
-// Copies protocol version and firmware version. `info` is left unchanged on failure.
-[[nodiscard]] Status decode_device_info(std::span<const uint8_t> body, DeviceInfo& info);
 
 }  // namespace companion_protocol

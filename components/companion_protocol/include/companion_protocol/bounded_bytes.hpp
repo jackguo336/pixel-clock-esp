@@ -10,12 +10,13 @@
 
 namespace companion_protocol {
 
-// Fixed-capacity byte string. assign() leaves the previous value in place when
-// the new value does not fit.
+// Stores bytes whose length may be shorter than a compile-time maximum.
+// Preferred over built in types such as std::array which does not track length, or
+// std::vector which requires dynamic allocation.
 template <std::size_t Capacity>
 class BoundedBytes {
 public:
-    static_assert(Capacity <= std::numeric_limits<uint8_t>::max(), "length is stored in a uint8_t");
+    static_assert(Capacity <= std::numeric_limits<uint8_t>::max(), "capacity must fit in a uint8_t");
 
     [[nodiscard]] bool assign(std::span<const uint8_t> bytes)
     {

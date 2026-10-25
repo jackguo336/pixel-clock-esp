@@ -2,25 +2,26 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 
-#include "companion_protocol/frame.hpp"
+#include "companion_protocol/message_header.hpp"
 
 namespace companion_protocol {
 
 inline constexpr std::size_t kAckBodyBytes = 1;
-inline constexpr std::size_t kAckFrameBytes = kHeaderBytes + kAckBodyBytes;
 
-static_assert(kAckFrameBytes <= kMaxFrameBytes);
-
+// Keep PROTOCOL.md in sync with this message.
 struct Ack {
+    static constexpr MessageType kMessageType = MessageType::Ack;
+
     Status status{Status::Ok};
+
+    [[nodiscard]] std::optional<std::size_t> encoded_body_size() const;
+
+    [[nodiscard]] bool encode(std::span<uint8_t> out) const;
+
+    [[nodiscard]] Status decode(std::span<const uint8_t> bytes);
 };
-
-// Writes an Ack frame. Returns the frame length, or 0 if `out` is too small.
-[[nodiscard]] std::size_t encode_ack(uint16_t request_id, const Ack& ack, std::span<uint8_t> out);
-
-// Copies the status byte. `ack` is left unchanged when the body is not one byte.
-[[nodiscard]] Status decode_ack(std::span<const uint8_t> body, Ack& ack);
 
 }  // namespace companion_protocol

@@ -2,39 +2,39 @@
 
 #include <array>
 
-#include "byte_cursor.hpp"
-#include "write_frame_header.hpp"
+#include "byte_reader.hpp"
+#include "byte_writer.hpp"
 
 namespace companion_protocol {
 
-std::size_t encode_device_info(uint16_t request_id, const DeviceInfo& info, std::span<uint8_t> out)
+std::optional<std::size_t> DeviceInfo::encoded_body_size() const
 {
-    const std::size_t version_size = info.firmware_version.size();
+    const std::size_t version_size = firmware_version.size();
     if (version_size > kMaxFirmwareVersionBytes) {
-        return 0;
+        return std::nullopt;
     }
-
-    const std::size_t body_length = kProtocolVersionFieldBytes + kFirmwareVersionLengthPrefixBytes + version_size;
-    const std::size_t frame_length = kHeaderBytes + body_length;
-    if (out.size() < frame_length) {
-        return 0;
-    }
-
-    ByteWriter writer(out);
-    if (!write_frame_header(writer, MessageType::DeviceInfo, request_id, static_cast<uint16_t>(body_length))
-        || !writer.write_u8(info.protocol_version) || !writer.write_u8(static_cast<uint8_t>(version_size))
-        || !writer.write_bytes(info.firmware_version.view()) || writer.written() != frame_length) {
-        return 0;
-    }
-    return frame_length;
+    return kProtocolVersionFieldBytes + kFirmwareVersionLengthPrefixBytes + version_size;
 }
 
-Status decode_device_info(std::span<const uint8_t> body, DeviceInfo& info)
+bool DeviceInfo::encode(std::span<uint8_t> out) const
 {
-    ByteReader reader(body);
-    uint8_t protocol_version = 0;
+    const std::optional<std::size_t> body_size = encoded_body_size();
+    if (!body_size.has_value() || out.size() < *body_size) {
+        return false;
+    }
+
+    const std::size_t version_size = firmware_version.size();
+    ByteWriter writer(out);
+    return writer.write_u8(protocol_version) && writer.write_u8(static_cast<uint8_t>(version_size))
+        && writer.write_bytes(firmware_version.view()) && writer.written() == *body_size;
+}
+
+Status DeviceInfo::decode(std::span<const uint8_t> bytes)
+{
+    ByteReader reader(bytes);
+    uint8_t protocol_version_byte = 0;
     uint8_t version_length = 0;
-    if (!reader.read_u8(protocol_version) || !reader.read_u8(version_length)) {
+    if (!reader.read_u8(protocol_version_byte) || !reader.read_u8(version_length)) {
         return Status::MalformedBody;
     }
     if (version_length > kMaxFirmwareVersionBytes) {
@@ -47,11 +47,11 @@ Status decode_device_info(std::span<const uint8_t> body, DeviceInfo& info)
     }
 
     DeviceInfo decoded{};
-    decoded.protocol_version = protocol_version;
+    decoded.protocol_version = protocol_version_byte;
     if (!decoded.firmware_version.assign(std::span<const uint8_t>(version_bytes.data(), version_length))) {
         return Status::InvalidField;
     }
-    info = decoded;
+    *this = decoded;
     return Status::Ok;
 }
 

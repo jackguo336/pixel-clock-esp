@@ -2,20 +2,22 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
 
-#include "companion_protocol/frame.hpp"
+#include "companion_protocol/message_header.hpp"
 
 namespace companion_protocol {
 
-inline constexpr std::size_t kGetDeviceInfoFrameBytes = kHeaderBytes;
+// Keep PROTOCOL.md in sync with this message.
+struct GetDeviceInfo {
+    static constexpr MessageType kMessageType = MessageType::GetDeviceInfo;
 
-static_assert(kGetDeviceInfoFrameBytes <= kMaxFrameBytes);
+    [[nodiscard]] std::optional<std::size_t> encoded_body_size() const;
 
-// Writes a GetDeviceInfo frame. Returns the frame length, or 0 if `out` is too small.
-[[nodiscard]] std::size_t encode_get_device_info(uint16_t request_id, std::span<uint8_t> out);
+    [[nodiscard]] bool encode(std::span<uint8_t> out) const;
 
-// Ok when `body` is empty. Any other size is MalformedBody.
-[[nodiscard]] Status decode_get_device_info(std::span<const uint8_t> body);
+    [[nodiscard]] Status decode(std::span<const uint8_t> bytes);
+};
 
 }  // namespace companion_protocol
