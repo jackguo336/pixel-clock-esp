@@ -1,5 +1,5 @@
 ---
-description: ESP-IDF C++ firmware practices (components, C linkage, no exceptions/RTTI, RAII, FreeRTOS, ISRs)
+description: ESP-IDF C++ firmware practices (components, C linkage, no exceptions/RTTI, RAII, comments, FreeRTOS, ISRs)
 globs: "**/{*.cpp,*.hpp,*.h,CMakeLists.txt,idf_component.yml}"
 alwaysApply: false
 ---
@@ -90,6 +90,45 @@ class Mailbox {
     uint32_t drop_count_{0};
     void* items_available_{nullptr};
 };
+```
+
+## Comments
+
+Comments are short and easy to read. They add what the names leave out. Skip a comment that repeats the declaration or the next line of code.
+
+**Class comments** explain the capability the type unlocks and the situation in which to use it. Describe the role in general. Leave method behavior and the implementation out. Omit the comment when the name already says that.
+
+```cpp
+// ❌ BAD: restates the methods, describes the queue, and names two call sites
+/**
+ * Stores items in a FreeRTOS queue of capacity kCapacity.
+ * post() copies the message and returns false when the wait expires.
+ * receive() blocks until an item is available.
+ * Use this for Wi-Fi status and the button task.
+ */
+class Mailbox { ... };
+
+// ✅ GOOD
+/**
+ * Bounded handoff of messages between tasks.
+ * Use when a producer and a consumer need blocking transfer with a fixed capacity.
+ */
+class Mailbox { ... };
+```
+
+**Method comments** call out behavior the signature does not show: a side effect, a lifetime rule, a failure mode, or an ordering constraint. Many methods need no comment. A method comment does not walk through the steps inside the function.
+
+```cpp
+// ❌ BAD: narrates the implementation
+/// Sends with xQueueSend and returns false if the queue is still full.
+bool post(const Message& message, uint32_t timeout_ms);
+
+// ✅ GOOD: the name already says what this does
+bool post(const Message& message, uint32_t timeout_ms);
+
+// ✅ GOOD: the overflow policy is not in the name
+/// Drops the oldest item when full so the newest event is kept.
+bool post_latest(const Message& message);
 ```
 
 ## Magic numbers
