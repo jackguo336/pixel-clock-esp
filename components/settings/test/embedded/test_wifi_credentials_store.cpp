@@ -11,7 +11,7 @@
 
 namespace {
 
-settings::WifiCredentials prefilled()
+settings::WifiCredentials sentinel_filled_credentials()
 {
     settings::WifiCredentials credentials{};
     credentials.ssid.fill(0xA5);
@@ -38,28 +38,24 @@ settings::WifiCredentials make_credentials(uint8_t ssid_length, uint8_t passphra
 
 void assert_load_error(settings::WifiCredentialsStore& store, esp_err_t expected)
 {
-    settings::WifiCredentials loaded = prefilled();
+    settings::WifiCredentials loaded = sentinel_filled_credentials();
     const settings::WifiCredentials unchanged = loaded;
     TEST_ASSERT_EQUAL(expected, store.load(loaded));
     TEST_ASSERT_EQUAL_MEMORY(&unchanged, &loaded, sizeof(loaded));
 }
 
-void write_blob(const uint8_t* bytes, std::size_t size)
+esp_err_t store_credentials_blob(const uint8_t* bytes, std::size_t byte_count)
 {
     nvs_handle_t handle = 0;
     const esp_err_t open_err = nvs_open(settings::kNvsNamespace, NVS_READWRITE, &handle);
-    esp_err_t set_err = ESP_FAIL;
-    esp_err_t commit_err = ESP_FAIL;
-    if (open_err == ESP_OK) {
-        set_err = nvs_set_blob(handle, settings::kCredentialsKey, bytes, size);
-        if (set_err == ESP_OK) {
-            commit_err = nvs_commit(handle);
-        }
-        nvs_close(handle);
+    if (open_err != ESP_OK) {
+        return open_err;
     }
-    TEST_ASSERT_EQUAL(ESP_OK, open_err);
-    TEST_ASSERT_EQUAL(ESP_OK, set_err);
-    TEST_ASSERT_EQUAL(ESP_OK, commit_err);
+
+    const esp_err_t set_err = nvs_set_blob(handle, settings::kCredentialsKey, bytes, byte_count);
+    const esp_err_t commit_err = set_err == ESP_OK ? nvs_commit(handle) : set_err;
+    nvs_close(handle);
+    return commit_err;
 }
 
 }  // namespace
@@ -86,7 +82,7 @@ TEST_CASE("save and load return the same credential bytes", "[settings]")
     full.ssid[16] = 0;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(full));
 
-    settings::WifiCredentials loaded = prefilled();
+    settings::WifiCredentials loaded = sentinel_filled_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(loaded));
     TEST_ASSERT_EQUAL_MEMORY(&full, &loaded, sizeof(full));
 
@@ -94,7 +90,7 @@ TEST_CASE("save and load return the same credential bytes", "[settings]")
     with_zero.ssid[1] = 0;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(with_zero));
 
-    loaded = prefilled();
+    loaded = sentinel_filled_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(loaded));
     TEST_ASSERT_EQUAL_MEMORY(&with_zero, &loaded, sizeof(with_zero));
 }
@@ -109,7 +105,7 @@ TEST_CASE("save and load keep an empty passphrase", "[settings]")
     settings::WifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
 
-    settings::WifiCredentials loaded = prefilled();
+    settings::WifiCredentials loaded = sentinel_filled_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(loaded));
     TEST_ASSERT_EQUAL_UINT8(0, loaded.passphrase_length);
     TEST_ASSERT_EQUAL_MEMORY(&expected, &loaded, sizeof(expected));
@@ -122,7 +118,7 @@ TEST_CASE("clear removes saved credentials", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
     TEST_ASSERT_EQUAL(ESP_OK, store.clear());
 
-    settings::WifiCredentials loaded = prefilled();
+    settings::WifiCredentials loaded = sentinel_filled_credentials();
     const settings::WifiCredentials unchanged = loaded;
     TEST_ASSERT_EQUAL(ESP_ERR_NVS_NOT_FOUND, store.load(loaded));
     TEST_ASSERT_EQUAL_MEMORY(&unchanged, &loaded, sizeof(loaded));
@@ -157,7 +153,7 @@ TEST_CASE("save rejects lengths outside the store limits", "[settings]")
     rejected.passphrase_length = static_cast<uint8_t>(settings::kMaxPassphraseBytes + 1);
     TEST_ASSERT_EQUAL(ESP_ERR_INVALID_ARG, store.save(rejected));
 
-    settings::WifiCredentials loaded = prefilled();
+    settings::WifiCredentials loaded = sentinel_filled_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(loaded));
     TEST_ASSERT_EQUAL_MEMORY(&saved, &loaded, sizeof(saved));
 }
@@ -172,7 +168,7 @@ TEST_CASE("a second save replaces the first", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, store.save(first));
     TEST_ASSERT_EQUAL(ESP_OK, store.save(second));
 
-    settings::WifiCredentials loaded = prefilled();
+    settings::WifiCredentials loaded = sentinel_filled_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(loaded));
     TEST_ASSERT_EQUAL_MEMORY(&second, &loaded, sizeof(second));
 }
@@ -189,29 +185,36 @@ TEST_CASE("load rejects a blob with a bad version or length", "[settings]")
     settings::WifiCredentialsStore store;
 
     const uint8_t version_two[] = {2, 1, 'z', 0};
-    write_blob(version_two, sizeof(version_two));
+    TEST_ASSERT_EQUAL(ESP_OK, store_credentials_blob(version_two, sizeof(version_two)));
     assert_load_error(store, ESP_ERR_INVALID_VERSION);
 
     const uint8_t length_mismatch[] = {settings::kCredentialsVersion, 1, 'z', 0, 0xEE};
-    write_blob(length_mismatch, sizeof(length_mismatch));
+    TEST_ASSERT_EQUAL(ESP_OK, store_credentials_blob(length_mismatch, sizeof(length_mismatch)));
     assert_load_error(store, ESP_ERR_INVALID_SIZE);
 
     const uint8_t empty_ssid[] = {settings::kCredentialsVersion, 0, 0};
-    write_blob(empty_ssid, sizeof(empty_ssid));
+    TEST_ASSERT_EQUAL(ESP_OK, store_credentials_blob(empty_ssid, sizeof(empty_ssid)));
     assert_load_error(store, ESP_ERR_INVALID_SIZE);
 
-    std::array<uint8_t, 3 + 33> ssid_too_long{};
+    constexpr std::size_t kSsidBytesPastLimit = settings::kMaxSsidBytes + 1;
+    std::array<uint8_t, settings::kVersionFieldBytes + settings::kSsidLengthFieldBytes + kSsidBytesPastLimit
+                            + settings::kPassphraseLengthFieldBytes>
+        ssid_too_long{};
     ssid_too_long[0] = settings::kCredentialsVersion;
-    ssid_too_long[1] = 33;
-    write_blob(ssid_too_long.data(), ssid_too_long.size());
+    ssid_too_long[1] = static_cast<uint8_t>(kSsidBytesPastLimit);
+    TEST_ASSERT_EQUAL(ESP_OK, store_credentials_blob(ssid_too_long.data(), ssid_too_long.size()));
     assert_load_error(store, ESP_ERR_INVALID_SIZE);
 
-    std::array<uint8_t, 3 + 1 + 65> passphrase_too_long{};
+    constexpr std::size_t kPassphraseBytesPastLimit = settings::kMaxPassphraseBytes + 1;
+    std::array<uint8_t, settings::kVersionFieldBytes + settings::kSsidLengthFieldBytes + settings::kMinSsidBytes
+                            + settings::kPassphraseLengthFieldBytes + kPassphraseBytesPastLimit>
+        passphrase_too_long{};
     passphrase_too_long[0] = settings::kCredentialsVersion;
-    passphrase_too_long[1] = 1;
+    passphrase_too_long[1] = static_cast<uint8_t>(settings::kMinSsidBytes);
     passphrase_too_long[2] = 'a';
-    passphrase_too_long[3] = 65;
-    write_blob(passphrase_too_long.data(), passphrase_too_long.size());
+    passphrase_too_long[settings::kVersionFieldBytes + settings::kSsidLengthFieldBytes + settings::kMinSsidBytes] =
+        static_cast<uint8_t>(kPassphraseBytesPastLimit);
+    TEST_ASSERT_EQUAL(ESP_OK, store_credentials_blob(passphrase_too_long.data(), passphrase_too_long.size()));
     assert_load_error(store, ESP_ERR_INVALID_SIZE);
 }
 
@@ -224,7 +227,7 @@ TEST_CASE("initialize_nvs again does not erase saved credentials", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
     TEST_ASSERT_EQUAL(ESP_OK, settings::initialize_nvs());
 
-    settings::WifiCredentials loaded = prefilled();
+    settings::WifiCredentials loaded = sentinel_filled_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(loaded));
     TEST_ASSERT_EQUAL_MEMORY(&saved, &loaded, sizeof(saved));
 }

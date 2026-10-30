@@ -7,6 +7,7 @@
 
 #include "esp_log.h"
 #include "nvs.h"
+#include "opened_nvs_handle.hpp"
 
 namespace settings {
 namespace {
@@ -16,60 +17,25 @@ constexpr char kTag[] = "settings";
 static_assert(sizeof(kNvsNamespace) <= NVS_NS_NAME_MAX_SIZE);
 static_assert(sizeof(kCredentialsKey) <= NVS_KEY_NAME_MAX_SIZE);
 
-constexpr std::size_t kRecordOverheadBytes = kMaxRecordBytes - kMaxSsidBytes - kMaxPassphraseBytes;
-static_assert(kRecordOverheadBytes == 3);
-
 constexpr std::size_t kVersionOffset = 0;
-constexpr std::size_t kSsidLengthOffset = 1;
-constexpr std::size_t kSsidOffset = 2;
-
-// nvs_handle_t is an integer and 0 is not a sentinel.
-class OpenedNvsHandle {
-public:
-    OpenedNvsHandle() = default;
-
-    OpenedNvsHandle(const OpenedNvsHandle&) = delete;
-    OpenedNvsHandle& operator=(const OpenedNvsHandle&) = delete;
-
-    ~OpenedNvsHandle()
-    {
-        if (open_) {
-            nvs_close(handle_);
-        }
-    }
-
-    [[nodiscard]] esp_err_t open(nvs_open_mode_t mode)
-    {
-        const esp_err_t err = nvs_open(kNvsNamespace, mode, &handle_);
-        open_ = err == ESP_OK;
-        return err;
-    }
-
-    [[nodiscard]] nvs_handle_t get() const
-    {
-        return handle_;
-    }
-
-private:
-    nvs_handle_t handle_{};
-    bool open_{false};
-};
+constexpr std::size_t kSsidLengthOffset = kVersionFieldBytes;
+constexpr std::size_t kSsidOffset = kVersionFieldBytes + kSsidLengthFieldBytes;
 
 void log_failure(const char* action, esp_err_t err)
 {
     ESP_LOGE(kTag, "%s: %s", action, esp_err_to_name(err));
 }
 
-bool lengths_accepted(const WifiCredentials& credentials)
+bool lengths_within_bounds(const WifiCredentials& credentials)
 {
     const std::size_t ssid_length = credentials.ssid_length;
     const std::size_t passphrase_length = credentials.passphrase_length;
     return ssid_length >= kMinSsidBytes && ssid_length <= kMaxSsidBytes && passphrase_length <= kMaxPassphraseBytes;
 }
 
-std::size_t record_size(uint8_t ssid_length, uint8_t passphrase_length)
+std::size_t encoded_byte_count(uint8_t ssid_length, uint8_t passphrase_length)
 {
-    return kRecordOverheadBytes + ssid_length + passphrase_length;
+    return kVersionFieldBytes + kSsidLengthFieldBytes + ssid_length + kPassphraseLengthFieldBytes + passphrase_length;
 }
 
 void encode(const WifiCredentials& credentials, std::array<uint8_t, kMaxRecordBytes>& record)
@@ -113,7 +79,7 @@ esp_err_t decode(const uint8_t* record, std::size_t size, WifiCredentials& crede
     if (static_cast<std::size_t>(passphrase_length) > kMaxPassphraseBytes) {
         return ESP_ERR_INVALID_SIZE;
     }
-    if (size != record_size(ssid_length, passphrase_length)) {
+    if (size != encoded_byte_count(ssid_length, passphrase_length)) {
         return ESP_ERR_INVALID_SIZE;
     }
 
@@ -130,7 +96,7 @@ esp_err_t decode(const uint8_t* record, std::size_t size, WifiCredentials& crede
 
 esp_err_t WifiCredentialsStore::save(const WifiCredentials& credentials) const
 {
-    if (!lengths_accepted(credentials)) {
+    if (!lengths_within_bounds(credentials)) {
         log_failure("save", ESP_ERR_INVALID_ARG);
         return ESP_ERR_INVALID_ARG;
     }
@@ -145,8 +111,8 @@ esp_err_t WifiCredentialsStore::save(const WifiCredentials& credentials) const
         return open_err;
     }
 
-    const std::size_t size = record_size(credentials.ssid_length, credentials.passphrase_length);
-    const esp_err_t set_err = nvs_set_blob(nvs.get(), kCredentialsKey, record.data(), size);
+    const std::size_t encoded_bytes = encoded_byte_count(credentials.ssid_length, credentials.passphrase_length);
+    const esp_err_t set_err = nvs_set_blob(nvs.get(), kCredentialsKey, record.data(), encoded_bytes);
     if (set_err != ESP_OK) {
         log_failure("save", set_err);
         return set_err;
