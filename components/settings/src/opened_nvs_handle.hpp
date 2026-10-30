@@ -34,7 +34,7 @@ public:
 
 private:
     nvs_handle_t handle_{};
-    // nvs_handle_t is an integer and 0 is not a sentinel.
+    // nvs_handle_t is an integer, so 0 can be a real handle. open_ is true only after nvs_open succeeds.
     bool open_{false};
 };
 
