@@ -72,6 +72,8 @@ Define the C++ side as `extern "C" void my_c_api(void) { ... }`.
 
 Use descriptive names for classes, methods, and variables. A reader should know the role without comments or the surrounding function. Prefer a longer clear name over a short vague one (`drop_count_`, `post_event_from_isr`, `Mailbox` — not `dc`, `pefi`, `MB`).
 
+A name says what the value is for, in words a reader already knows. `timeout_ms` is a wait limit. `pattern_filled` only says a slot was written, which does not say why that value is there. Do not use a specialist label such as “sentinel.” If the value means there is no message yet, or the handle is not a real one, the name says that (`no_message_yet`, `unused_queue_handle`).
+
 - **Classes / enums / structs:** PascalCase nouns (`Mailbox`, `MessageType`). Name what the type *is*, not a generic `Manager` / `Helper` / `Data`.
 - **Methods:** snake_case verbs that say what happens and from where (`receive`, `post_from_isr`, `uses_reserved_slots`). Pair task-vs-ISR APIs with an explicit `_from_isr` suffix. Booleans read as predicates (`started_`, `has_message`).
 - **Variables / members:** snake_case; members end with `_` (`items_available_`, `control_task_`). Name the meaning, not the type (`timeout_ms` not `t` or `uint32_val`). Loop indices `i`/`n` are fine in a few lines; anything that lives longer is not.
