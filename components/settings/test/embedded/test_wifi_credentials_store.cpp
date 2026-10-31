@@ -11,7 +11,7 @@
 
 namespace {
 
-settings::WifiCredentials fake_credentials()
+settings::WifiCredentials placeholder_credentials()
 {
     settings::WifiCredentials credentials{};
     credentials.ssid.fill(0xA5);
@@ -38,7 +38,7 @@ settings::WifiCredentials make_credentials(uint8_t ssid_length, uint8_t passphra
 
 void assert_load_error(settings::WifiCredentialsStore& store, esp_err_t expected)
 {
-    settings::WifiCredentials output = fake_credentials();
+    settings::WifiCredentials output = placeholder_credentials();
     const settings::WifiCredentials unchanged = output;
     TEST_ASSERT_EQUAL(expected, store.load(output));
     TEST_ASSERT_EQUAL_MEMORY(&unchanged, &output, sizeof(output));
@@ -82,7 +82,7 @@ TEST_CASE("save and load return the same credential bytes", "[settings]")
     full.ssid[16] = 0;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(full));
 
-    settings::WifiCredentials output = fake_credentials();
+    settings::WifiCredentials output = placeholder_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(output));
     TEST_ASSERT_EQUAL_MEMORY(&full, &output, sizeof(full));
 
@@ -90,7 +90,7 @@ TEST_CASE("save and load return the same credential bytes", "[settings]")
     with_zero.ssid[1] = 0;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(with_zero));
 
-    output = fake_credentials();
+    output = placeholder_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(output));
     TEST_ASSERT_EQUAL_MEMORY(&with_zero, &output, sizeof(with_zero));
 }
@@ -105,7 +105,7 @@ TEST_CASE("save and load keep an empty passphrase", "[settings]")
     settings::WifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
 
-    settings::WifiCredentials output = fake_credentials();
+    settings::WifiCredentials output = placeholder_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(output));
     TEST_ASSERT_EQUAL_UINT8(0, output.passphrase_length);
     TEST_ASSERT_EQUAL_MEMORY(&expected, &output, sizeof(expected));
@@ -118,7 +118,7 @@ TEST_CASE("clear removes saved credentials", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
     TEST_ASSERT_EQUAL(ESP_OK, store.clear());
 
-    settings::WifiCredentials output = fake_credentials();
+    settings::WifiCredentials output = placeholder_credentials();
     const settings::WifiCredentials unchanged = output;
     TEST_ASSERT_EQUAL(ESP_ERR_NVS_NOT_FOUND, store.load(output));
     TEST_ASSERT_EQUAL_MEMORY(&unchanged, &output, sizeof(output));
@@ -153,7 +153,7 @@ TEST_CASE("save rejects lengths outside the store limits", "[settings]")
     rejected.passphrase_length = static_cast<uint8_t>(settings::kMaxPassphraseBytes + 1);
     TEST_ASSERT_EQUAL(ESP_ERR_INVALID_ARG, store.save(rejected));
 
-    settings::WifiCredentials output = fake_credentials();
+    settings::WifiCredentials output = placeholder_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(output));
     TEST_ASSERT_EQUAL_MEMORY(&saved, &output, sizeof(saved));
 }
@@ -168,7 +168,7 @@ TEST_CASE("a second save replaces the first", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, store.save(first));
     TEST_ASSERT_EQUAL(ESP_OK, store.save(second));
 
-    settings::WifiCredentials output = fake_credentials();
+    settings::WifiCredentials output = placeholder_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(output));
     TEST_ASSERT_EQUAL_MEMORY(&second, &output, sizeof(second));
 }
@@ -227,7 +227,7 @@ TEST_CASE("initialize_nvs again does not erase saved credentials", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
     TEST_ASSERT_EQUAL(ESP_OK, settings::initialize_nvs());
 
-    settings::WifiCredentials output = fake_credentials();
+    settings::WifiCredentials output = placeholder_credentials();
     TEST_ASSERT_EQUAL(ESP_OK, store.load(output));
     TEST_ASSERT_EQUAL_MEMORY(&saved, &output, sizeof(saved));
 }
