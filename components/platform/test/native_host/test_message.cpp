@@ -53,7 +53,7 @@ TEST(Message, SetPayloadCopiesValueIntoEvent)
     platform::Event event{};
     const SamplePayload payload{0x12345678u, 0xABCDu};
 
-    platform::set_payload(event, payload);
+    platform::set_runtime_event_payload(event, payload);
 
     EXPECT_EQ(event.payload_size, sizeof(SamplePayload));
 
@@ -85,7 +85,7 @@ TEST(Message, SetPayloadAcceptsFullCapacityBuffer)
     payload.front() = 0x11;
     payload.back() = 0x22;
 
-    platform::set_payload(event, payload);
+    platform::set_runtime_event_payload(event, payload);
 
     EXPECT_EQ(event.payload_size, platform::kPayloadCapacity);
     EXPECT_EQ(event.payload[0], 0x11);

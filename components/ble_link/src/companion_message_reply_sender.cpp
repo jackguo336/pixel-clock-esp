@@ -1,4 +1,4 @@
-#include "ble_link/inbound_message_handler.hpp"
+#include "ble_link/companion_message_reply_sender.hpp"
 
 #include <array>
 #include <span>
@@ -9,11 +9,16 @@
 namespace ble_link {
 namespace {
 
-constexpr char kTag[] = "send_reply";
+constexpr char kTag[] = "companion_message_reply_sender";
 
 }  // namespace
 
-void send_reply(MessageTransport& transport, uint16_t request_id, const companion_protocol::MessageBody& body)
+CompanionMessageReplySender::CompanionMessageReplySender(MessageTransport& transport)
+    : transport_(transport)
+{
+}
+
+void CompanionMessageReplySender::send_reply(uint16_t request_id, const companion_protocol::MessageBody& body)
 {
     companion_protocol::Message message{};
     message.header.request_id = request_id;
@@ -26,7 +31,7 @@ void send_reply(MessageTransport& transport, uint16_t request_id, const companio
         return;
     }
 
-    const bool sent = transport.send(std::span<const uint8_t>(encoded.data(), written));
+    const bool sent = transport_.send(std::span<const uint8_t>(encoded.data(), written));
     if (!sent) {
         ESP_LOGE(kTag, "send failed");
     }

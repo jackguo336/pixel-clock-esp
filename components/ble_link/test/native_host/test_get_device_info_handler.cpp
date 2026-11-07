@@ -42,7 +42,8 @@ const std::vector<uint8_t> kDeviceInfoExample{
 TEST(GetDeviceInfoHandler, RepliesWithProtocolExample)
 {
     RecordingMessageTransport transport;
-    ble_link::GetDeviceInfoHandler handler(transport, kFirmwareVersion);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::GetDeviceInfoHandler handler(reply_sender, kFirmwareVersion);
 
     const companion_protocol::Message request =
         request_with(companion_protocol::GetDeviceInfo{}, 0x0001);
@@ -54,7 +55,8 @@ TEST(GetDeviceInfoHandler, RepliesWithProtocolExample)
 TEST(GetDeviceInfoHandler, EchoesRequestIdZero)
 {
     RecordingMessageTransport transport;
-    ble_link::GetDeviceInfoHandler handler(transport, kFirmwareVersion);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::GetDeviceInfoHandler handler(reply_sender, kFirmwareVersion);
 
     EXPECT_TRUE(handler.try_handle(request_with(companion_protocol::GetDeviceInfo{}, 0)));
     const std::vector<uint8_t> expected{
@@ -68,7 +70,8 @@ TEST(GetDeviceInfoHandler, OverlongFirmwareVersionStaysEmpty)
     RecordingMessageTransport transport;
     std::array<uint8_t, companion_protocol::kMaxFirmwareVersionBytes + 1> firmware_version{};
     firmware_version.fill('1');
-    ble_link::GetDeviceInfoHandler handler(transport, firmware_version);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::GetDeviceInfoHandler handler(reply_sender, firmware_version);
 
     EXPECT_TRUE(handler.try_handle(request_with(companion_protocol::GetDeviceInfo{}, 0x0001)));
     const std::vector<uint8_t> expected{0x01, 0x81, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00};
@@ -78,7 +81,8 @@ TEST(GetDeviceInfoHandler, OverlongFirmwareVersionStaysEmpty)
 TEST(GetDeviceInfoHandler, IgnoresOtherBodies)
 {
     RecordingMessageTransport transport;
-    ble_link::GetDeviceInfoHandler handler(transport, kFirmwareVersion);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::GetDeviceInfoHandler handler(reply_sender, kFirmwareVersion);
 
     EXPECT_FALSE(handler.try_handle(request_with(companion_protocol::SetWifiCredentials{}, 0x0001)));
     EXPECT_FALSE(handler.try_handle(request_with(companion_protocol::Ack{}, 0x0001)));

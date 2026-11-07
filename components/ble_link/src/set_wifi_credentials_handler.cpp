@@ -62,10 +62,10 @@ void copy_field(std::span<const uint8_t> bytes, std::span<uint8_t> destination, 
 
 }  // namespace
 
-SetWifiCredentialsHandler::SetWifiCredentialsHandler(MessageTransport& transport,
-                                                     settings::WifiCredentialsStore& wifi_credentials)
-    : transport_(transport)
-    , wifi_credentials_(wifi_credentials)
+SetWifiCredentialsHandler::SetWifiCredentialsHandler(CompanionMessageReplySender& reply_sender,
+                                                     settings::WifiCredentialsStore& wifi_credentials_store)
+    : reply_sender_(reply_sender)
+    , wifi_credentials_store_(wifi_credentials_store)
 {
 }
 
@@ -78,9 +78,9 @@ bool SetWifiCredentialsHandler::try_handle(const companion_protocol::Message& re
 
     const std::span<const uint8_t> passphrase = credentials->passphrase.view();
     if (!passphrase_allowed(passphrase)) {
-        send_reply(transport_, request.header.request_id,
-                   companion_protocol::MessageBody{
-                       companion_protocol::Error{.code = companion_protocol::Status::InvalidField}});
+        reply_sender_.send_reply(request.header.request_id,
+                                 companion_protocol::MessageBody{
+                                     companion_protocol::Error{.code = companion_protocol::Status::InvalidField}});
         return true;
     }
 
@@ -88,17 +88,18 @@ bool SetWifiCredentialsHandler::try_handle(const companion_protocol::Message& re
     copy_field(credentials->ssid.view(), stored.ssid, stored.ssid_length);
     copy_field(passphrase, stored.passphrase, stored.passphrase_length);
 
-    const esp_err_t save_result = wifi_credentials_.save(stored);
+    const esp_err_t save_result = wifi_credentials_store_.save(stored);
     if (save_result != ESP_OK) {
         ESP_LOGE(kTag, "save: %s", esp_err_to_name(save_result));
-        send_reply(transport_, request.header.request_id,
-                   companion_protocol::MessageBody{
-                       companion_protocol::Ack{.status = companion_protocol::Status::StorageFailed}});
+        reply_sender_.send_reply(request.header.request_id,
+                                 companion_protocol::MessageBody{
+                                     companion_protocol::Ack{.status = companion_protocol::Status::StorageFailed}});
         return true;
     }
 
-    send_reply(transport_, request.header.request_id,
-               companion_protocol::MessageBody{companion_protocol::Ack{.status = companion_protocol::Status::Ok}});
+    reply_sender_.send_reply(
+        request.header.request_id,
+        companion_protocol::MessageBody{companion_protocol::Ack{.status = companion_protocol::Status::Ok}});
     return true;
 }
 

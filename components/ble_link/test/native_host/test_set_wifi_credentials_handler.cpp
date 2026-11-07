@@ -117,7 +117,8 @@ TEST(SetWifiCredentialsHandler, SavesProtocolExampleAndAcksOk)
 {
     RecordingMessageTransport transport;
     ProgrammedWifiCredentialsStore store(ESP_OK);
-    ble_link::SetWifiCredentialsHandler handler(transport, store);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
 
     companion_protocol::Message request{};
     ASSERT_EQ(companion_protocol::decode_message(kSetWifiCredentialsExample, request), companion_protocol::Status::Ok);
@@ -140,7 +141,8 @@ TEST(SetWifiCredentialsHandler, StorageFailureAcksStorageFailed)
 {
     RecordingMessageTransport transport;
     ProgrammedWifiCredentialsStore store(ESP_FAIL);
-    ble_link::SetWifiCredentialsHandler handler(transport, store);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
 
     companion_protocol::Message request{};
     ASSERT_EQ(companion_protocol::decode_message(kSetWifiCredentialsExample, request), companion_protocol::Status::Ok);
@@ -157,7 +159,8 @@ TEST(SetWifiCredentialsHandler, SavesSsidBytesThatContainZero)
 {
     RecordingMessageTransport transport;
     ProgrammedWifiCredentialsStore store(ESP_OK);
-    ble_link::SetWifiCredentialsHandler handler(transport, store);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
 
     const uint8_t ssid[] = {'h', 0x00, 'm', 'e'};
     const uint8_t passphrase[] = {'p', 'a', 's', 's', 'w', 'o', 'r', 'd'};
@@ -187,7 +190,8 @@ TEST(SetWifiCredentialsHandler, RejectsPassphrasesOutsideWpaRules)
     for (const std::span<const uint8_t> passphrase : rejected) {
         RecordingMessageTransport transport;
         ProgrammedWifiCredentialsStore store(ESP_OK);
-        ble_link::SetWifiCredentialsHandler handler(transport, store);
+        ble_link::CompanionMessageReplySender reply_sender(transport);
+        ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
 
         EXPECT_TRUE(handler.try_handle(passphrase_request(passphrase)));
         expect_store_unused(store);
@@ -215,7 +219,8 @@ TEST(SetWifiCredentialsHandler, AcceptsOpenPrintableAndHexPassphrases)
     for (const std::span<const uint8_t> passphrase : allowed) {
         RecordingMessageTransport transport;
         ProgrammedWifiCredentialsStore store(ESP_OK);
-        ble_link::SetWifiCredentialsHandler handler(transport, store);
+        ble_link::CompanionMessageReplySender reply_sender(transport);
+        ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
 
         EXPECT_TRUE(handler.try_handle(passphrase_request(passphrase)));
         EXPECT_EQ(store.save_count, 1);
@@ -232,7 +237,8 @@ TEST(SetWifiCredentialsHandler, IgnoresOtherBodies)
 {
     RecordingMessageTransport transport;
     ProgrammedWifiCredentialsStore store(ESP_OK);
-    ble_link::SetWifiCredentialsHandler handler(transport, store);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
 
     EXPECT_FALSE(handler.try_handle(request_with(companion_protocol::GetDeviceInfo{}, kExampleRequestId)));
     EXPECT_FALSE(handler.try_handle(request_with(companion_protocol::Ack{}, kExampleRequestId)));
@@ -246,7 +252,8 @@ TEST(SetWifiCredentialsHandler, FailedSendStillSavedOnce)
 {
     RecordingMessageTransport transport(false);
     ProgrammedWifiCredentialsStore store(ESP_OK);
-    ble_link::SetWifiCredentialsHandler handler(transport, store);
+    ble_link::CompanionMessageReplySender reply_sender(transport);
+    ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
 
     companion_protocol::Message request{};
     ASSERT_EQ(companion_protocol::decode_message(kSetWifiCredentialsExample, request), companion_protocol::Status::Ok);

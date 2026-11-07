@@ -66,7 +66,7 @@ inline Message make_command_message(const Command& command)
 }
 
 template <typename T>
-inline void set_payload(Event& event, const T& value)
+inline void set_runtime_event_payload(Event& event, const T& value)
 {
     static_assert(std::is_trivially_copyable_v<T>);
     static_assert(sizeof(T) <= kPayloadCapacity);

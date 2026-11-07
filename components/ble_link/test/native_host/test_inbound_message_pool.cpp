@@ -15,7 +15,7 @@ using ble_link::InboundMessagePoolEntryRef;
 
 std::size_t read_entry(InboundMessagePool& pool, uint8_t entry_index, std::span<uint8_t> out)
 {
-    return pool.read_then_remove(entry_index, out);
+    return pool.read_then_free_slot(entry_index, out);
 }
 
 }  // namespace
@@ -106,8 +106,8 @@ TEST(InboundMessagePool, RejectsEmptyAndOverlongMessages)
 TEST(InboundMessagePool, RemoveLeavesDropCountAndShortReadDropsBytes)
 {
     InboundMessagePool pool;
-    pool.remove(0);
-    pool.remove(static_cast<uint8_t>(InboundMessagePool::kCapacity));
+    pool.free_slot(0);
+    pool.free_slot(static_cast<uint8_t>(InboundMessagePool::kCapacity));
     EXPECT_EQ(pool.drop_count(), 0u);
 
     const uint8_t message[] = {0x01, 0x02, 0x03, 0x04};
@@ -115,10 +115,10 @@ TEST(InboundMessagePool, RemoveLeavesDropCountAndShortReadDropsBytes)
     ASSERT_TRUE(stored.has_value());
 
     std::array<uint8_t, 2> short_out{};
-    EXPECT_EQ(pool.read_then_remove(*stored, short_out), 0u);
+    EXPECT_EQ(pool.read_then_free_slot(*stored, short_out), 0u);
 
     std::array<uint8_t, InboundMessagePool::kMessageBytes> copied{};
-    EXPECT_EQ(pool.read_then_remove(*stored, copied), 0u);
+    EXPECT_EQ(pool.read_then_free_slot(*stored, copied), 0u);
     EXPECT_EQ(pool.drop_count(), 0u);
 }
 

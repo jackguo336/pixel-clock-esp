@@ -80,9 +80,9 @@ struct Session {
     RecordingInboundMessageHandler handler{};
     RecordingMessageTransport transport{};
     ble_link::InboundMessagePool pool{};
+    ble_link::CompanionMessageReplySender reply_sender{transport};
     ble_link::InboundMessageHandler* const handlers[1]{&handler};
-    ble_link::InboundMessageRouter router{handlers};
-    ble_link::CompanionInboundMessageConsumer consumer{pool, router, transport};
+    ble_link::CompanionInboundMessageConsumer consumer{pool, handlers, reply_sender};
 };
 
 void expect_error(const RecordingMessageTransport& transport, companion_protocol::Status code, uint16_t request_id)
@@ -136,7 +136,7 @@ TEST(CompanionInboundMessageConsumer, ConsumeRoutesAValidGetDeviceInfo)
     EXPECT_EQ(session.transport.send_count, 0);
 }
 
-TEST(CompanionInboundMessageConsumer, FailedDecodeSendsErrorAndSkipsTheRouter)
+TEST(CompanionInboundMessageConsumer, FailedDecodeSendsErrorWithoutCallingAHandler)
 {
     const std::vector<uint8_t> too_short{0x01, 0x34, 0x12};
     std::vector<uint8_t> too_long = header_with_request_id(companion_protocol::kProtocolVersion,
@@ -215,7 +215,7 @@ TEST(CompanionInboundMessageConsumer, MessageBeforeConnectRemovesEntry)
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
     std::array<uint8_t, ble_link::InboundMessagePool::kMessageBytes> copied{};
-    EXPECT_EQ(session.pool.read_then_remove(*entry_index, copied), 0u);
+    EXPECT_EQ(session.pool.read_then_free_slot(*entry_index, copied), 0u);
 }
 
 TEST(CompanionInboundMessageConsumer, MessageAfterDisconnectRemovesEntry)
@@ -232,7 +232,7 @@ TEST(CompanionInboundMessageConsumer, MessageAfterDisconnectRemovesEntry)
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
     std::array<uint8_t, ble_link::InboundMessagePool::kMessageBytes> copied{};
-    EXPECT_EQ(session.pool.read_then_remove(*entry_index, copied), 0u);
+    EXPECT_EQ(session.pool.read_then_free_slot(*entry_index, copied), 0u);
 }
 
 TEST(CompanionInboundMessageConsumer, DisconnectLeavesAnUndeliveredEntryHeld)
@@ -281,7 +281,7 @@ TEST(CompanionInboundMessageConsumer, ZeroPayloadSizeDoesNotRemoveEntryZero)
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
     std::array<uint8_t, ble_link::InboundMessagePool::kMessageBytes> copied{};
-    const std::size_t copied_length = session.pool.read_then_remove(0, copied);
+    const std::size_t copied_length = session.pool.read_then_free_slot(0, copied);
     ASSERT_EQ(copied_length, kGetDeviceInfoExample.size());
     EXPECT_TRUE(std::equal(kGetDeviceInfoExample.begin(), kGetDeviceInfoExample.end(), copied.begin()));
 }
@@ -300,7 +300,7 @@ TEST(CompanionInboundMessageConsumer, MismatchedLengthRemovesEntry)
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
     std::array<uint8_t, ble_link::InboundMessagePool::kMessageBytes> copied{};
-    EXPECT_EQ(session.pool.read_then_remove(*entry_index, copied), 0u);
+    EXPECT_EQ(session.pool.read_then_free_slot(*entry_index, copied), 0u);
 }
 
 TEST(CompanionInboundMessageConsumer, TickDoesNotCallTheHandler)
@@ -317,12 +317,12 @@ TEST(CompanionInboundMessageConsumer, TickDoesNotCallTheHandler)
 TEST(CompanionInboundMessageConsumer, ConnectedSetWifiCredentialsSavesAndAcks)
 {
     RecordingMessageTransport transport;
+    ble_link::CompanionMessageReplySender reply_sender(transport);
     ProgrammedWifiCredentialsStore store;
-    ble_link::SetWifiCredentialsHandler handler(transport, store);
+    ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
     ble_link::InboundMessagePool pool;
     ble_link::InboundMessageHandler* const handlers[] = {&handler};
-    ble_link::InboundMessageRouter router(handlers);
-    ble_link::CompanionInboundMessageConsumer consumer(pool, router, transport);
+    ble_link::CompanionInboundMessageConsumer consumer(pool, handlers, reply_sender);
 
     consumer.on_event(ble_link::companion_connected_event());
     const std::optional<uint8_t> entry_index = pool.try_insert(kSetWifiCredentialsExample);

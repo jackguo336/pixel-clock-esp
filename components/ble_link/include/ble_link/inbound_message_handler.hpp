@@ -1,17 +1,12 @@
 #pragma once
 
-#include <cstdint>
-
-#include "ble_link/message_transport.hpp"
 #include "companion_protocol/message.hpp"
 
 namespace ble_link {
 
-void send_reply(MessageTransport& transport, uint16_t request_id, const companion_protocol::MessageBody& body);
-
 /**
- * Reply for one decoded companion request.
- * Use when a request type encodes and sends its own response.
+ * Handles one decoded companion request.
+ * Sending a reply is optional when the handler owns the request.
  */
 class InboundMessageHandler {
 public:
@@ -20,8 +15,8 @@ public:
     InboundMessageHandler(const InboundMessageHandler&) = delete;
     InboundMessageHandler& operator=(const InboundMessageHandler&) = delete;
 
-    /// Encodes and sends when this handler owns the decoded request.
-    /// Returns false without sending when it does not.
+    /// Returns true when this handler owns the request.
+    /// Returns false when it does not. Sending a reply is optional.
     [[nodiscard]] virtual bool try_handle(const companion_protocol::Message& request) = 0;
 
 protected:

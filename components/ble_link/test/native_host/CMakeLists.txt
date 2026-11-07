@@ -15,8 +15,7 @@ add_executable(ble_link
     stubs/esp_err.cpp
     "${BLE_LINK_ROOT}/src/inbound_message_pool.cpp"
     "${BLE_LINK_ROOT}/src/companion_inbound_message_consumer.cpp"
-    "${BLE_LINK_ROOT}/src/inbound_message_router.cpp"
-    "${BLE_LINK_ROOT}/src/send_reply.cpp"
+    "${BLE_LINK_ROOT}/src/companion_message_reply_sender.cpp"
     "${BLE_LINK_ROOT}/src/get_device_info_handler.cpp"
     "${BLE_LINK_ROOT}/src/set_wifi_credentials_handler.cpp"
     "${COMPANION_PROTOCOL_ROOT}/src/message_encoder.cpp"

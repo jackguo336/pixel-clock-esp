@@ -185,7 +185,7 @@ TEST_CASE("payload is preserved through post and receive", "[mailbox]")
     event.type = kTestEvent1;
     event.generation = 11;
     const uint32_t payload = 0xA5A5A5A5;
-    platform::set_payload(event, payload);
+    platform::set_runtime_event_payload(event, payload);
 
     TEST_ASSERT_TRUE(mailbox.post(platform::make_event_message(event), 0));
 
@@ -218,9 +218,9 @@ TEST_CASE("coalesce updates payload of the existing event", "[mailbox]")
     platform::Event first{};
     first.type = kTestEvent1;
     first.coalesce_key = 4;
-    platform::set_payload(first, static_cast<uint32_t>(1));
+    platform::set_runtime_event_payload(first, static_cast<uint32_t>(1));
     platform::Event second = first;
-    platform::set_payload(second, static_cast<uint32_t>(99));
+    platform::set_runtime_event_payload(second, static_cast<uint32_t>(99));
 
     TEST_ASSERT_TRUE(mailbox.post(platform::make_event_message(first), 0));
     TEST_ASSERT_TRUE(mailbox.post(platform::make_event_message(second), 0));
