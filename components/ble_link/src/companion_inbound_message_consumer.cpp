@@ -10,23 +10,23 @@
 namespace ble_link {
 namespace {
 
-// MessageTooShort returns 0. The decoded message is unchanged and has no request id to copy.
-// MessageTooLong returns the request id from the first header when that header decodes, and 0 when it does not.
-// Any other status returns the request id stored on decoded.
-[[nodiscard]] uint16_t request_id_to_echo(std::span<const uint8_t> message, companion_protocol::Status status,
-                                          const companion_protocol::Message& decoded)
+// A message shorter than a header uses request id 0.
+// A message longer than the maximum uses the id in the first header when that header decodes, and 0 when it does not.
+// Every other failure uses the request id the decoder stored.
+void send_decode_error(CompanionMessageReplySender& reply_sender, std::span<const uint8_t> message,
+                       companion_protocol::Status status, const companion_protocol::Message& decoded)
 {
-    if (status == companion_protocol::Status::MessageTooShort) {
-        return 0;
-    }
+    uint16_t request_id = 0;
     if (status == companion_protocol::Status::MessageTooLong) {
         companion_protocol::MessageHeader header{};
-        if (companion_protocol::decode_header(message, header) != companion_protocol::Status::Ok) {
-            return 0;
+        if (companion_protocol::decode_header(message, header) == companion_protocol::Status::Ok) {
+            request_id = header.request_id;
         }
-        return header.request_id;
+    } else if (status != companion_protocol::Status::MessageTooShort) {
+        request_id = decoded.header.request_id;
     }
-    return decoded.header.request_id;
+
+    reply_sender.send_reply(request_id, companion_protocol::MessageBody{companion_protocol::Error{.code = status}});
 }
 
 }  // namespace
@@ -88,8 +88,7 @@ void CompanionInboundMessageConsumer::consume(std::span<const uint8_t> message)
     const companion_protocol::Status status = companion_protocol::decode_message(message, decoded);
     if (status != companion_protocol::Status::Ok) {
         PLATFORM_LOGE(this, "decode failed status=%u", static_cast<unsigned>(status));
-        const uint16_t request_id = request_id_to_echo(message, status, decoded);
-        reply_sender_.send_reply(request_id, companion_protocol::MessageBody{companion_protocol::Error{.code = status}});
+        send_decode_error(reply_sender_, message, status, decoded);
         return;
     }
 
