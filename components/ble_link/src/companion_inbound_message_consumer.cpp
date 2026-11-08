@@ -10,9 +10,7 @@
 namespace ble_link {
 namespace {
 
-// A message shorter than a header uses request id 0.
-// A message longer than the maximum uses the id in the first header when that header decodes, and 0 when it does not.
-// Every other failure uses the request id the decoder stored.
+// The error reply includes the request id when the request can be partly decoded, and uses request id 0 otherwise.
 void send_decode_error(CompanionMessageReplySender& reply_sender, std::span<const uint8_t> message,
                        companion_protocol::Status status, const companion_protocol::Message& decoded)
 {
