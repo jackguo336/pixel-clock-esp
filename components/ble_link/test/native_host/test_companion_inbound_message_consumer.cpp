@@ -66,7 +66,7 @@ std::vector<uint8_t> header_with_request_id(uint8_t version, uint8_t message_typ
     };
 }
 
-ble_link::InboundMessagePoolEntryRef inserted_ref(const std::optional<uint8_t>& entry_index, std::size_t message_length)
+ble_link::InboundMessagePoolEntryRef stored_message_for_event(const std::optional<uint8_t>& entry_index, std::size_t message_length)
 {
     ble_link::InboundMessagePoolEntryRef handoff{};
     handoff.entry_index = entry_index.value_or(0);
@@ -163,7 +163,7 @@ TEST(CompanionInboundMessageConsumer, MessageBeforeConnectRemovesEntry)
     ASSERT_TRUE(entry_index.has_value());
 
     session.consumer.on_event(ble_link::companion_message_received_event(
-        inserted_ref(entry_index, kGetDeviceInfoExample.size())));
+        stored_message_for_event(entry_index, kGetDeviceInfoExample.size())));
 
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
@@ -180,7 +180,7 @@ TEST(CompanionInboundMessageConsumer, MessageAfterDisconnectRemovesEntry)
     const std::optional<uint8_t> entry_index = session.pool.try_insert(kGetDeviceInfoExample);
     ASSERT_TRUE(entry_index.has_value());
     session.consumer.on_event(ble_link::companion_message_received_event(
-        inserted_ref(entry_index, kGetDeviceInfoExample.size())));
+        stored_message_for_event(entry_index, kGetDeviceInfoExample.size())));
 
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
@@ -209,7 +209,7 @@ TEST(CompanionInboundMessageConsumer, DisconnectLeavesAnUndeliveredEntryHeld)
     EXPECT_EQ(session.pool.drop_count(), drops_before + 1);
 
     session.consumer.on_event(ble_link::companion_message_received_event(
-        inserted_ref(second, kSetWifiCredentialsExample.size())));
+        stored_message_for_event(second, kSetWifiCredentialsExample.size())));
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
 
@@ -246,7 +246,7 @@ TEST(CompanionInboundMessageConsumer, MismatchedLengthRemovesEntry)
     const std::optional<uint8_t> entry_index = session.pool.try_insert(kGetDeviceInfoExample);
     ASSERT_TRUE(entry_index.has_value());
 
-    ble_link::InboundMessagePoolEntryRef handoff = inserted_ref(entry_index, kGetDeviceInfoExample.size());
+    ble_link::InboundMessagePoolEntryRef handoff = stored_message_for_event(entry_index, kGetDeviceInfoExample.size());
     handoff.message_length = 1;
     session.consumer.on_event(ble_link::companion_message_received_event(handoff));
 
@@ -281,7 +281,7 @@ TEST(CompanionInboundMessageConsumer, ConnectedSetWifiCredentialsSavesAndAcks)
     const std::optional<uint8_t> entry_index = pool.try_insert(kSetWifiCredentialsExample);
     ASSERT_TRUE(entry_index.has_value());
     consumer.on_event(
-        ble_link::companion_message_received_event(inserted_ref(entry_index, kSetWifiCredentialsExample.size())));
+        ble_link::companion_message_received_event(stored_message_for_event(entry_index, kSetWifiCredentialsExample.size())));
 
     EXPECT_EQ(store.save_count, 1);
     EXPECT_EQ(store.saved.ssid_length, 4);
