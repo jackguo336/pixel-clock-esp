@@ -14,13 +14,13 @@
 
 namespace ble_link {
 
-struct InboundMessagePoolEntryRef {
-    uint8_t entry_index{0};
+struct InboundMessagePoolSlotRef {
+    uint8_t slot_index{0};
     uint8_t message_length{0};
 };
 
-static_assert(std::is_trivially_copyable_v<InboundMessagePoolEntryRef>);
-static_assert(sizeof(InboundMessagePoolEntryRef) < platform::kPayloadCapacity);
+static_assert(std::is_trivially_copyable_v<InboundMessagePoolSlotRef>);
+static_assert(sizeof(InboundMessagePoolSlotRef) < platform::kPayloadCapacity);
 static_assert(companion_protocol::kMaxMessageBytes <= std::numeric_limits<uint8_t>::max());
 
 /**
@@ -84,7 +84,7 @@ static_assert(InboundMessagePool::kCapacity <= std::numeric_limits<uint8_t>::max
     return event;
 }
 
-[[nodiscard]] inline platform::Event companion_message_received_event(InboundMessagePoolEntryRef handoff)
+[[nodiscard]] inline platform::Event companion_message_received_event(InboundMessagePoolSlotRef message_ref)
 {
     platform::Event event{};
     event.type = platform::EventType::CompanionMessageReceived;
@@ -92,7 +92,7 @@ static_assert(InboundMessagePool::kCapacity <= std::numeric_limits<uint8_t>::max
     event.generation = 0;
     event.priority = platform::Priority::Normal;
     event.coalesce_key = 0;
-    platform::set_runtime_event_payload(event, handoff);
+    platform::set_runtime_event_payload(event, message_ref);
     return event;
 }
 

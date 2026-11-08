@@ -66,12 +66,12 @@ std::vector<uint8_t> header_with_request_id(uint8_t version, uint8_t message_typ
     };
 }
 
-ble_link::InboundMessagePoolEntryRef build_message_ref_for_event(const std::optional<uint8_t>& entry_index, std::size_t message_length)
+ble_link::InboundMessagePoolSlotRef build_message_ref_for_event(const std::optional<uint8_t>& slot_index, std::size_t message_length)
 {
-    ble_link::InboundMessagePoolEntryRef handoff{};
-    handoff.entry_index = entry_index.value_or(0);
-    handoff.message_length = static_cast<uint8_t>(message_length);
-    return handoff;
+    ble_link::InboundMessagePoolSlotRef message_ref{};
+    message_ref.slot_index = slot_index.value_or(0);
+    message_ref.message_length = static_cast<uint8_t>(message_length);
+    return message_ref;
 }
 
 }  // namespace
@@ -159,16 +159,16 @@ TEST(CompanionInboundMessageConsumer, DeclinedRequestSendsNothing)
 TEST(CompanionInboundMessageConsumer, MessageBeforeConnectRemovesEntry)
 {
     Session session;
-    const std::optional<uint8_t> entry_index = session.pool.try_insert(kGetDeviceInfoExample);
-    ASSERT_TRUE(entry_index.has_value());
+    const std::optional<uint8_t> slot_index = session.pool.try_insert(kGetDeviceInfoExample);
+    ASSERT_TRUE(slot_index.has_value());
 
     session.consumer.on_event(ble_link::companion_message_received_event(
-        build_message_ref_for_event(entry_index, kGetDeviceInfoExample.size())));
+        build_message_ref_for_event(slot_index, kGetDeviceInfoExample.size())));
 
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
     std::array<uint8_t, ble_link::InboundMessagePool::kMessageBytes> copied{};
-    EXPECT_EQ(session.pool.read_then_free_slot(*entry_index, copied), 0u);
+    EXPECT_EQ(session.pool.read_then_free_slot(*slot_index, copied), 0u);
 }
 
 TEST(CompanionInboundMessageConsumer, MessageAfterDisconnectRemovesEntry)
@@ -177,15 +177,15 @@ TEST(CompanionInboundMessageConsumer, MessageAfterDisconnectRemovesEntry)
     session.consumer.on_event(ble_link::companion_connected_event());
     session.consumer.on_event(ble_link::companion_disconnected_event());
 
-    const std::optional<uint8_t> entry_index = session.pool.try_insert(kGetDeviceInfoExample);
-    ASSERT_TRUE(entry_index.has_value());
+    const std::optional<uint8_t> slot_index = session.pool.try_insert(kGetDeviceInfoExample);
+    ASSERT_TRUE(slot_index.has_value());
     session.consumer.on_event(ble_link::companion_message_received_event(
-        build_message_ref_for_event(entry_index, kGetDeviceInfoExample.size())));
+        build_message_ref_for_event(slot_index, kGetDeviceInfoExample.size())));
 
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
     std::array<uint8_t, ble_link::InboundMessagePool::kMessageBytes> copied{};
-    EXPECT_EQ(session.pool.read_then_free_slot(*entry_index, copied), 0u);
+    EXPECT_EQ(session.pool.read_then_free_slot(*slot_index, copied), 0u);
 }
 
 TEST(CompanionInboundMessageConsumer, DisconnectLeavesAnUndeliveredEntryHeld)
@@ -222,9 +222,9 @@ TEST(CompanionInboundMessageConsumer, ZeroPayloadSizeDoesNotRemoveEntryZero)
 {
     Session session;
     session.consumer.on_event(ble_link::companion_connected_event());
-    const std::optional<uint8_t> entry_index = session.pool.try_insert(kGetDeviceInfoExample);
-    ASSERT_TRUE(entry_index.has_value());
-    ASSERT_EQ(*entry_index, 0);
+    const std::optional<uint8_t> slot_index = session.pool.try_insert(kGetDeviceInfoExample);
+    ASSERT_TRUE(slot_index.has_value());
+    ASSERT_EQ(*slot_index, 0);
 
     platform::Event event{};
     event.type = platform::EventType::CompanionMessageReceived;
@@ -243,17 +243,17 @@ TEST(CompanionInboundMessageConsumer, MismatchedLengthRemovesEntry)
 {
     Session session;
     session.consumer.on_event(ble_link::companion_connected_event());
-    const std::optional<uint8_t> entry_index = session.pool.try_insert(kGetDeviceInfoExample);
-    ASSERT_TRUE(entry_index.has_value());
+    const std::optional<uint8_t> slot_index = session.pool.try_insert(kGetDeviceInfoExample);
+    ASSERT_TRUE(slot_index.has_value());
 
-    ble_link::InboundMessagePoolEntryRef handoff = build_message_ref_for_event(entry_index, kGetDeviceInfoExample.size());
-    handoff.message_length = 1;
-    session.consumer.on_event(ble_link::companion_message_received_event(handoff));
+    ble_link::InboundMessagePoolSlotRef message_ref = build_message_ref_for_event(slot_index, kGetDeviceInfoExample.size());
+    message_ref.message_length = 1;
+    session.consumer.on_event(ble_link::companion_message_received_event(message_ref));
 
     EXPECT_EQ(session.handler.try_handle_count, 0);
     EXPECT_EQ(session.transport.send_count, 0);
     std::array<uint8_t, ble_link::InboundMessagePool::kMessageBytes> copied{};
-    EXPECT_EQ(session.pool.read_then_free_slot(*entry_index, copied), 0u);
+    EXPECT_EQ(session.pool.read_then_free_slot(*slot_index, copied), 0u);
 }
 
 TEST(CompanionInboundMessageConsumer, TickDoesNotCallTheHandler)
@@ -278,10 +278,10 @@ TEST(CompanionInboundMessageConsumer, ConnectedSetWifiCredentialsSavesAndAcks)
     ble_link::CompanionInboundMessageConsumer consumer(pool, handlers, reply_sender);
 
     consumer.on_event(ble_link::companion_connected_event());
-    const std::optional<uint8_t> entry_index = pool.try_insert(kSetWifiCredentialsExample);
-    ASSERT_TRUE(entry_index.has_value());
+    const std::optional<uint8_t> slot_index = pool.try_insert(kSetWifiCredentialsExample);
+    ASSERT_TRUE(slot_index.has_value());
     consumer.on_event(
-        ble_link::companion_message_received_event(build_message_ref_for_event(entry_index, kSetWifiCredentialsExample.size())));
+        ble_link::companion_message_received_event(build_message_ref_for_event(slot_index, kSetWifiCredentialsExample.size())));
 
     EXPECT_EQ(store.save_count, 1);
     EXPECT_EQ(store.saved.ssid_length, 4);

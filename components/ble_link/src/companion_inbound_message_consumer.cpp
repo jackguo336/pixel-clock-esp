@@ -57,20 +57,20 @@ void CompanionInboundMessageConsumer::on_event(const platform::Event& event)
         return;
     }
 
-    // A payload of any other size is not a handoff. payload_size 0 is not slot 0.
-    if (event.payload_size != sizeof(InboundMessagePoolEntryRef)) {
+    // A payload of any other size is not a message ref. payload_size 0 is not slot 0.
+    if (event.payload_size != sizeof(InboundMessagePoolSlotRef)) {
         PLATFORM_LOGW(this, "message event payload is %u bytes", static_cast<unsigned>(event.payload_size));
         return;
     }
 
-    InboundMessagePoolEntryRef handoff{};
-    std::memcpy(&handoff, event.payload, sizeof(handoff));
+    InboundMessagePoolSlotRef message_ref{};
+    std::memcpy(&message_ref, event.payload, sizeof(message_ref));
 
     std::array<uint8_t, companion_protocol::kMaxMessageBytes> message_bytes{};
-    const std::size_t copied_length = inbound_messages_.read_then_free_slot(handoff.entry_index, message_bytes);
-    if (copied_length != handoff.message_length) {
-        PLATFORM_LOGW(this, "slot %u copied %u expected %u", static_cast<unsigned>(handoff.entry_index),
-                      static_cast<unsigned>(copied_length), static_cast<unsigned>(handoff.message_length));
+    const std::size_t copied_length = inbound_messages_.read_then_free_slot(message_ref.slot_index, message_bytes);
+    if (copied_length != message_ref.message_length) {
+        PLATFORM_LOGW(this, "slot %u copied %u expected %u", static_cast<unsigned>(message_ref.slot_index),
+                      static_cast<unsigned>(copied_length), static_cast<unsigned>(message_ref.message_length));
         return;
     }
     if (!companion_connected_) {

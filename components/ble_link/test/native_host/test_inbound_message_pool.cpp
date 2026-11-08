@@ -11,11 +11,11 @@
 namespace {
 
 using ble_link::InboundMessagePool;
-using ble_link::InboundMessagePoolEntryRef;
+using ble_link::InboundMessagePoolSlotRef;
 
-std::size_t read_entry(InboundMessagePool& pool, uint8_t entry_index, std::span<uint8_t> out)
+std::size_t read_entry(InboundMessagePool& pool, uint8_t slot_index, std::span<uint8_t> out)
 {
-    return pool.read_then_free_slot(entry_index, out);
+    return pool.read_then_free_slot(slot_index, out);
 }
 
 }  // namespace
@@ -124,19 +124,19 @@ TEST(InboundMessagePool, RemoveLeavesDropCountAndShortReadDropsBytes)
 
 TEST(InboundMessagePool, CompanionEventsCarryHandoffWithoutCoalescing)
 {
-    const InboundMessagePoolEntryRef handoff{.entry_index = 2, .message_length = 15};
-    const platform::Event message = ble_link::companion_message_received_event(handoff);
+    const InboundMessagePoolSlotRef message_ref{.slot_index = 2, .message_length = 15};
+    const platform::Event message = ble_link::companion_message_received_event(message_ref);
     EXPECT_EQ(message.type, platform::EventType::CompanionMessageReceived);
     EXPECT_EQ(message.coalesce_key, 0);
     EXPECT_EQ(message.priority, platform::Priority::Normal);
     EXPECT_EQ(message.generation, 0u);
     EXPECT_EQ(message.source, nullptr);
-    ASSERT_EQ(message.payload_size, sizeof(handoff));
+    ASSERT_EQ(message.payload_size, sizeof(message_ref));
 
-    InboundMessagePoolEntryRef copied{};
+    InboundMessagePoolSlotRef copied{};
     std::memcpy(&copied, message.payload, sizeof(copied));
-    EXPECT_EQ(copied.entry_index, handoff.entry_index);
-    EXPECT_EQ(copied.message_length, handoff.message_length);
+    EXPECT_EQ(copied.slot_index, message_ref.slot_index);
+    EXPECT_EQ(copied.message_length, message_ref.message_length);
 
     const platform::Event connected = ble_link::companion_connected_event();
     EXPECT_EQ(connected.type, platform::EventType::CompanionConnected);
