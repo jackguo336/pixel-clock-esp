@@ -1,6 +1,6 @@
 #pragma once
 
-#include "settings/wifi_credentials_store.hpp"
+#include "settings/nvs_wifi_credentials_store.hpp"
 
 #include "nvs.h"
 

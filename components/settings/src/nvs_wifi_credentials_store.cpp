@@ -1,4 +1,4 @@
-#include "settings/wifi_credentials_store.hpp"
+#include "settings/nvs_wifi_credentials_store.hpp"
 
 #include <algorithm>
 #include <array>
@@ -94,7 +94,7 @@ esp_err_t decode(const uint8_t* record, std::size_t size, WifiCredentials& crede
 
 }  // namespace
 
-esp_err_t WifiCredentialsStore::save(const WifiCredentials& credentials) const
+esp_err_t NvsWifiCredentialsStore::save(const WifiCredentials& credentials) const
 {
     if (!lengths_within_bounds(credentials)) {
         log_failure("save", ESP_ERR_INVALID_ARG);
@@ -125,7 +125,7 @@ esp_err_t WifiCredentialsStore::save(const WifiCredentials& credentials) const
     return commit_err;
 }
 
-esp_err_t WifiCredentialsStore::load(WifiCredentials& credentials) const
+esp_err_t NvsWifiCredentialsStore::load(WifiCredentials& credentials) const
 {
     OpenedNvsHandle nvs;
     const esp_err_t open_err = nvs.open(NVS_READONLY);
@@ -166,7 +166,7 @@ esp_err_t WifiCredentialsStore::load(WifiCredentials& credentials) const
     return ESP_OK;
 }
 
-esp_err_t WifiCredentialsStore::clear() const
+esp_err_t NvsWifiCredentialsStore::clear() const
 {
     OpenedNvsHandle nvs;
     const esp_err_t open_err = nvs.open(NVS_READWRITE);

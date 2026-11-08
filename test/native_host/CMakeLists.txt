@@ -37,6 +37,7 @@ set(NATIVE_HOST_TEST_COMPONENTS
     file_system
     display
     companion_protocol
+    ble_link
 )
 
 foreach(component IN LISTS NATIVE_HOST_TEST_COMPONENTS)

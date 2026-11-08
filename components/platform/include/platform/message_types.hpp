@@ -9,6 +9,9 @@ enum class EventType : uint16_t {
     Tick = 1,
     TicksPaused = 2,
     RefreshDisplay = 3,
+    CompanionMessageReceived = 4,
+    CompanionConnected = 5,
+    CompanionDisconnected = 6,
 };
 
 enum class CommandType : uint16_t {

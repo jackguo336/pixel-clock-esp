@@ -7,7 +7,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "settings/nvs_init.hpp"
-#include "settings/wifi_credentials_store.hpp"
+#include "settings/nvs_wifi_credentials_store.hpp"
 
 namespace {
 
@@ -67,14 +67,14 @@ extern "C" void __real_setUp(void);
 extern "C" void __wrap_setUp(void)
 {
     TEST_ASSERT_EQUAL(ESP_OK, settings::initialize_nvs());
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.clear());
     __real_setUp();
 }
 
 TEST_CASE("save and load return the same credential bytes", "[settings]")
 {
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
 
     settings::WifiCredentials full =
         make_credentials(settings::kMaxSsidBytes, settings::kMaxPassphraseBytes, 0x5A, 0xA5);
@@ -102,7 +102,7 @@ TEST_CASE("save and load keep an empty passphrase", "[settings]")
     saved.passphrase_length = 0;
     const settings::WifiCredentials expected = make_credentials(6, 0, 'n', 0);
 
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
 
     settings::WifiCredentials output = placeholder_credentials();
@@ -114,7 +114,7 @@ TEST_CASE("save and load keep an empty passphrase", "[settings]")
 TEST_CASE("clear removes saved credentials", "[settings]")
 {
     const settings::WifiCredentials saved = make_credentials(4, 4, 3, 4);
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
     TEST_ASSERT_EQUAL(ESP_OK, store.clear());
 
@@ -131,14 +131,14 @@ TEST_CASE("load when nothing has been saved returns not found", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, nvs_flash_erase());
     TEST_ASSERT_EQUAL(ESP_OK, settings::initialize_nvs());
 
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     assert_load_error(store, ESP_ERR_NVS_NOT_FOUND);
 }
 
 TEST_CASE("save rejects lengths outside the store limits", "[settings]")
 {
     const settings::WifiCredentials saved = make_credentials(8, 12, 9, 10);
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
 
     settings::WifiCredentials rejected = saved;
@@ -164,7 +164,7 @@ TEST_CASE("a second save replaces the first", "[settings]")
         make_credentials(settings::kMaxSsidBytes, settings::kMaxPassphraseBytes, 0x21, 0x41);
     const settings::WifiCredentials second = make_credentials(3, 1, 'a', 'Z');
 
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(first));
     TEST_ASSERT_EQUAL(ESP_OK, store.save(second));
 
@@ -175,14 +175,14 @@ TEST_CASE("a second save replaces the first", "[settings]")
 
 TEST_CASE("clear on an empty store returns ok", "[settings]")
 {
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.clear());
     assert_load_error(store, ESP_ERR_NVS_NOT_FOUND);
 }
 
 TEST_CASE("load rejects a blob with a bad version or length", "[settings]")
 {
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
 
     const uint8_t version_two[] = {2, 1, 'z', 0};
     TEST_ASSERT_EQUAL(ESP_OK, store_credentials_blob(version_two, sizeof(version_two)));
@@ -223,7 +223,7 @@ TEST_CASE("initialize_nvs again does not erase saved credentials", "[settings]")
     TEST_ASSERT_EQUAL(ESP_OK, settings::initialize_nvs());
 
     const settings::WifiCredentials saved = make_credentials(8, 10, 1, 2);
-    settings::WifiCredentialsStore store;
+    settings::NvsWifiCredentialsStore store;
     TEST_ASSERT_EQUAL(ESP_OK, store.save(saved));
     TEST_ASSERT_EQUAL(ESP_OK, settings::initialize_nvs());
 
