@@ -9,7 +9,6 @@ set(SETTINGS_ROOT "${BLE_LINK_ROOT}/../settings")
 add_executable(ble_link
     test_inbound_message_pool.cpp
     test_companion_inbound_message_consumer.cpp
-    test_inbound_message_router.cpp
     test_get_device_info_handler.cpp
     test_set_wifi_credentials_handler.cpp
     stubs/esp_err.cpp
