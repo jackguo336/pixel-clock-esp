@@ -29,6 +29,7 @@ add_executable(ble_link
 
 target_include_directories(ble_link
     PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/stubs"
         "${BLE_LINK_ROOT}/include"
         "${COMPANION_PROTOCOL_ROOT}/include"

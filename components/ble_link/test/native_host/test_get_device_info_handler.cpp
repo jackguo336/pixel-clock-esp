@@ -5,22 +5,10 @@
 #include <vector>
 
 #include "ble_link/get_device_info_handler.hpp"
+#include "fake_message_transport.hpp"
 #include "gtest/gtest.h"
 
 namespace {
-
-class RecordingMessageTransport : public ble_link::MessageTransport {
-public:
-    bool send(std::span<const uint8_t> message) override
-    {
-        ++send_count;
-        sent.assign(message.begin(), message.end());
-        return true;
-    }
-
-    int send_count{0};
-    std::vector<uint8_t> sent;
-};
 
 template <typename Body>
 companion_protocol::Message request_with(Body body, uint16_t request_id)
@@ -41,7 +29,7 @@ const std::vector<uint8_t> kDeviceInfoExample{
 
 TEST(GetDeviceInfoHandler, RepliesWithProtocolExample)
 {
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     ble_link::CompanionMessageReplySender reply_sender(transport);
     ble_link::GetDeviceInfoHandler handler(reply_sender, kFirmwareVersion);
 
@@ -54,7 +42,7 @@ TEST(GetDeviceInfoHandler, RepliesWithProtocolExample)
 
 TEST(GetDeviceInfoHandler, EchoesRequestIdZero)
 {
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     ble_link::CompanionMessageReplySender reply_sender(transport);
     ble_link::GetDeviceInfoHandler handler(reply_sender, kFirmwareVersion);
 
@@ -67,7 +55,7 @@ TEST(GetDeviceInfoHandler, EchoesRequestIdZero)
 
 TEST(GetDeviceInfoHandler, OverlongFirmwareVersionStaysEmpty)
 {
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     std::array<uint8_t, companion_protocol::kMaxFirmwareVersionBytes + 1> firmware_version{};
     firmware_version.fill('1');
     ble_link::CompanionMessageReplySender reply_sender(transport);
@@ -80,7 +68,7 @@ TEST(GetDeviceInfoHandler, OverlongFirmwareVersionStaysEmpty)
 
 TEST(GetDeviceInfoHandler, IgnoresOtherBodies)
 {
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     ble_link::CompanionMessageReplySender reply_sender(transport);
     ble_link::GetDeviceInfoHandler handler(reply_sender, kFirmwareVersion);
 

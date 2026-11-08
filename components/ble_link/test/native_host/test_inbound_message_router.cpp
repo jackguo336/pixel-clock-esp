@@ -6,6 +6,7 @@
 
 #include "ble_link/companion_inbound_message_consumer.hpp"
 #include "companion_protocol/message_encoder.hpp"
+#include "fake_message_transport.hpp"
 #include "gtest/gtest.h"
 
 namespace {
@@ -38,18 +39,6 @@ private:
     std::vector<int>& call_order_;
 };
 
-class RecordingMessageTransport : public ble_link::MessageTransport {
-public:
-    bool send(std::span<const uint8_t> message) override
-    {
-        (void)message;
-        ++send_count;
-        return true;
-    }
-
-    int send_count{0};
-};
-
 void consume_device_info(ble_link::CompanionInboundMessageConsumer& consumer)
 {
     Message request{};
@@ -68,7 +57,7 @@ TEST(CompanionInboundMessageConsumer, SecondHandlerOwnsRequestWhenFirstDeclines)
     std::vector<int> call_order;
     ScriptedHandler first(false, 1, call_order);
     ScriptedHandler second(true, 2, call_order);
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     ble_link::CompanionMessageReplySender reply_sender(transport);
     ble_link::InboundMessagePool pool;
     ble_link::InboundMessageHandler* const handlers[] = {&first, &second};
@@ -89,7 +78,7 @@ TEST(CompanionInboundMessageConsumer, FirstHandlerOwnsRequestAndStopsTheWalk)
     std::vector<int> call_order;
     ScriptedHandler first(true, 1, call_order);
     ScriptedHandler second(true, 2, call_order);
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     ble_link::CompanionMessageReplySender reply_sender(transport);
     ble_link::InboundMessagePool pool;
     ble_link::InboundMessageHandler* const handlers[] = {&first, &second};
@@ -107,7 +96,7 @@ TEST(CompanionInboundMessageConsumer, EveryHandlerDecliningSendsNothing)
     std::vector<int> call_order;
     ScriptedHandler first(false, 1, call_order);
     ScriptedHandler second(false, 2, call_order);
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     ble_link::CompanionMessageReplySender reply_sender(transport);
     ble_link::InboundMessagePool pool;
     ble_link::InboundMessageHandler* const handlers[] = {&first, &second};

@@ -11,6 +11,9 @@
 #include "ble_link/companion_inbound_message_consumer.hpp"
 #include "ble_link/set_wifi_credentials_handler.hpp"
 #include "companion_protocol/message_decoder.hpp"
+#include "fake_inbound_message_handler.hpp"
+#include "fake_message_transport.hpp"
+#include "fake_wifi_credentials_store.hpp"
 #include "gtest/gtest.h"
 
 namespace {
@@ -26,66 +29,16 @@ const std::vector<uint8_t> kSetWifiCredentialsExample{
 
 const std::vector<uint8_t> kAckOkExample{0x01, 0x80, 0x00, 0x34, 0x12, 0x01, 0x00, 0x00};
 
-class RecordingMessageTransport : public ble_link::MessageTransport {
-public:
-    bool send(std::span<const uint8_t> message) override
-    {
-        ++send_count;
-        sent.assign(message.begin(), message.end());
-        return true;
-    }
-
-    int send_count{0};
-    std::vector<uint8_t> sent;
-};
-
-class RecordingInboundMessageHandler : public ble_link::InboundMessageHandler {
-public:
-    bool try_handle(const companion_protocol::Message& request) override
-    {
-        ++try_handle_count;
-        last_request = request;
-        return claims_request;
-    }
-
-    bool claims_request{true};
-    int try_handle_count{0};
-    companion_protocol::Message last_request{};
-};
-
-class ProgrammedWifiCredentialsStore : public settings::WifiCredentialsStore {
-public:
-    esp_err_t save(const settings::WifiCredentials& credentials) const override
-    {
-        ++save_count;
-        saved = credentials;
-        return ESP_OK;
-    }
-
-    esp_err_t load(settings::WifiCredentials&) const override
-    {
-        return ESP_FAIL;
-    }
-
-    esp_err_t clear() const override
-    {
-        return ESP_FAIL;
-    }
-
-    mutable int save_count{0};
-    mutable settings::WifiCredentials saved{};
-};
-
 struct Session {
-    RecordingInboundMessageHandler handler{};
-    RecordingMessageTransport transport{};
+    FakeInboundMessageHandler handler{};
+    FakeMessageTransport transport{};
     ble_link::InboundMessagePool pool{};
     ble_link::CompanionMessageReplySender reply_sender{transport};
     ble_link::InboundMessageHandler* const handlers[1]{&handler};
     ble_link::CompanionInboundMessageConsumer consumer{pool, handlers, reply_sender};
 };
 
-void expect_error(const RecordingMessageTransport& transport, companion_protocol::Status code, uint16_t request_id)
+void expect_error(const FakeMessageTransport& transport, companion_protocol::Status code, uint16_t request_id)
 {
     ASSERT_EQ(transport.send_count, 1);
     companion_protocol::Message reply{};
@@ -316,9 +269,9 @@ TEST(CompanionInboundMessageConsumer, TickDoesNotCallTheHandler)
 
 TEST(CompanionInboundMessageConsumer, ConnectedSetWifiCredentialsSavesAndAcks)
 {
-    RecordingMessageTransport transport;
+    FakeMessageTransport transport;
     ble_link::CompanionMessageReplySender reply_sender(transport);
-    ProgrammedWifiCredentialsStore store;
+    FakeWifiCredentialsStore store;
     ble_link::SetWifiCredentialsHandler handler(reply_sender, store);
     ble_link::InboundMessagePool pool;
     ble_link::InboundMessageHandler* const handlers[] = {&handler};
