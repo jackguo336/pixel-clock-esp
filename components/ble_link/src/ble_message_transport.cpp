@@ -37,12 +37,12 @@ struct HostLinkState {
 HostLinkState host_link;
 bool start_attempted = false;
 
-constexpr ble_uuid128_t make_ble_uuid128(const std::array<uint8_t, 16>& air_bytes)
+constexpr ble_uuid128_t make_ble_uuid128(const std::array<uint8_t, 16>& little_endian_bytes)
 {
     ble_uuid128_t uuid{};
     uuid.u.type = BLE_UUID_TYPE_128;
-    for (std::size_t i = 0; i < air_bytes.size(); ++i) {
-        uuid.value[i] = air_bytes[i];
+    for (std::size_t i = 0; i < little_endian_bytes.size(); ++i) {
+        uuid.value[i] = little_endian_bytes[i];
     }
     return uuid;
 }

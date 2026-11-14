@@ -7,7 +7,7 @@
 
 namespace ble_link {
 
-namespace uuid_air_bytes_detail {
+namespace uuid_text_converter_detail {
 
 // Not constexpr and never defined: reaching it while computing a UUID constant
 // stops the build.
@@ -36,22 +36,22 @@ consteval bool is_hyphen_offset(std::size_t offset)
     return false;
 }
 
-}  // namespace uuid_air_bytes_detail
+}  // namespace uuid_text_converter_detail
 
 /// Reads lowercase 8-4-4-4-12 UUID text, the form iOS passes to CBUUID, and
-/// returns the bytes in the order they travel on the air: the text order
-/// reversed. Malformed text fails the build.
-consteval std::array<uint8_t, 16> uuid_air_bytes_from_text(std::string_view text)
+/// returns its bytes little-endian, the order Bluetooth sends them: the text
+/// order reversed. Malformed text fails the build.
+consteval std::array<uint8_t, 16> uuid_text_to_little_endian_bytes(std::string_view text)
 {
-    namespace detail = uuid_air_bytes_detail;
+    namespace detail = uuid_text_converter_detail;
 
     constexpr std::size_t kUuidTextLength = 36;
     if (text.size() != kUuidTextLength) {
         detail::reject_malformed_uuid_text();
     }
 
-    std::array<uint8_t, 16> air_bytes{};
-    std::size_t next_air_index = air_bytes.size();
+    std::array<uint8_t, 16> little_endian_bytes{};
+    std::size_t next_byte_index = little_endian_bytes.size();
     for (std::size_t offset = 0; offset < text.size();) {
         if (detail::is_hyphen_offset(offset)) {
             if (text[offset] != '-') {
@@ -62,10 +62,10 @@ consteval std::array<uint8_t, 16> uuid_air_bytes_from_text(std::string_view text
         }
         const uint8_t high = detail::hex_digit_value(text[offset]);
         const uint8_t low = detail::hex_digit_value(text[offset + 1]);
-        air_bytes[--next_air_index] = static_cast<uint8_t>((high << 4) | low);
+        little_endian_bytes[--next_byte_index] = static_cast<uint8_t>((high << 4) | low);
         offset += 2;
     }
-    return air_bytes;
+    return little_endian_bytes;
 }
 
 }  // namespace ble_link
