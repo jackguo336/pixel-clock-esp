@@ -13,7 +13,6 @@ add_executable(ble_link
     test_companion_inbound_message_consumer.cpp
     test_get_device_info_handler.cpp
     test_set_wifi_credentials_handler.cpp
-    test_companion_gatt_ids.cpp
     test_legacy_advertising.cpp
     stubs/esp_err.cpp
     "${BLE_LINK_ROOT}/src/inbound_message_pool.cpp"
