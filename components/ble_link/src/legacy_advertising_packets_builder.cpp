@@ -1,4 +1,4 @@
-#include "ble_link/legacy_advertising.hpp"
+#include "ble_link/legacy_advertising_packets_builder.hpp"
 
 #include <algorithm>
 

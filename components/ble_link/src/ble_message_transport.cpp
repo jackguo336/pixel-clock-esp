@@ -7,7 +7,7 @@
 
 #include "ble_link/companion_gatt_ids.hpp"
 #include "ble_link/inbound_message_pool.hpp"
-#include "ble_link/legacy_advertising.hpp"
+#include "ble_link/legacy_advertising_packets_builder.hpp"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "host/ble_hs.h"

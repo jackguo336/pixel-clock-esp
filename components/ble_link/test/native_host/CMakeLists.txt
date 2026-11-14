@@ -20,7 +20,7 @@ add_executable(ble_link
     "${BLE_LINK_ROOT}/src/companion_message_reply_sender.cpp"
     "${BLE_LINK_ROOT}/src/get_device_info_handler.cpp"
     "${BLE_LINK_ROOT}/src/set_wifi_credentials_handler.cpp"
-    "${BLE_LINK_ROOT}/src/legacy_advertising.cpp"
+    "${BLE_LINK_ROOT}/src/legacy_advertising_packets_builder.cpp"
     "${COMPANION_PROTOCOL_ROOT}/src/message_encoder.cpp"
     "${COMPANION_PROTOCOL_ROOT}/src/message_decoder.cpp"
     "${COMPANION_PROTOCOL_ROOT}/src/get_device_info.cpp"

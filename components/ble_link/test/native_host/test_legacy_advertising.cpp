@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include "ble_link/companion_gatt_ids.hpp"
-#include "ble_link/legacy_advertising.hpp"
+#include "ble_link/legacy_advertising_packets_builder.hpp"
 #include "gtest/gtest.h"
 
 namespace {
