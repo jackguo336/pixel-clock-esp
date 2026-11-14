@@ -1,10 +1,10 @@
 #include "ble_link/ble_message_transport.hpp"
 
-#include <array>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 
+#include "companion_gatt_service_definitions.hpp"
 #include "ble_link/companion_gatt_ids.hpp"
 #include "ble_link/inbound_message_pool.hpp"
 #include "ble_link/legacy_advertising_packets_builder.hpp"
@@ -36,60 +36,6 @@ struct HostLinkState {
 
 HostLinkState host_link;
 bool start_attempted = false;
-
-constexpr ble_uuid128_t make_ble_uuid128(const std::array<uint8_t, 16>& little_endian_bytes)
-{
-    ble_uuid128_t uuid{};
-    uuid.u.type = BLE_UUID_TYPE_128;
-    for (std::size_t i = 0; i < little_endian_bytes.size(); ++i) {
-        uuid.value[i] = little_endian_bytes[i];
-    }
-    return uuid;
-}
-
-constexpr ble_uuid128_t kCompanionServiceBleUuid = make_ble_uuid128(kCompanionServiceUuid);
-constexpr ble_uuid128_t kInboundCharacteristicBleUuid = make_ble_uuid128(kInboundCharacteristicUuid);
-constexpr ble_uuid128_t kOutboundCharacteristicBleUuid = make_ble_uuid128(kOutboundCharacteristicUuid);
-
-int refuse_characteristic_access(uint16_t connection_handle,
-                                 uint16_t attribute_handle,
-                                 ble_gatt_access_ctxt* context,
-                                 void* unused);
-
-// NimBLE keeps pointers into these tables after registration.
-const ble_gatt_chr_def kCompanionCharacteristics[] = {
-    {
-        .uuid = &kInboundCharacteristicBleUuid.u,
-        .access_cb = refuse_characteristic_access,
-        .arg = nullptr,
-        .descriptors = nullptr,
-        .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_ENC,
-        .min_key_size = 0,
-        .val_handle = nullptr,
-        .cpfd = nullptr,
-    },
-    {
-        .uuid = &kOutboundCharacteristicBleUuid.u,
-        .access_cb = refuse_characteristic_access,
-        .arg = nullptr,
-        .descriptors = nullptr,
-        .flags = BLE_GATT_CHR_F_NOTIFY | BLE_GATT_CHR_F_NOTIFY_INDICATE_ENC,
-        .min_key_size = 0,
-        .val_handle = nullptr,
-        .cpfd = nullptr,
-    },
-    {},
-};
-
-const ble_gatt_svc_def kCompanionServices[] = {
-    {
-        .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid = &kCompanionServiceBleUuid.u,
-        .includes = nullptr,
-        .characteristics = kCompanionCharacteristics,
-    },
-    {},
-};
 
 void post_link_event(const platform::Event& event)
 {
@@ -220,20 +166,6 @@ int on_gap_event(ble_gap_event* event, void* unused)
     }
 }
 
-int refuse_characteristic_access(uint16_t connection_handle,
-                                 uint16_t attribute_handle,
-                                 ble_gatt_access_ctxt* context,
-                                 void* unused)
-{
-    (void)attribute_handle;
-    (void)unused;
-    if (context->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
-        ESP_LOGW(kTag, "refused a %u-byte companion write on connection %u",
-                 static_cast<unsigned>(OS_MBUF_PKTLEN(context->om)), static_cast<unsigned>(connection_handle));
-    }
-    return BLE_ATT_ERR_UNLIKELY;
-}
-
 void on_sync()
 {
     int rc = ble_hs_util_ensure_addr(0);
@@ -264,6 +196,20 @@ void host_task_entry(void* unused)
 }
 
 }  // namespace
+
+int refuse_characteristic_access(uint16_t connection_handle,
+                                 uint16_t attribute_handle,
+                                 ble_gatt_access_ctxt* context,
+                                 void* unused)
+{
+    (void)attribute_handle;
+    (void)unused;
+    if (context->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
+        ESP_LOGW(kTag, "refused a %u-byte companion write on connection %u",
+                 static_cast<unsigned>(OS_MBUF_PKTLEN(context->om)), static_cast<unsigned>(connection_handle));
+    }
+    return BLE_ATT_ERR_UNLIKELY;
+}
 
 bool BleMessageTransport::start()
 {
