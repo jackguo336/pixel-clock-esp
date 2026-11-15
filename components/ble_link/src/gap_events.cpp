@@ -67,6 +67,8 @@ void handle_disconnect(int reason, uint16_t connection_handle)
     gap_advertise();
 }
 
+// The link between the phone and the pixel clock becomes encrypted after pairing
+// succeeds, or stops being encrypted if that fails. A failed change ends the connection.
 void handle_encryption_change(int status, uint16_t connection_handle)
 {
     if (status == 0) {
