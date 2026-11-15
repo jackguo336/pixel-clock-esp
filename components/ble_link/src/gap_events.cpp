@@ -77,6 +77,8 @@ void handle_encryption_change(int status, uint16_t connection_handle)
     end_link(connection_handle, BLE_ERR_REM_USER_CONN_TERM);
 }
 
+// A phone that already paired is trying to pair again. The pixel clock deletes
+// that phone's saved keys and lets the pair start over.
 int handle_repeat_pairing(uint16_t connection_handle)
 {
     ble_gap_conn_desc connection{};
