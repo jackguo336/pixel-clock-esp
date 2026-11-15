@@ -1,3 +1,4 @@
+#include "ble_link/ble_message_transport.hpp"
 #include "display.hpp"
 #include "file_system/assets_fs.hpp"
 #include "platform/runtime.hpp"
@@ -34,4 +35,9 @@ extern "C" void app_main(void)
     refresh.coalesce_key = kRefreshCoalesceKey;
     (void)runtime.scheduler().every(kRefreshPeriod, refresh);
     runtime.start();
+
+    static ble_link::BleMessageTransport ble_message_transport;
+    if (!ble_message_transport.start()) {
+        ESP_LOGE(kTag, "BLE companion link did not start");
+    }
 }

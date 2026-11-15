@@ -2,8 +2,10 @@
 
 ESP32-C6 firmware for a pixel clock. Boot mounts an asset partition and
 presents a test bitmap on the LED matrix. The platform runtime is a single
-control task, a bounded event/command mailbox, and a timer scheduler. Wi-Fi,
-BLE, weather, and OTA are not implemented yet.
+control task, a bounded event/command mailbox, and a timer scheduler. The
+clock advertises over Bluetooth LE as `Pixel Clock` and accepts and pairs one
+companion connection. Companion messages, Wi-Fi, weather, and OTA are not
+implemented yet.
 
 Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
@@ -16,7 +18,7 @@ Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 - `components/display/` — LED matrix output; loads the test bitmap and presents it
 - `components/companion_protocol/` — message codec for the iOS companion link
 - `components/settings/` — NVS initialization, `WifiCredentialsStore`, and `NvsWifiCredentialsStore`
-- `components/ble_link/` — companion session, the inbound message pool, and inbound message routing
+- `components/ble_link/` — NimBLE peripheral (`BleMessageTransport`), companion session, the inbound message pool, and inbound message routing
 - `components/<name>/test/native_host/` — GoogleTest cases owned by that component
 - `components/<name>/test/embedded/` — Unity cases and mocks owned by that component
 - `test/native_host/` — shared GoogleTest/CTest runner (no ESP-IDF; no `test_*.cpp`)
@@ -45,6 +47,15 @@ element at the origin, and initialized the LED matrix. Each event clears the
 32×8 framebuffer, renders that element, and presents the frame. The event
 `coalesce_key` replaces a queued refresh when a frame is still waiting, so the
 mailbox keeps a single pending frame. The control task runs every step.
+
+After `runtime.start()`, `app_main` starts `BleMessageTransport`. NimBLE runs on
+its own host task: it advertises, accepts one phone, starts Just Works pairing,
+and posts `CompanionConnected` and `CompanionDisconnected` to the runtime
+mailbox. Advertising restarts after a disconnect. A write to the inbound
+characteristic is refused. The companion session is not registered, so nothing
+consumes those events yet, and the test bitmap keeps rendering. Bonds live in
+RAM until power-off. NVS is not initialized at boot, so the PHY logs that its
+calibration data cannot be loaded and runs a full calibration.
 
 ## Tests
 

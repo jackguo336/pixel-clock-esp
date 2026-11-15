@@ -8,10 +8,17 @@ The device is the Bluetooth peripheral. The companion is the central. One connec
 
 | Item | Value |
 | --- | --- |
-| GATT service UUID | **TBD (stage 4)** |
-| Inbound characteristic (companion writes a request) | **TBD (stage 4)** |
-| Outbound characteristic (device notifies a reply) | **TBD (stage 4)** |
+| Device name | `Pixel Clock` |
+| GATT service UUID | `0833bf0e-f5b9-48aa-b1e5-f2302081b62f` |
+| Inbound characteristic (companion writes a request) | `8477f4a4-5ec0-4ee8-9721-5c0f922cd089`, write with response, encryption required |
+| Outbound characteristic (device notifies a reply) | `929fa0c1-08a7-4b77-bd04-a62a88652607`, notify, encryption required |
 | MTU chunking and reassembly | **TBD (stage 5)** |
+
+UUIDs are written in the text form `CBUUID` takes. On the air each UUID is those 16 bytes in reverse order.
+
+The device advertises the service UUID and puts the name in the scan response. It accepts one connection at a time. On connect the device asks to pair with LE Secure Connections Just Works: iOS shows the system pairing dialog with no PIN. The link is encrypted, without a man-in-the-middle check. Both characteristics require that encryption.
+
+The device does not process messages yet. A write to the inbound characteristic is refused with ATT error `0x0E` (unlikely error) and its bytes are discarded.
 
 A message may be larger than a single ATT payload. How messages are split and reassembled is **TBD (stage 5)**. The layout rules below describe a whole message, after reassembly.
 
