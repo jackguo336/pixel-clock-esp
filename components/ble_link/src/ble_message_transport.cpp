@@ -26,12 +26,14 @@ bool start_attempted = false;
 
 void on_sync()
 {
+    // Make sure the clock has a Bluetooth address. 0 uses the factory address.
     int rc = ble_hs_util_ensure_addr(0);
     if (rc != 0) {
         ESP_LOGE(kTag, "ble_hs_util_ensure_addr failed: rc=%d", rc);
         return;
     }
 
+    // Remember that address for advertising. 0 shows it to phones as-is.
     rc = ble_hs_id_infer_auto(0, &host_link.own_address_type);
     if (rc != 0) {
         ESP_LOGE(kTag, "ble_hs_id_infer_auto failed: rc=%d", rc);
@@ -104,9 +106,12 @@ bool BleMessageTransport::start()
     // store_status_cb stays unset so a full bond store refuses a new bond
     // instead of deleting the existing one.
 
+    // Standard spot where a phone reads the device name.
     ble_svc_gap_init();
+    // Standard spot where a phone reads the list of services.
     ble_svc_gatt_init();
 
+    // Reserve room for the companion service before adding it.
     int rc = ble_gatts_count_cfg(kCompanionServices);
     if (rc != 0) {
         ESP_LOGE(kTag, "ble_gatts_count_cfg failed: rc=%d", rc);
@@ -114,6 +119,7 @@ bool BleMessageTransport::start()
         return false;
     }
 
+    // Publish the companion service. A phone reads it after connecting.
     rc = ble_gatts_add_svcs(kCompanionServices);
     if (rc != 0) {
         ESP_LOGE(kTag, "ble_gatts_add_svcs failed: rc=%d", rc);
@@ -121,6 +127,7 @@ bool BleMessageTransport::start()
         return false;
     }
 
+    // The name a phone shows for this clock.
     rc = ble_svc_gap_device_name_set(kDeviceName);
     if (rc != 0) {
         ESP_LOGE(kTag, "ble_svc_gap_device_name_set failed: rc=%d", rc);
@@ -128,6 +135,7 @@ bool BleMessageTransport::start()
         return false;
     }
 
+    // Keep pairing keys in memory until power-off.
     ble_store_config_init();
     nimble_port_freertos_init(host_task_entry);
     return true;
