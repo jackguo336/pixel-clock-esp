@@ -6,6 +6,7 @@
 
 #include "ble_link/companion_gatt_ids.hpp"
 #include "host/ble_hs.h"
+#include "host_link_state.hpp"
 
 namespace ble_link {
 namespace {
@@ -27,7 +28,7 @@ constexpr ble_uuid128_t kOutboundCharacteristicBleUuid = make_ble_uuid128(kOutbo
 const ble_gatt_chr_def kCompanionCharacteristics[] = {
     {
         .uuid = &kInboundCharacteristicBleUuid.u,
-        .access_cb = refuse_characteristic_access,
+        .access_cb = on_inbound_write,
         .arg = nullptr,
         .descriptors = nullptr,
         .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_ENC,
@@ -42,7 +43,7 @@ const ble_gatt_chr_def kCompanionCharacteristics[] = {
         .descriptors = nullptr,
         .flags = BLE_GATT_CHR_F_NOTIFY | BLE_GATT_CHR_F_NOTIFY_INDICATE_ENC,
         .min_key_size = 0,
-        .val_handle = nullptr,
+        .val_handle = &host_link.outbound_value_handle,
         .cpfd = nullptr,
     },
     {},

@@ -46,6 +46,8 @@ void handle_connect(int status, uint16_t connection_handle)
     }
 
     host_link.connection_handle.store(connection_handle);
+    host_link.notifications_enabled.store(false);
+    host_link.assembler.reset();
     ESP_LOGI(kTag, "companion connected on connection %u", static_cast<unsigned>(connection_handle));
     post_link_event(companion_connected_event());
 
@@ -61,6 +63,8 @@ void handle_disconnect(int reason, uint16_t connection_handle)
 {
     uint16_t expected_handle = connection_handle;
     if (host_link.connection_handle.compare_exchange_strong(expected_handle, BLE_HS_CONN_HANDLE_NONE)) {
+        host_link.notifications_enabled.store(false);
+        host_link.assembler.reset();
         ESP_LOGI(kTag, "companion disconnected: reason=0x%x", static_cast<unsigned>(reason));
         post_link_event(companion_disconnected_event());
     }
@@ -77,6 +81,19 @@ void handle_encryption_change(int status, uint16_t connection_handle)
     }
     ESP_LOGW(kTag, "encryption failed on connection %u: status=%d", static_cast<unsigned>(connection_handle), status);
     end_link(connection_handle, BLE_ERR_REM_USER_CONN_TERM);
+}
+
+void handle_subscribe(uint16_t connection_handle, uint16_t attribute_handle, bool notifications_on)
+{
+    if (connection_handle != host_link.connection_handle.load()) {
+        return;
+    }
+    if (host_link.outbound_value_handle == 0 || attribute_handle != host_link.outbound_value_handle) {
+        return;
+    }
+    host_link.notifications_enabled.store(notifications_on);
+    ESP_LOGI(kTag, "notifications %s on connection %u", notifications_on ? "on" : "off",
+             static_cast<unsigned>(connection_handle));
 }
 
 // A phone that already paired is trying to pair again. The pixel clock deletes
@@ -113,6 +130,9 @@ int on_gap_event(ble_gap_event* event, void* unused)
         return 0;
     case BLE_GAP_EVENT_REPEAT_PAIRING:
         return handle_repeat_pairing(event->repeat_pairing.conn_handle);
+    case BLE_GAP_EVENT_SUBSCRIBE:
+        handle_subscribe(event->subscribe.conn_handle, event->subscribe.attr_handle, event->subscribe.cur_notify != 0);
+        return 0;
     case BLE_GAP_EVENT_ADV_COMPLETE:
         gap_advertise();
         return 0;

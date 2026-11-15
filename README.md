@@ -3,9 +3,10 @@
 ESP32-C6 firmware for a pixel clock. Boot mounts an asset partition and
 presents a test bitmap on the LED matrix. The platform runtime is a single
 control task, a bounded event/command mailbox, and a timer scheduler. The
-clock advertises over Bluetooth LE as `Pixel Clock` and accepts and pairs one
-companion connection. Companion messages, Wi-Fi, weather, and OTA are not
-implemented yet.
+pixel clock advertises over Bluetooth LE as `Pixel Clock`, accepts one
+companion connection, and pairs it. It accepts companion messages and saves
+Wi-Fi credentials. NVS is initialized at boot. Bond keys stay in RAM until
+power-off. Wi-Fi connect, weather, and OTA are still absent.
 
 Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 
@@ -18,7 +19,7 @@ Target: `esp32c6`. Language: C++. Build: ESP-IDF with `MINIMAL_BUILD`.
 - `components/display/` — LED matrix output; loads the test bitmap and presents it
 - `components/companion_protocol/` — message codec for the iOS companion link
 - `components/settings/` — NVS initialization, `WifiCredentialsStore`, and `NvsWifiCredentialsStore`
-- `components/ble_link/` — NimBLE peripheral (`BleMessageTransport`), companion session, the inbound message pool, and inbound message routing
+- `components/ble_link/` — NimBLE peripheral (`BleMessageTransport`), companion session, the inbound message assembler, the inbound message pool, and notifications
 - `components/<name>/test/native_host/` — GoogleTest cases owned by that component
 - `components/<name>/test/embedded/` — Unity cases and mocks owned by that component
 - `test/native_host/` — shared GoogleTest/CTest runner (no ESP-IDF; no `test_*.cpp`)
@@ -39,8 +40,9 @@ serial monitor with `Ctrl+]`.
 
 ## Runtime demo
 
-On boot, `app_main` mounts the assets partition, registers `DisplayRuntime`,
-and arms a coalesced `RefreshDisplay` timer at 15 Hz before `runtime.start()`.
+On boot, `app_main` mounts the assets partition, initializes NVS, registers
+`DisplayRuntime` and the companion message consumer, and arms a coalesced
+`RefreshDisplay` timer at 15 Hz before `runtime.start()`.
 `esp_timer` fires the first callback one period later (about 66.7 ms), after
 `DisplayRuntime::start` has loaded `/assets/test.bmp`, built one root bitmap
 element at the origin, and initialized the LED matrix. Each event clears the
@@ -48,14 +50,14 @@ element at the origin, and initialized the LED matrix. Each event clears the
 `coalesce_key` replaces a queued refresh when a frame is still waiting, so the
 mailbox keeps a single pending frame. The control task runs every step.
 
-After `runtime.start()`, `app_main` starts `BleMessageTransport`. NimBLE runs on
-its own host task: it advertises, accepts one phone, starts Just Works pairing,
-and posts `CompanionConnected` and `CompanionDisconnected` to the runtime
-mailbox. Advertising restarts after a disconnect. A write to the inbound
-characteristic is refused. The companion session is not registered, so nothing
-consumes those events yet, and the test bitmap keeps rendering. Bonds live in
-RAM until power-off. NVS is not initialized at boot, so the PHY logs that its
-calibration data cannot be loaded and runs a full calibration.
+After `runtime.start()`, `app_main` starts the Bluetooth transport. NimBLE runs
+on its own host task: it advertises, accepts one phone, starts Just Works
+pairing, and posts `CompanionConnected` and `CompanionDisconnected` to the
+runtime mailbox. An inbound write is joined into one message and handled on
+the control task. A Wi-Fi credential message is saved in NVS, and the reply is
+notified in pieces. Advertising restarts after a disconnect. The test bitmap
+keeps rendering. Bond keys stay in RAM until power-off. NVS is initialized
+before the radio starts.
 
 ## Tests
 
