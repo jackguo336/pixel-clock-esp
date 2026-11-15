@@ -22,6 +22,7 @@ void post_link_event(const platform::Event& event)
 
 void end_link(uint16_t connection_handle, uint8_t hci_reason)
 {
+    // End the phone's connection to the pixel clock.
     const int rc = ble_gap_terminate(connection_handle, hci_reason);
     if (rc != 0) {
         ESP_LOGE(kTag, "ble_gap_terminate failed on connection %u: rc=%d",
@@ -48,6 +49,7 @@ void handle_connect(int status, uint16_t connection_handle)
     ESP_LOGI(kTag, "companion connected on connection %u", static_cast<unsigned>(connection_handle));
     post_link_event(companion_connected_event());
 
+    // Ask the phone to pair. It shows the system dialog, with no PIN.
     const int rc = ble_gap_security_initiate(connection_handle);
     if (rc != 0) {
         ESP_LOGE(kTag, "ble_gap_security_initiate failed: rc=%d", rc);
@@ -78,9 +80,11 @@ void handle_encryption_change(int status, uint16_t connection_handle)
 int handle_repeat_pairing(uint16_t connection_handle)
 {
     ble_gap_conn_desc connection{};
+    // Look up which phone is on this connection.
     const int rc = ble_gap_conn_find(connection_handle, &connection);
     if (rc == 0) {
         ESP_LOGI(kTag, "companion forgot its bond; deleting the clock's copy");
+        // Delete the pixel clock's saved pairing keys for that phone.
         (void)ble_store_util_delete_peer(&connection.peer_id_addr);
     } else {
         ESP_LOGE(kTag, "ble_gap_conn_find failed on repeat pairing: rc=%d", rc);
