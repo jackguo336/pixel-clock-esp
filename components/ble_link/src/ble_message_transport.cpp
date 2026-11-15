@@ -24,6 +24,8 @@ namespace {
 constexpr char kTag[] = "ble_link";
 bool start_attempted = false;
 
+// Runs once, when Bluetooth has finished starting and is ready: the clock
+// reads its address and starts advertising. A connection does not call this.
 void on_sync()
 {
     // Make sure the clock has a Bluetooth address. 0 uses the factory address.
