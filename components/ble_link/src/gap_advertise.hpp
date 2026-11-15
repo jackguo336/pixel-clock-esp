@@ -2,6 +2,6 @@
 
 namespace ble_link {
 
-void advertise();
+void gap_advertise();
 
 }  // namespace ble_link

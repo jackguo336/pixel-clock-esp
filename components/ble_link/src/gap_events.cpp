@@ -1,6 +1,6 @@
 #include "gap_events.hpp"
 
-#include "advertise.hpp"
+#include "gap_advertise.hpp"
 #include "host_link_state.hpp"
 
 #include "ble_link/inbound_message_pool.hpp"
@@ -33,7 +33,7 @@ void handle_connect(int status, uint16_t connection_handle)
 {
     if (status != 0) {
         ESP_LOGW(kTag, "connect failed: status=%d", status);
-        advertise();
+        gap_advertise();
         return;
     }
 
@@ -62,7 +62,7 @@ void handle_disconnect(int reason, uint16_t connection_handle)
         ESP_LOGI(kTag, "companion disconnected: reason=0x%x", static_cast<unsigned>(reason));
         post_link_event(companion_disconnected_event());
     }
-    advertise();
+    gap_advertise();
 }
 
 void handle_encryption_change(int status, uint16_t connection_handle)
@@ -106,7 +106,7 @@ int on_gap_event(ble_gap_event* event, void* unused)
     case BLE_GAP_EVENT_REPEAT_PAIRING:
         return handle_repeat_pairing(event->repeat_pairing.conn_handle);
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        advertise();
+        gap_advertise();
         return 0;
     default:
         return 0;

@@ -1,6 +1,6 @@
 #include "ble_link/ble_message_transport.hpp"
 
-#include "advertise.hpp"
+#include "gap_advertise.hpp"
 #include "companion_gatt_service_definitions.hpp"
 #include "host_link_state.hpp"
 
@@ -37,7 +37,7 @@ void on_sync()
         ESP_LOGE(kTag, "ble_hs_id_infer_auto failed: rc=%d", rc);
         return;
     }
-    advertise();
+    gap_advertise();
 }
 
 void on_reset(int reason)

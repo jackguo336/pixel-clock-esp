@@ -1,4 +1,4 @@
-#include "advertise.hpp"
+#include "gap_advertise.hpp"
 
 #include "gap_events.hpp"
 #include "host_link_state.hpp"
@@ -14,7 +14,7 @@ constexpr char kTag[] = "ble_link";
 
 }  // namespace
 
-void advertise()
+void gap_advertise()
 {
     int rc = ble_gap_adv_set_data(host_link.packets.advertising.data(),
                                   static_cast<int>(host_link.packets.advertising_length));
