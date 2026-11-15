@@ -11,7 +11,6 @@ int refuse_characteristic_access(uint16_t connection_handle,
                                  ble_gatt_access_ctxt* context,
                                  void* unused);
 
-// NimBLE keeps this pointer after registration.
 extern const ble_gatt_svc_def kCompanionServices[];
 
 }  // namespace ble_link

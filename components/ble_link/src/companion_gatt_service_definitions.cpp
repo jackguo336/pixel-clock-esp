@@ -24,7 +24,6 @@ constexpr ble_uuid128_t kCompanionServiceBleUuid = make_ble_uuid128(kCompanionSe
 constexpr ble_uuid128_t kInboundCharacteristicBleUuid = make_ble_uuid128(kInboundCharacteristicUuid);
 constexpr ble_uuid128_t kOutboundCharacteristicBleUuid = make_ble_uuid128(kOutboundCharacteristicUuid);
 
-// NimBLE keeps pointers into these tables after registration.
 const ble_gatt_chr_def kCompanionCharacteristics[] = {
     {
         .uuid = &kInboundCharacteristicBleUuid.u,
