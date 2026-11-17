@@ -4,9 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "companion_inbound_message_write.hpp"
+#include "host_link_state.hpp"
+
 #include "ble_link/companion_gatt_ids.hpp"
 #include "host/ble_hs.h"
-#include "host_link_state.hpp"
 
 namespace ble_link {
 namespace {
