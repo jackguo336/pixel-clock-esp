@@ -143,7 +143,7 @@ TEST(BufferedMessageAssembler, PieceCrossesDeclaredMessageEnd)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(BufferedMessageAssembler, PiecePastDeclaredLengthIsRejected)
+TEST(BufferedMessageAssembler, PieceLongerThanDeclaredMessage)
 {
     BufferedMessageAssembler assembler;
     const uint8_t header_prefix[] = {0x01, 0x01, 0x00, 0x01, 0x00, 0x00};
@@ -158,7 +158,7 @@ TEST(BufferedMessageAssembler, PiecePastDeclaredLengthIsRejected)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(BufferedMessageAssembler, EmptyPieceLeavesPartialInPlace)
+TEST(BufferedMessageAssembler, EmptyPieceKeepsBufferedMessage)
 {
     BufferedMessageAssembler assembler;
     const std::span<const uint8_t> message(kGetDeviceInfo);
