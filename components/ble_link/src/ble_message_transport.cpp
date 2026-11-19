@@ -169,15 +169,15 @@ bool BleMessageTransport::send(std::span<const uint8_t> message)
     }
 
     const uint16_t att_mtu = ble_att_mtu(handle);
-    std::array<std::size_t, kMaxNotifyPieces> piece_lengths{};
-    std::size_t piece_count = 0;
-    if (!message_split_piece_lengths(message.size(), att_mtu, piece_lengths, piece_count)) {
+    std::array<std::size_t, kMaxNotifyPieces> message_piece_lengths{};
+    std::size_t message_piece_count = 0;
+    if (!message_split_piece_lengths(message.size(), att_mtu, message_piece_lengths, message_piece_count)) {
         return false;
     }
 
     std::size_t offset = 0;
-    for (std::size_t index = 0; index < piece_count; ++index) {
-        const std::size_t piece_length = piece_lengths[index];
+    for (std::size_t index = 0; index < message_piece_count; ++index) {
+        const std::size_t piece_length = message_piece_lengths[index];
         os_mbuf* const outbound = ble_hs_mbuf_from_flat(message.data() + offset, static_cast<uint16_t>(piece_length));
         if (outbound == nullptr) {
             return false;

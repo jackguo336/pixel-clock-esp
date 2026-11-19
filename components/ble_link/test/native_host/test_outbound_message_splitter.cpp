@@ -18,34 +18,35 @@ constexpr uint16_t kLargerMtu = 185;
 
 struct Split {
     bool accepted{false};
-    std::size_t piece_count{0};
-    std::array<std::size_t, kMaxNotifyPieces> piece_lengths{};
+    std::size_t message_piece_count{0};
+    std::array<std::size_t, kMaxNotifyPieces> message_piece_lengths{};
 };
 
 Split split(std::size_t message_length, uint16_t att_mtu)
 {
     Split result{};
-    result.piece_lengths.fill(kUnchangedLength);
-    result.piece_count = kUnchangedLength;
-    result.accepted = message_split_piece_lengths(message_length, att_mtu, result.piece_lengths, result.piece_count);
+    result.message_piece_lengths.fill(kUnchangedLength);
+    result.message_piece_count = kUnchangedLength;
+    result.accepted = message_split_piece_lengths(message_length, att_mtu, result.message_piece_lengths,
+                                                  result.message_piece_count);
     return result;
 }
 
 void expect_unchanged(const Split& result)
 {
     EXPECT_FALSE(result.accepted);
-    EXPECT_EQ(result.piece_count, 0u);
-    EXPECT_TRUE(std::all_of(result.piece_lengths.begin(), result.piece_lengths.end(),
+    EXPECT_EQ(result.message_piece_count, 0u);
+    EXPECT_TRUE(std::all_of(result.message_piece_lengths.begin(), result.message_piece_lengths.end(),
                             [](std::size_t length) { return length == kUnchangedLength; }));
 }
 
 void expect_pieces(const Split& result, std::initializer_list<std::size_t> expected)
 {
     ASSERT_TRUE(result.accepted);
-    ASSERT_EQ(result.piece_count, expected.size());
-    EXPECT_TRUE(std::equal(expected.begin(), expected.end(), result.piece_lengths.begin()));
-    EXPECT_TRUE(std::all_of(result.piece_lengths.begin() + static_cast<std::ptrdiff_t>(expected.size()),
-                            result.piece_lengths.end(),
+    ASSERT_EQ(result.message_piece_count, expected.size());
+    EXPECT_TRUE(std::equal(expected.begin(), expected.end(), result.message_piece_lengths.begin()));
+    EXPECT_TRUE(std::all_of(result.message_piece_lengths.begin() + static_cast<std::ptrdiff_t>(expected.size()),
+                            result.message_piece_lengths.end(),
                             [](std::size_t length) { return length == kUnchangedLength; }));
 }
 
