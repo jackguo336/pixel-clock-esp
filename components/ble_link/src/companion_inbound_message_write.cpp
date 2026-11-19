@@ -61,6 +61,7 @@ int on_inbound_write(uint16_t connection_handle,
     std::array<uint8_t, InboundMessageAssembler::kMessageBytes> copied{};
     if (length > 0) {
         uint16_t copied_length = 0;
+        // Copy the phone's write into a buffer the pixel clock can keep.
         const int copy_rc = ble_hs_mbuf_to_flat(context->om, copied.data(), static_cast<uint16_t>(copied.size()),
                                                 &copied_length);
         if (copy_rc != 0 || copied_length != length) {

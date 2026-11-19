@@ -168,6 +168,7 @@ bool BleMessageTransport::send(std::span<const uint8_t> message)
         return false;
     }
 
+    // Read the packet size the phone and the pixel clock are using.
     const uint16_t att_mtu = ble_att_mtu(handle);
     std::array<std::size_t, kMaxNotifyPieces> message_piece_lengths{};
     std::size_t message_piece_count = 0;
@@ -178,10 +179,12 @@ bool BleMessageTransport::send(std::span<const uint8_t> message)
     std::size_t offset = 0;
     for (std::size_t index = 0; index < message_piece_count; ++index) {
         const std::size_t piece_length = message_piece_lengths[index];
+        // Copy these reply bytes into a buffer the pixel clock can send.
         os_mbuf* const outbound = ble_hs_mbuf_from_flat(message.data() + offset, static_cast<uint16_t>(piece_length));
         if (outbound == nullptr) {
             return false;
         }
+        // Send these reply bytes to the phone.
         const int rc = ble_gatts_notify_custom(handle, host_link.outbound_value_handle, outbound);
         if (rc != 0) {
             ESP_LOGE(kTag, "ble_gatts_notify_custom failed: rc=%d", rc);
