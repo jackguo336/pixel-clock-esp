@@ -39,8 +39,8 @@ public:
     [[nodiscard]] uint32_t drop_count() const;
 
 private:
-    std::array<uint8_t, kMessageBytes> held_{};
-    std::size_t held_count_{0};
+    std::array<uint8_t, kMessageBytes> buffered_message_{};
+    std::size_t buffered_message_size_{0};
     uint32_t drop_count_{0};
 };
 

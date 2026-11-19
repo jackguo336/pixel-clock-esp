@@ -13,22 +13,22 @@ AppendResult InboundMessageAssembler::append(std::span<const uint8_t> message_pi
         return AppendResult::NeedMore;
     }
 
-    if (message_piece.size() > kMessageBytes - held_count_) {
+    if (message_piece.size() > kMessageBytes - buffered_message_size_) {
         drop_count_ += 1;
         reset();
         return AppendResult::Rejected;
     }
 
-    std::copy_n(message_piece.begin(), message_piece.size(), held_.begin() + held_count_);
-    held_count_ += message_piece.size();
+    std::copy_n(message_piece.begin(), message_piece.size(), buffered_message_.begin() + buffered_message_size_);
+    buffered_message_size_ += message_piece.size();
 
-    if (held_count_ < companion_protocol::kHeaderBytes) {
+    if (buffered_message_size_ < companion_protocol::kHeaderBytes) {
         return AppendResult::NeedMore;
     }
 
     companion_protocol::MessageHeader header{};
     const companion_protocol::Status header_status = companion_protocol::decode_header(
-        std::span<const uint8_t>(held_.data(), companion_protocol::kHeaderBytes), header);
+        std::span<const uint8_t>(buffered_message_.data(), companion_protocol::kHeaderBytes), header);
     if (header_status != companion_protocol::Status::Ok) {
         drop_count_ += 1;
         reset();
@@ -43,12 +43,12 @@ AppendResult InboundMessageAssembler::append(std::span<const uint8_t> message_pi
     }
 
     const std::size_t needed = companion_protocol::kHeaderBytes + header.body_length;
-    if (held_count_ > needed) {
+    if (buffered_message_size_ > needed) {
         drop_count_ += 1;
         reset();
         return AppendResult::Rejected;
     }
-    if (held_count_ < needed) {
+    if (buffered_message_size_ < needed) {
         return AppendResult::NeedMore;
     }
     if (message.size() < needed) {
@@ -57,7 +57,7 @@ AppendResult InboundMessageAssembler::append(std::span<const uint8_t> message_pi
         return AppendResult::Rejected;
     }
 
-    std::copy_n(held_.begin(), needed, message.begin());
+    std::copy_n(buffered_message_.begin(), needed, message.begin());
     message_length = needed;
     reset();
     return AppendResult::Finished;
@@ -65,8 +65,8 @@ AppendResult InboundMessageAssembler::append(std::span<const uint8_t> message_pi
 
 void InboundMessageAssembler::reset()
 {
-    held_.fill(0);
-    held_count_ = 0;
+    buffered_message_.fill(0);
+    buffered_message_size_ = 0;
 }
 
 uint32_t InboundMessageAssembler::drop_count() const
