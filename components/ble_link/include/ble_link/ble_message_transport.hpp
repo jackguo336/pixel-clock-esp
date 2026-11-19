@@ -9,10 +9,7 @@
 namespace ble_link {
 
 /**
- * The pixel clock's Bluetooth LE peripheral for the companion app.
- * Use once per boot to make the pixel clock visible, accept one phone, and
- * pair it with Just Works. Inbound writes become companion messages, and
- * replies leave as notifications.
+ * Lets the pixel clock connect with a companion phone over Bluetooth and receive and reply to messages.
  */
 class BleMessageTransport : public MessageTransport {
 public:
