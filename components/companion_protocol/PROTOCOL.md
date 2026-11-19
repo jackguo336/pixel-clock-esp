@@ -11,16 +11,20 @@ The device is the Bluetooth peripheral. The companion is the central. One connec
 | Device name | `Pixel Clock` |
 | GATT service UUID | `0833bf0e-f5b9-48aa-b1e5-f2302081b62f` |
 | Inbound characteristic (companion writes a request) | `8477f4a4-5ec0-4ee8-9721-5c0f922cd089`, write with response, encryption required |
-| Outbound characteristic (device notifies a reply) | `929fa0c1-08a7-4b77-bd04-a62a88652607`, notify, encryption required |
-| MTU chunking and reassembly | **TBD (stage 5)** |
+| Outbound characteristic (pixel clock notifies a reply) | `929fa0c1-08a7-4b77-bd04-a62a88652607`, notify, encryption required |
+| Pieces | The next bytes of one message, in order. A piece has no header of its own. One write or one notification is one piece. A piece holds at most MTU − 3 bytes and may be the whole message. Before an MTU is agreed, the size is 23, so a piece holds at most 20 bytes. |
 
 UUIDs are written in the text form `CBUUID` takes. On the air each UUID is those 16 bytes in reverse order.
 
 The device advertises the service UUID and puts the name in the scan response. It accepts one connection at a time. On connect the device asks to pair with LE Secure Connections Just Works: iOS shows the system pairing dialog with no PIN. The link is encrypted, without a man-in-the-middle check. Both characteristics require that encryption.
 
-The device does not process messages yet. A write to the inbound characteristic is refused with ATT error `0x0E` (unlikely error) and its bytes are discarded.
+The phone turns notifications on for the outbound characteristic before the first request. The phone writes the message to the inbound characteristic, write with response, as one or more pieces in order. The pixel clock notifies the reply the same way.
 
-A message may be larger than a single ATT payload. How messages are split and reassembled is **TBD (stage 5)**. The layout rules below describe a whole message, after reassembly.
+A write longer than 128 bytes is refused. The pixel clock does not append it. A partial message already waiting stays waiting.
+
+A write that would make the stored bytes longer than 128, or that runs past the length the header declared, is refused. The pixel clock discards that stored message. The phone sends the whole message again.
+
+The layout rules below describe a whole message, after the pieces are joined.
 
 ## Message layout
 
@@ -71,6 +75,8 @@ Request. The body is:
 The body length is exactly `2 + ssid_length + passphrase_length`. The largest body is 98 bytes, so the largest message is 7 + 98 = 105 bytes.
 
 Reply: `Ack`.
+
+`Ack` / `Ok` means the credentials were written to NVS. Joining the network waits for a later change.
 
 The codec checks only those lengths. It does not check whether a passphrase is valid for WPA. A passphrase must be one of:
 

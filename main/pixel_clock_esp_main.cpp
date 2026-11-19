@@ -1,7 +1,8 @@
-#include "ble_link/ble_message_transport.hpp"
+#include "ble_link/ble_setup.hpp"
 #include "display.hpp"
 #include "file_system/assets_fs.hpp"
 #include "platform/runtime.hpp"
+#include "settings/nvs_init.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -25,9 +26,17 @@ extern "C" void app_main(void)
         ESP_LOGE(kTag, "mount_assets failed: %s", esp_err_to_name(mounted));
     }
 
+    const esp_err_t nvs_ready = settings::initialize_nvs();
+    if (nvs_ready != ESP_OK) {
+        ESP_LOGE(kTag, "initialize_nvs failed: %s", esp_err_to_name(nvs_ready));
+    }
+
     auto& runtime = platform::Runtime::instance();
     static display_runtime::DisplayRuntime display;
     runtime.add(display);
+
+    ble_link::BluetoothSetup bluetooth_setup_result = ble_link::setup_bluetooth();
+    runtime.add(bluetooth_setup_result.consumer);
 
     platform::Event refresh{};
     refresh.type = platform::EventType::RefreshDisplay;
@@ -36,8 +45,7 @@ extern "C" void app_main(void)
     (void)runtime.scheduler().every(kRefreshPeriod, refresh);
     runtime.start();
 
-    static ble_link::BleMessageTransport ble_message_transport;
-    if (!ble_message_transport.start()) {
+    if (!bluetooth_setup_result.transport.start()) {
         ESP_LOGE(kTag, "BLE companion link did not start");
     }
 }

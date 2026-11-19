@@ -1,14 +1,21 @@
 #include "ble_link/ble_message_transport.hpp"
 
+#include <array>
+#include <cstdint>
+
 #include "gap_advertise.hpp"
 #include "companion_gatt_service_definitions.hpp"
 #include "host_link_state.hpp"
 
 #include "ble_link/companion_gatt_ids.hpp"
 #include "ble_link/legacy_advertising_packets_builder.hpp"
+#include "ble_link/outbound_message_splitter.hpp"
+#include "companion_protocol/message_header.hpp"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "host/ble_att.h"
 #include "host/ble_hs.h"
+#include "host/ble_hs_mbuf.h"
 #include "host/util/util.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
@@ -60,6 +67,12 @@ void host_task_entry(void* unused)
 }  // namespace
 
 HostLinkState host_link;
+
+BleMessageTransport::BleMessageTransport(InboundMessagePool& inbound_messages)
+    : inbound_messages_(inbound_messages)
+{
+    host_link.inbound_messages = &inbound_messages_;
+}
 
 int refuse_characteristic_access(uint16_t connection_handle,
                                  uint16_t attribute_handle,
@@ -145,8 +158,41 @@ bool BleMessageTransport::start()
 
 bool BleMessageTransport::send(std::span<const uint8_t> message)
 {
-    (void)message;
-    return false;
+    if (message.empty() || message.size() > companion_protocol::kMaxMessageBytes) {
+        return false;
+    }
+
+    const uint16_t handle = host_link.connection_handle.load();
+    if (handle == BLE_HS_CONN_HANDLE_NONE || !host_link.notifications_enabled.load()
+        || host_link.outbound_value_handle == 0) {
+        return false;
+    }
+
+    // Read the packet size the phone and the pixel clock are using.
+    const uint16_t att_mtu = ble_att_mtu(handle);
+    std::array<std::size_t, kMaxNotifyPieces> message_piece_lengths{};
+    std::size_t message_piece_count = 0;
+    if (!message_split_piece_lengths(message.size(), att_mtu, message_piece_lengths, message_piece_count)) {
+        return false;
+    }
+
+    std::size_t offset = 0;
+    for (std::size_t index = 0; index < message_piece_count; ++index) {
+        const std::size_t piece_length = message_piece_lengths[index];
+        // Copy these reply bytes into a buffer the pixel clock can send.
+        os_mbuf* const outbound = ble_hs_mbuf_from_flat(message.data() + offset, static_cast<uint16_t>(piece_length));
+        if (outbound == nullptr) {
+            return false;
+        }
+        // Send these reply bytes to the phone.
+        const int rc = ble_gatts_notify_custom(handle, host_link.outbound_value_handle, outbound);
+        if (rc != 0) {
+            ESP_LOGE(kTag, "ble_gatts_notify_custom failed: rc=%d", rc);
+            return false;
+        }
+        offset += piece_length;
+    }
+    return true;
 }
 
 }  // namespace ble_link

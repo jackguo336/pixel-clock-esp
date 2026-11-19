@@ -1,8 +1,13 @@
 idf_component_register(SRCS "src/inbound_message_pool.cpp"
+                            "src/buffered_message_assembler.cpp"
+                            "src/outbound_message_splitter.cpp"
                             "src/companion_inbound_message_consumer.cpp"
                             "src/companion_message_reply_sender.cpp"
                             "src/get_device_info_handler.cpp"
                             "src/set_wifi_credentials_handler.cpp"
+                            "src/firmware_version_reader.cpp"
+                            "src/ble_setup.cpp"
+                            "src/companion_inbound_message_write.cpp"
                             "src/ble_message_transport.cpp"
                             "src/legacy_advertising_packets_builder.cpp"
                             "src/companion_gatt_service_definitions.cpp"
@@ -10,4 +15,4 @@ idf_component_register(SRCS "src/inbound_message_pool.cpp"
                             "src/gap_events.cpp"
                        INCLUDE_DIRS "include"
                        REQUIRES platform companion_protocol settings
-                       PRIV_REQUIRES bt log)
+                       PRIV_REQUIRES bt log esp_app_format)

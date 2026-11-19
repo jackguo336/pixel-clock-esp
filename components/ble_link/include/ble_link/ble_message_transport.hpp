@@ -3,26 +3,28 @@
 #include <cstdint>
 #include <span>
 
+#include "ble_link/inbound_message_pool.hpp"
 #include "ble_link/message_transport.hpp"
 
 namespace ble_link {
 
 /**
- * The clock's Bluetooth LE peripheral for the companion app.
- * Use once per boot to make the clock visible, accept one phone, and pair it
- * with Just Works. Connect and disconnect reach the runtime as
- * CompanionConnected and CompanionDisconnected.
+ * Lets the pixel clock connect with a companion phone over Bluetooth and
+ * receive and reply to messages.
  */
 class BleMessageTransport : public MessageTransport {
 public:
-    BleMessageTransport() = default;
+    explicit BleMessageTransport(InboundMessagePool& inbound_messages);
 
     /// Runs once per boot; a second call returns false. A failed start leaves
     /// the radio off and the rest of the firmware running.
     [[nodiscard]] bool start();
 
-    /// Always false; the message data path is not implemented. The bytes are not read.
+    /// Sends the encoded message. The bytes are valid only for this call.
     [[nodiscard]] bool send(std::span<const uint8_t> message) override;
+
+private:
+    InboundMessagePool& inbound_messages_;
 };
 
 }  // namespace ble_link
