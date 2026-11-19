@@ -10,7 +10,6 @@ struct BluetoothSetup {
     BleMessageTransport& transport;
 };
 
-/// Builds the session. Call once, before Runtime::start.
 [[nodiscard]] BluetoothSetup setup_bluetooth();
 
 }  // namespace ble_link
