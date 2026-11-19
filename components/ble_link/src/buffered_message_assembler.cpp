@@ -26,6 +26,27 @@ AppendResult BufferedMessageAssembler::append(std::span<const uint8_t> message_p
         return AppendResult::NeedMore;
     }
 
+    std::size_t required_message_size = 0;
+    if (validate_buffered_message(required_message_size) == AppendResult::Rejected) {
+        return AppendResult::Rejected;
+    }
+    if (buffered_message_size_ < required_message_size) {
+        return AppendResult::NeedMore;
+    }
+    if (message.size() < required_message_size) {
+        drop_count_ += 1;
+        reset();
+        return AppendResult::Rejected;
+    }
+
+    std::copy_n(buffered_message_.begin(), required_message_size, message.begin());
+    message_length = required_message_size;
+    reset();
+    return AppendResult::Finished;
+}
+
+AppendResult BufferedMessageAssembler::validate_buffered_message(std::size_t& required_message_size)
+{
     companion_protocol::MessageHeader header{};
     const companion_protocol::Status header_status = companion_protocol::decode_header(
         std::span<const uint8_t>(buffered_message_.data(), companion_protocol::kHeaderBytes), header);
@@ -42,24 +63,12 @@ AppendResult BufferedMessageAssembler::append(std::span<const uint8_t> message_p
         return AppendResult::Rejected;
     }
 
-    const std::size_t required_message_size = companion_protocol::kHeaderBytes + header.body_length;
+    required_message_size = companion_protocol::kHeaderBytes + header.body_length;
     if (buffered_message_size_ > required_message_size) {
         drop_count_ += 1;
         reset();
         return AppendResult::Rejected;
     }
-    if (buffered_message_size_ < required_message_size) {
-        return AppendResult::NeedMore;
-    }
-    if (message.size() < required_message_size) {
-        drop_count_ += 1;
-        reset();
-        return AppendResult::Rejected;
-    }
-
-    std::copy_n(buffered_message_.begin(), required_message_size, message.begin());
-    message_length = required_message_size;
-    reset();
     return AppendResult::Finished;
 }
 

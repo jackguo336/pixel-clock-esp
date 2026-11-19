@@ -39,6 +39,10 @@ public:
     [[nodiscard]] uint32_t drop_count() const;
 
 private:
+    /// Returns Rejected when the buffered header is thrown away.
+    /// Otherwise sets required_message_size from that header.
+    [[nodiscard]] AppendResult validate_buffered_message(std::size_t& required_message_size);
+
     std::array<uint8_t, kMessageBytes> buffered_message_{};
     std::size_t buffered_message_size_{0};
     uint32_t drop_count_{0};
