@@ -83,6 +83,8 @@ void handle_encryption_change(int status, uint16_t connection_handle)
     end_link(connection_handle, BLE_ERR_REM_USER_CONN_TERM);
 }
 
+// The phone is turning notifications on or off so it can receive replies. The
+// pixel clock records that, so a reply is sent only while notifications are on.
 void handle_subscribe(uint16_t connection_handle, uint16_t attribute_handle, bool notifications_on)
 {
     if (connection_handle != host_link.connection_handle.load()) {
