@@ -21,15 +21,11 @@ namespace {
 
 constexpr char kTag[] = "companion_inbound_write";
 
-}  // namespace
-
-int on_inbound_write(uint16_t connection_handle,
-                     uint16_t attribute_handle,
-                     ble_gatt_access_ctxt* context,
-                     void* unused)
+/// Returns a Bluetooth error when this write must be refused, or 0 when it
+/// can continue.
+[[nodiscard]] int validate_inbound_write(uint16_t connection_handle,
+                                         const ble_gatt_access_ctxt* context)
 {
-    (void)attribute_handle;
-    (void)unused;
     if (context->op != BLE_GATT_ACCESS_OP_WRITE_CHR) {
         return BLE_ATT_ERR_UNLIKELY;
     }
@@ -51,6 +47,24 @@ int on_inbound_write(uint16_t connection_handle,
                  static_cast<unsigned>(connection_handle));
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
+    return 0;
+}
+
+}  // namespace
+
+int on_inbound_write(uint16_t connection_handle,
+                     uint16_t attribute_handle,
+                     ble_gatt_access_ctxt* context,
+                     void* unused)
+{
+    (void)attribute_handle;
+    (void)unused;
+    const int error = validate_inbound_write(connection_handle, context);
+    if (error != 0) {
+        return error;
+    }
+
+    const uint16_t length = OS_MBUF_PKTLEN(context->om);
 
     InboundMessagePool* const inbound_messages = host_link.inbound_messages;
     if (inbound_messages == nullptr) {
