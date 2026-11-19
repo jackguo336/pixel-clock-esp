@@ -113,7 +113,7 @@ TEST(BufferedMessageAssembler, HeaderDeclaresMessagePastMaxLength)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(BufferedMessageAssembler, PieceCrossesDeclaredMessageEnd)
+TEST(BufferedMessageAssembler, MessagePieceCrossesDeclaredMessageEnd)
 {
     BufferedMessageAssembler assembler;
     // body_length 121 needs 128 bytes. 120 are stored, then 9 more would pass 128.
@@ -143,7 +143,7 @@ TEST(BufferedMessageAssembler, PieceCrossesDeclaredMessageEnd)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(BufferedMessageAssembler, PieceLongerThanDeclaredMessage)
+TEST(BufferedMessageAssembler, MessagePieceLongerThanDeclaredMessage)
 {
     BufferedMessageAssembler assembler;
     const uint8_t header_prefix[] = {0x01, 0x01, 0x00, 0x01, 0x00, 0x00};
@@ -158,7 +158,7 @@ TEST(BufferedMessageAssembler, PieceLongerThanDeclaredMessage)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(BufferedMessageAssembler, EmptyPieceKeepsBufferedMessage)
+TEST(BufferedMessageAssembler, EmptyMessagePieceKeepsBufferedMessage)
 {
     BufferedMessageAssembler assembler;
     const std::span<const uint8_t> message(kGetDeviceInfo);
@@ -178,7 +178,7 @@ TEST(BufferedMessageAssembler, EmptyPieceKeepsBufferedMessage)
     EXPECT_EQ(assembler.drop_count(), drops);
 }
 
-TEST(BufferedMessageAssembler, ResetClearsPartialAndLeavesDropCount)
+TEST(BufferedMessageAssembler, ResetClearsBufferedMessageAndLeavesDropCount)
 {
     BufferedMessageAssembler assembler;
     const uint8_t declares_129_bytes[] = {0x01, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x00};
