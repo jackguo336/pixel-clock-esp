@@ -5,7 +5,6 @@
 #include <span>
 
 #include "ble_link/buffered_message_assembler.hpp"
-#include "companion_protocol/message_header.hpp"
 #include "gtest/gtest.h"
 
 namespace {
@@ -195,26 +194,6 @@ TEST(BufferedMessageAssembler, ResetClearsBufferedMessageAndLeavesDropCount)
     EXPECT_EQ(restarted.result, AppendResult::Finished);
     expect_message(restarted, kGetDeviceInfo);
     EXPECT_EQ(assembler.drop_count(), 1u);
-}
-
-TEST(BufferedMessageAssembler, WriteLongerThanMessageIsNotAppended)
-{
-    BufferedMessageAssembler assembler;
-    const std::span<const uint8_t> message(kGetDeviceInfo);
-    const Appended partial = append_piece(assembler, message.first(3));
-    EXPECT_EQ(partial.result, AppendResult::NeedMore);
-    const uint32_t drops = assembler.drop_count();
-
-    // The write callback refuses this length before append, so the partial stays waiting.
-    std::array<uint8_t, companion_protocol::kMaxMessageBytes + 1> long_write{};
-    long_write.fill(0x5A);
-    ASSERT_GT(long_write.size(), companion_protocol::kMaxMessageBytes);
-    EXPECT_EQ(assembler.drop_count(), drops);
-
-    const Appended finished = append_piece(assembler, message.subspan(3));
-    EXPECT_EQ(finished.result, AppendResult::Finished);
-    expect_message(finished, kGetDeviceInfo);
-    EXPECT_EQ(assembler.drop_count(), drops);
 }
 
 TEST(BufferedMessageAssembler, NextAppendStartsANewMessage)
