@@ -6,7 +6,7 @@
 
 namespace ble_link {
 
-/// The smallest packet a phone and the pixel clock can use. They may agree on a larger one.
+/// The packet size used as soon as the phone connects. After the phone and the pixel clock agree on a size, later messages use that larger packet.
 inline constexpr uint16_t kMinimumAttMtu = 23;
 inline constexpr std::size_t kNotifyHeaderBytes = 3;  // opcode and attribute handle
 
