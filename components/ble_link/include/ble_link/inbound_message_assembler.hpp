@@ -12,9 +12,7 @@ namespace ble_link {
 enum class AppendResult { NeedMore, Finished, Rejected };
 
 /**
- * Joins inbound companion writes into one message.
- * Use on the Bluetooth host task, which is the only writer. One assembler
- * serves the one connection.
+ * A Bluetooth write holds at most the agreed packet size minus 3 bytes. A longer companion message arrives as pieces, and this class joins them into one message.
  */
 class InboundMessageAssembler {
 public:
