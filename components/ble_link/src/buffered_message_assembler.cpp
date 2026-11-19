@@ -42,23 +42,23 @@ AppendResult BufferedMessageAssembler::append(std::span<const uint8_t> message_p
         return AppendResult::Rejected;
     }
 
-    const std::size_t needed = companion_protocol::kHeaderBytes + header.body_length;
-    if (buffered_message_size_ > needed) {
+    const std::size_t required_message_size = companion_protocol::kHeaderBytes + header.body_length;
+    if (buffered_message_size_ > required_message_size) {
         drop_count_ += 1;
         reset();
         return AppendResult::Rejected;
     }
-    if (buffered_message_size_ < needed) {
+    if (buffered_message_size_ < required_message_size) {
         return AppendResult::NeedMore;
     }
-    if (message.size() < needed) {
+    if (message.size() < required_message_size) {
         drop_count_ += 1;
         reset();
         return AppendResult::Rejected;
     }
 
-    std::copy_n(buffered_message_.begin(), needed, message.begin());
-    message_length = needed;
+    std::copy_n(buffered_message_.begin(), required_message_size, message.begin());
+    message_length = required_message_size;
     reset();
     return AppendResult::Finished;
 }
