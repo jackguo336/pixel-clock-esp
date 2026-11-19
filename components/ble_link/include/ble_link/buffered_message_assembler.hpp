@@ -16,7 +16,7 @@ enum class AppendResult { NeedMore, Finished, Rejected };
  * A longer companion message arrives as pieces, and this class joins them into
  * one message.
  */
-class InboundMessageAssembler {
+class BufferedMessageAssembler {
 public:
     static constexpr std::size_t kMessageBytes = companion_protocol::kMaxMessageBytes;
 

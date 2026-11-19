@@ -9,7 +9,7 @@
 
 #include "host_link_state.hpp"
 
-#include "ble_link/inbound_message_assembler.hpp"
+#include "ble_link/buffered_message_assembler.hpp"
 #include "companion_protocol/message_header.hpp"
 #include "esp_log.h"
 #include "host/ble_att.h"
@@ -72,7 +72,7 @@ int on_inbound_write(uint16_t connection_handle,
         return BLE_ATT_ERR_UNLIKELY;
     }
 
-    std::array<uint8_t, InboundMessageAssembler::kMessageBytes> copied{};
+    std::array<uint8_t, BufferedMessageAssembler::kMessageBytes> copied{};
     if (length > 0) {
         uint16_t copied_length = 0;
         // Copy the phone's write into a buffer the pixel clock can keep.
@@ -84,7 +84,7 @@ int on_inbound_write(uint16_t connection_handle,
         }
     }
 
-    std::array<uint8_t, InboundMessageAssembler::kMessageBytes> message{};
+    std::array<uint8_t, BufferedMessageAssembler::kMessageBytes> message{};
     std::size_t message_length = 0;
     const AppendResult result = host_link.assembler.append(std::span<const uint8_t>(copied.data(), length), message,
                                                            message_length);

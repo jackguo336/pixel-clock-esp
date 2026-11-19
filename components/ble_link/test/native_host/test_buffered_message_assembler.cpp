@@ -4,14 +4,14 @@
 #include <limits>
 #include <span>
 
-#include "ble_link/inbound_message_assembler.hpp"
+#include "ble_link/buffered_message_assembler.hpp"
 #include "companion_protocol/message_header.hpp"
 #include "gtest/gtest.h"
 
 namespace {
 
 using ble_link::AppendResult;
-using ble_link::InboundMessageAssembler;
+using ble_link::BufferedMessageAssembler;
 
 constexpr uint8_t kUnwritten = 0xEE;
 constexpr uint8_t kGetDeviceInfo[] = {0x01, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00};
@@ -25,10 +25,10 @@ constexpr std::size_t kPieceBytes = 20;
 struct Appended {
     AppendResult result{AppendResult::NeedMore};
     std::size_t message_length{0};
-    std::array<uint8_t, InboundMessageAssembler::kMessageBytes> message{};
+    std::array<uint8_t, BufferedMessageAssembler::kMessageBytes> message{};
 };
 
-Appended append_piece(InboundMessageAssembler& assembler, std::span<const uint8_t> message_piece)
+Appended append_piece(BufferedMessageAssembler& assembler, std::span<const uint8_t> message_piece)
 {
     Appended appended{};
     appended.message.fill(kUnwritten);
@@ -54,9 +54,9 @@ void expect_message(const Appended& appended, std::span<const uint8_t> expected)
 
 }  // namespace
 
-TEST(InboundMessageAssembler, GetDeviceInfoFinishesInOneAppend)
+TEST(BufferedMessageAssembler, GetDeviceInfoFinishesInOneAppend)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     const Appended appended = append_piece(assembler, kGetDeviceInfo);
 
     EXPECT_EQ(appended.result, AppendResult::Finished);
@@ -64,9 +64,9 @@ TEST(InboundMessageAssembler, GetDeviceInfoFinishesInOneAppend)
     EXPECT_EQ(assembler.drop_count(), 0u);
 }
 
-TEST(InboundMessageAssembler, GetDeviceInfoSplitAcrossTwoAppends)
+TEST(BufferedMessageAssembler, GetDeviceInfoSplitAcrossTwoAppends)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     const std::span<const uint8_t> message(kGetDeviceInfo);
 
     const Appended first = append_piece(assembler, message.first(3));
@@ -80,9 +80,9 @@ TEST(InboundMessageAssembler, GetDeviceInfoSplitAcrossTwoAppends)
     EXPECT_EQ(assembler.drop_count(), 0u);
 }
 
-TEST(InboundMessageAssembler, SetWifiCredentialsFinishesOnDeclaredLength)
+TEST(BufferedMessageAssembler, SetWifiCredentialsFinishesOnDeclaredLength)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     const std::span<const uint8_t> message(kSetWifiCredentials);
     ASSERT_GT(message.size(), kPieceBytes);
 
@@ -96,9 +96,9 @@ TEST(InboundMessageAssembler, SetWifiCredentialsFinishesOnDeclaredLength)
     EXPECT_EQ(assembler.drop_count(), 0u);
 }
 
-TEST(InboundMessageAssembler, HeaderPastMessageLimitIsRejected)
+TEST(BufferedMessageAssembler, HeaderPastMessageLimitIsRejected)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     // body_length 122 makes 7 + 122 = 129 bytes. The stored header is thrown away.
     const uint8_t declares_129_bytes[] = {0x01, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x00};
 
@@ -113,9 +113,9 @@ TEST(InboundMessageAssembler, HeaderPastMessageLimitIsRejected)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(InboundMessageAssembler, PiecePastStoredLimitIsRejected)
+TEST(BufferedMessageAssembler, PiecePastStoredLimitIsRejected)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     // body_length 121 needs 128 bytes. 120 are stored, then 9 more would pass 128.
     std::array<uint8_t, 120> stored{};
     stored[0] = 0x01;
@@ -143,9 +143,9 @@ TEST(InboundMessageAssembler, PiecePastStoredLimitIsRejected)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(InboundMessageAssembler, PiecePastDeclaredLengthIsRejected)
+TEST(BufferedMessageAssembler, PiecePastDeclaredLengthIsRejected)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     const uint8_t header_prefix[] = {0x01, 0x01, 0x00, 0x01, 0x00, 0x00};
     const uint8_t crosses_end[] = {0x00, 0xFF};
 
@@ -158,9 +158,9 @@ TEST(InboundMessageAssembler, PiecePastDeclaredLengthIsRejected)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(InboundMessageAssembler, EmptyPieceLeavesPartialInPlace)
+TEST(BufferedMessageAssembler, EmptyPieceLeavesPartialInPlace)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     const std::span<const uint8_t> message(kGetDeviceInfo);
 
     const Appended partial = append_piece(assembler, message.first(3));
@@ -178,9 +178,9 @@ TEST(InboundMessageAssembler, EmptyPieceLeavesPartialInPlace)
     EXPECT_EQ(assembler.drop_count(), drops);
 }
 
-TEST(InboundMessageAssembler, ResetClearsPartialAndLeavesDropCount)
+TEST(BufferedMessageAssembler, ResetClearsPartialAndLeavesDropCount)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     const uint8_t declares_129_bytes[] = {0x01, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x00};
     ASSERT_EQ(append_piece(assembler, declares_129_bytes).result, AppendResult::Rejected);
     ASSERT_EQ(assembler.drop_count(), 1u);
@@ -197,9 +197,9 @@ TEST(InboundMessageAssembler, ResetClearsPartialAndLeavesDropCount)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(InboundMessageAssembler, WriteLongerThanMessageIsNotAppended)
+TEST(BufferedMessageAssembler, WriteLongerThanMessageIsNotAppended)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
     const std::span<const uint8_t> message(kGetDeviceInfo);
     const Appended partial = append_piece(assembler, message.first(3));
     EXPECT_EQ(partial.result, AppendResult::NeedMore);
@@ -217,9 +217,9 @@ TEST(InboundMessageAssembler, WriteLongerThanMessageIsNotAppended)
     EXPECT_EQ(assembler.drop_count(), drops);
 }
 
-TEST(InboundMessageAssembler, NextAppendStartsANewMessage)
+TEST(BufferedMessageAssembler, NextAppendStartsANewMessage)
 {
-    InboundMessageAssembler assembler;
+    BufferedMessageAssembler assembler;
 
     const Appended first = append_piece(assembler, kGetDeviceInfo);
     EXPECT_EQ(first.result, AppendResult::Finished);

@@ -1,4 +1,4 @@
-#include "ble_link/inbound_message_assembler.hpp"
+#include "ble_link/buffered_message_assembler.hpp"
 
 #include <algorithm>
 
@@ -6,7 +6,7 @@
 
 namespace ble_link {
 
-AppendResult InboundMessageAssembler::append(std::span<const uint8_t> message_piece, std::span<uint8_t> message,
+AppendResult BufferedMessageAssembler::append(std::span<const uint8_t> message_piece, std::span<uint8_t> message,
                                               std::size_t& message_length)
 {
     if (message_piece.empty()) {
@@ -63,13 +63,13 @@ AppendResult InboundMessageAssembler::append(std::span<const uint8_t> message_pi
     return AppendResult::Finished;
 }
 
-void InboundMessageAssembler::reset()
+void BufferedMessageAssembler::reset()
 {
     buffered_message_.fill(0);
     buffered_message_size_ = 0;
 }
 
-uint32_t InboundMessageAssembler::drop_count() const
+uint32_t BufferedMessageAssembler::drop_count() const
 {
     return drop_count_;
 }

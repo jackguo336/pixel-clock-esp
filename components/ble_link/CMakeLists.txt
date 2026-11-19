@@ -1,5 +1,5 @@
 idf_component_register(SRCS "src/inbound_message_pool.cpp"
-                            "src/inbound_message_assembler.cpp"
+                            "src/buffered_message_assembler.cpp"
                             "src/outbound_message_splitter.cpp"
                             "src/companion_inbound_message_consumer.cpp"
                             "src/companion_message_reply_sender.cpp"

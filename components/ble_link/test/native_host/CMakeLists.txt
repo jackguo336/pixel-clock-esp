@@ -10,7 +10,7 @@ set(SETTINGS_ROOT "${BLE_LINK_ROOT}/../settings")
 
 add_executable(ble_link
     test_inbound_message_pool.cpp
-    test_inbound_message_assembler.cpp
+    test_buffered_message_assembler.cpp
     test_outbound_message_splitter.cpp
     test_companion_inbound_message_consumer.cpp
     test_get_device_info_handler.cpp
@@ -19,7 +19,7 @@ add_executable(ble_link
     test_uuid_text_converter.cpp
     stubs/esp_err.cpp
     "${BLE_LINK_ROOT}/src/inbound_message_pool.cpp"
-    "${BLE_LINK_ROOT}/src/inbound_message_assembler.cpp"
+    "${BLE_LINK_ROOT}/src/buffered_message_assembler.cpp"
     "${BLE_LINK_ROOT}/src/outbound_message_splitter.cpp"
     "${BLE_LINK_ROOT}/src/companion_inbound_message_consumer.cpp"
     "${BLE_LINK_ROOT}/src/companion_message_reply_sender.cpp"
