@@ -6,21 +6,21 @@
 
 namespace ble_link {
 
-AppendResult InboundMessageAssembler::append(std::span<const uint8_t> piece, std::span<uint8_t> message,
+AppendResult InboundMessageAssembler::append(std::span<const uint8_t> message_piece, std::span<uint8_t> message,
                                               std::size_t& message_length)
 {
-    if (piece.empty()) {
+    if (message_piece.empty()) {
         return AppendResult::NeedMore;
     }
 
-    if (piece.size() > kMessageBytes - held_count_) {
+    if (message_piece.size() > kMessageBytes - held_count_) {
         drop_count_ += 1;
         reset();
         return AppendResult::Rejected;
     }
 
-    std::copy_n(piece.begin(), piece.size(), held_.begin() + held_count_);
-    held_count_ += piece.size();
+    std::copy_n(message_piece.begin(), message_piece.size(), held_.begin() + held_count_);
+    held_count_ += message_piece.size();
 
     if (held_count_ < companion_protocol::kHeaderBytes) {
         return AppendResult::NeedMore;

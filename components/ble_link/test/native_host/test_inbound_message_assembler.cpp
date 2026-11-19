@@ -28,12 +28,12 @@ struct Appended {
     std::array<uint8_t, InboundMessageAssembler::kMessageBytes> message{};
 };
 
-Appended append_piece(InboundMessageAssembler& assembler, std::span<const uint8_t> piece)
+Appended append_piece(InboundMessageAssembler& assembler, std::span<const uint8_t> message_piece)
 {
     Appended appended{};
     appended.message.fill(kUnwritten);
     appended.message_length = std::numeric_limits<std::size_t>::max();
-    appended.result = assembler.append(piece, appended.message, appended.message_length);
+    appended.result = assembler.append(message_piece, appended.message, appended.message_length);
     return appended;
 }
 

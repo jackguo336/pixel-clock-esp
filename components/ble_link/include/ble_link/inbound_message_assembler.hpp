@@ -20,16 +20,16 @@ class InboundMessageAssembler {
 public:
     static constexpr std::size_t kMessageBytes = companion_protocol::kMaxMessageBytes;
 
-    /// Adds the next received piece to the message being built. A piece never
-    /// holds more than one whole message.
+    /// Adds the next received message_piece to the message being built. A
+    /// message_piece never holds more than one whole message.
     /// Finished means the pieces now form one complete message, copied into
     /// message.
-    /// NeedMore means this piece was kept, and the phone still has more to
-    /// send.
-    /// Rejected means this piece did not fit the message already stored, so
-    /// that stored message was thrown away and drop_count increased by one.
-    /// message and message_length are unchanged.
-    [[nodiscard]] AppendResult append(std::span<const uint8_t> piece, std::span<uint8_t> message,
+    /// NeedMore means this message_piece was kept, and the phone still has more
+    /// to send.
+    /// Rejected means this message_piece did not fit the message already
+    /// stored, so that stored message was thrown away and drop_count increased
+    /// by one. message and message_length are unchanged.
+    [[nodiscard]] AppendResult append(std::span<const uint8_t> message_piece, std::span<uint8_t> message,
                                       std::size_t& message_length);
 
     /// Clears a partial message that is already waiting. Does not change
