@@ -24,7 +24,7 @@ public:
         return write_length > kMessageBytes;
     }
 
-    /// Appends one piece, in order. The piece is at most one message.
+    /// Adds the next received piece to the message being built. A piece never holds more than one whole message.
     /// Finished means the pieces now form one complete message, copied into message.
     /// NeedMore means this piece was kept, and the phone still has more to send.
     /// Rejected means this piece did not fit the message already stored, so that stored message was thrown away and drop_count increased by one. message and message_length are unchanged.
