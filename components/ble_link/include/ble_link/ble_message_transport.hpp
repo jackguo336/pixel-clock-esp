@@ -19,9 +19,7 @@ public:
     /// the radio off and the rest of the firmware running.
     [[nodiscard]] bool start();
 
-    /// Notifies the encoded message as pieces. The bytes are valid only for this call.
-    /// Returns false when there is no connection, notifications are off, the message
-    /// is empty or longer than 128 bytes, or a notification fails.
+    /// Sends the encoded message. The bytes are valid only for this call.
     [[nodiscard]] bool send(std::span<const uint8_t> message) override;
 
 private:
