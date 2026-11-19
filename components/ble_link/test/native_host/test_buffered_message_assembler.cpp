@@ -80,7 +80,7 @@ TEST(BufferedMessageAssembler, GetDeviceInfoSplitAcrossTwoAppends)
     EXPECT_EQ(assembler.drop_count(), 0u);
 }
 
-TEST(BufferedMessageAssembler, SetWifiCredentialsFinishesOnDeclaredLength)
+TEST(BufferedMessageAssembler, SetWifiCredentialsCompletesWhenAllBytesArrive)
 {
     BufferedMessageAssembler assembler;
     const std::span<const uint8_t> message(kSetWifiCredentials);
