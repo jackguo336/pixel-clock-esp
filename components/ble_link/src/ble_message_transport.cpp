@@ -8,9 +8,9 @@
 #include "host_link_state.hpp"
 
 #include "ble_link/companion_gatt_ids.hpp"
-#include "ble_link/inbound_message_assembler.hpp"
 #include "ble_link/legacy_advertising_packets_builder.hpp"
 #include "ble_link/outbound_message_splitter.hpp"
+#include "companion_protocol/message_header.hpp"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "host/ble_att.h"
@@ -158,7 +158,7 @@ bool BleMessageTransport::start()
 
 bool BleMessageTransport::send(std::span<const uint8_t> message)
 {
-    if (message.empty() || InboundMessageAssembler::write_exceeds_message(message.size())) {
+    if (message.empty() || message.size() > companion_protocol::kMaxMessageBytes) {
         return false;
     }
 

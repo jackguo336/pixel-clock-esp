@@ -20,13 +20,6 @@ class InboundMessageAssembler {
 public:
     static constexpr std::size_t kMessageBytes = companion_protocol::kMaxMessageBytes;
 
-    /// A write of this length is refused before append. drop_count stays
-    /// unchanged.
-    [[nodiscard]] static constexpr bool write_exceeds_message(std::size_t write_length)
-    {
-        return write_length > kMessageBytes;
-    }
-
     /// Adds the next received piece to the message being built. A piece never
     /// holds more than one whole message.
     /// Finished means the pieces now form one complete message, copied into

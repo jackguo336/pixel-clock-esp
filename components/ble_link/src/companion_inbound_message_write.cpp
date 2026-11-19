@@ -10,6 +10,7 @@
 #include "host_link_state.hpp"
 
 #include "ble_link/inbound_message_assembler.hpp"
+#include "companion_protocol/message_header.hpp"
 #include "esp_log.h"
 #include "host/ble_att.h"
 #include "host/ble_hs_mbuf.h"
@@ -45,7 +46,7 @@ int on_inbound_write(uint16_t connection_handle,
     }
 
     const uint16_t length = OS_MBUF_PKTLEN(context->om);
-    if (InboundMessageAssembler::write_exceeds_message(length)) {
+    if (length > companion_protocol::kMaxMessageBytes) {
         ESP_LOGW(kTag, "refused a %u-byte companion write on connection %u", static_cast<unsigned>(length),
                  static_cast<unsigned>(connection_handle));
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;

@@ -5,6 +5,7 @@
 #include <span>
 
 #include "ble_link/inbound_message_assembler.hpp"
+#include "companion_protocol/message_header.hpp"
 #include "gtest/gtest.h"
 
 namespace {
@@ -205,9 +206,9 @@ TEST(InboundMessageAssembler, WriteLongerThanMessageIsNotAppended)
     const uint32_t drops = assembler.drop_count();
 
     // The write callback refuses this length before append, so the partial stays waiting.
-    std::array<uint8_t, InboundMessageAssembler::kMessageBytes + 1> long_write{};
+    std::array<uint8_t, companion_protocol::kMaxMessageBytes + 1> long_write{};
     long_write.fill(0x5A);
-    ASSERT_TRUE(InboundMessageAssembler::write_exceeds_message(long_write.size()));
+    ASSERT_GT(long_write.size(), companion_protocol::kMaxMessageBytes);
     EXPECT_EQ(assembler.drop_count(), drops);
 
     const Appended finished = append_piece(assembler, message.subspan(3));
