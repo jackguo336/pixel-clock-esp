@@ -9,7 +9,8 @@
 namespace ble_link {
 
 /**
- * Lets the pixel clock connect with a companion phone over Bluetooth and receive and reply to messages.
+ * Lets the pixel clock connect with a companion phone over Bluetooth and
+ * receive and reply to messages.
  */
 class BleMessageTransport : public MessageTransport {
 public:
