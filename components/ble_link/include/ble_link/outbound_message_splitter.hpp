@@ -16,7 +16,7 @@ inline constexpr std::size_t kNotifyHeaderBytes = 3;  // opcode and attribute ha
 inline constexpr std::size_t kMaxNotifyPieces = 7;
 
 /// Fills piece_lengths with how many bytes of the message fit in each packet
-/// sent back to the phone.
+/// sent back to the phone. Each length is at most att_mtu minus 3.
 [[nodiscard]] bool message_split_piece_lengths(std::size_t message_length, uint16_t att_mtu,
                                                std::span<std::size_t> piece_lengths, std::size_t& piece_count);
 
