@@ -96,7 +96,7 @@ TEST(BufferedMessageAssembler, SetWifiCredentialsCompletesWhenAllBytesArrive)
     EXPECT_EQ(assembler.drop_count(), 0u);
 }
 
-TEST(BufferedMessageAssembler, HeaderPastMessageLimitIsRejected)
+TEST(BufferedMessageAssembler, HeaderDeclaresMessagePastMaxLength)
 {
     BufferedMessageAssembler assembler;
     // body_length 122 makes 7 + 122 = 129 bytes. The stored header is thrown away.
@@ -113,7 +113,7 @@ TEST(BufferedMessageAssembler, HeaderPastMessageLimitIsRejected)
     EXPECT_EQ(assembler.drop_count(), 1u);
 }
 
-TEST(BufferedMessageAssembler, PiecePastStoredLimitIsRejected)
+TEST(BufferedMessageAssembler, PieceCrossesDeclaredMessageEnd)
 {
     BufferedMessageAssembler assembler;
     // body_length 121 needs 128 bytes. 120 are stored, then 9 more would pass 128.
